@@ -1,0 +1,2 @@
+Modern e-commerce REST API with ASP.NET Core 8.0, Clean Architecture, DDD, CQRS, JWT auth, PostgreSQL. Features: Result pattern, FluentValidation, Mapster, Serilog, Docker support.
+

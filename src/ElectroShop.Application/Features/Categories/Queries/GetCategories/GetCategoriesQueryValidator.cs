@@ -1,0 +1,20 @@
+using FluentValidation;
+
+namespace ElectroShop.Application.Features.Categories.Queries.GetCategories;
+
+public class GetCategoriesQueryValidator : AbstractValidator<GetCategoriesQuery>
+{
+    public GetCategoriesQueryValidator()
+    {
+        RuleFor(x => x.Page)
+            .GreaterThan(0)
+            .WithMessage("Səhifə nömrəsi 0-dan böyük olmalıdır");
+
+        RuleFor(x => x.PageSize)
+            .GreaterThan(0)
+            .WithMessage("Səhifə ölçüsü 0-dan böyük olmalıdır")
+            .LessThanOrEqualTo(100)
+            .WithMessage("Səhifə ölçüsü maksimum 100 ola bilər");
+    }
+}
+

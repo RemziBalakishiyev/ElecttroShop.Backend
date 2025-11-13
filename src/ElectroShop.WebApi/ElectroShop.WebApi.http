@@ -1,0 +1,6 @@
+@ElectroShop.WebApi_HostAddress = http://localhost:5223
+
+GET {{ElectroShop.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

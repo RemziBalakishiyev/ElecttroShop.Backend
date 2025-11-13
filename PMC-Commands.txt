@@ -1,0 +1,40 @@
+# Package Manager Console (PMC) Commands for ElectroShop
+
+## 1. İlk Migration yaratmaq:
+```
+Add-Migration InitialMigration -Project ElectroShop.Persistence -StartupProject ElectroShop.WebApi
+```
+
+## 2. Database-i update etmək (migration-ları tətbiq etmək):
+```
+Update-Database -Project ElectroShop.Persistence -StartupProject ElectroShop.WebApi
+```
+
+## 3. Migration-ı geri almaq (son migration-ı silmək):
+```
+Remove-Migration -Project ElectroShop.Persistence -StartupProject ElectroShop.WebApi
+```
+
+## 4. Database-i sıfırlamaq (Bütün migration-ları geri al və yenidən tətbiq et):
+```
+Update-Database 0 -Project ElectroShop.Persistence -StartupProject ElectroShop.WebApi
+Update-Database -Project ElectroShop.Persistence -StartupProject ElectroShop.WebApi
+```
+
+## 5. Migration-ların siyahısını görmək:
+```
+Get-Migrations -Project ElectroShop.Persistence -StartupProject ElectroShop.WebApi
+```
+
+## 6. Script yaratmaq (SQL migration script):
+```
+Script-Migration -Project ElectroShop.Persistence -StartupProject ElectroShop.WebApi
+```
+
+## Qeyd:
+- Migration yaratmadan əvvəl Docker Compose-da PostgreSQL-in işlədiyindən əmin olun
+- Connection String `appsettings.json`-da düzgün olmalıdır:
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=ElectroShopDb;Username=postgres;Password=postgres"
+  }
+
