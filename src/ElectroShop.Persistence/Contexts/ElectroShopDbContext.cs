@@ -17,6 +17,7 @@ public class ElectroShopDbContext : DbContext
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Discount> Discounts => Set<Discount>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

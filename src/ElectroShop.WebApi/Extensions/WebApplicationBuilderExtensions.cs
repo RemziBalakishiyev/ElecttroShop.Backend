@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace ElectroShop.WebApi.Extensions;
 
@@ -16,12 +17,17 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddApplication();
         builder.Services.AddAuthenticationServices(builder.Configuration);
         builder.Services.AddImageStorage(builder.Configuration);
+        builder.Services.AddDiscountServices();
 
         // Persistence Layer
         builder.Services.AddPersistence(builder.Configuration);
 
         // Controllers
         builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            })
             .ConfigureApiBehaviorOptions(options =>
             {
                 options.SuppressModelStateInvalidFilter = true;

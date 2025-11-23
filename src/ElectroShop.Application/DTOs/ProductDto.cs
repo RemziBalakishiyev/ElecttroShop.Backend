@@ -20,6 +20,15 @@ public record ProductDto
     public bool IsActive { get; init; }
     public Guid? ImageId { get; init; }
     public string? ImageUrl { get; init; }
+    /// <summary>
+    /// Final endirim faizi (0-100 arası)
+    /// Prioritet: Məhsul > Brand > Kateqoriya
+    /// </summary>
+    public decimal FinalDiscountPercent { get; init; }
+    /// <summary>
+    /// Endirimli final qiymət
+    /// </summary>
+    public decimal FinalPrice { get; init; }
     public DateTime CreatedAt { get; init; }
     public DateTime? UpdatedAt { get; init; }
 }
@@ -39,6 +48,14 @@ public record ProductListDto
     public int Stock { get; init; }
     public bool IsActive { get; init; }
     public string? ImageUrl { get; init; }
+    /// <summary>
+    /// Final endirim faizi (0-100 arası)
+    /// </summary>
+    public decimal FinalDiscountPercent { get; init; }
+    /// <summary>
+    /// Endirimli final qiymət
+    /// </summary>
+    public decimal FinalPrice { get; init; }
 }
 
 /// <summary>

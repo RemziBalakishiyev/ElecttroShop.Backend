@@ -1,6 +1,7 @@
 using ElectroShop.Application.Common.Results;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace ElectroShop.WebApi.Controllers;
 
@@ -19,6 +20,28 @@ public abstract class BaseApiController : ControllerBase
         if (result.IsSuccess && result.Value == null)
             return NotFound();
 
+        // ValidationResult üçün xüsusi handling
+        if (result is ValidationResult<T> validationResult)
+        {
+            return BadRequest(new
+            {
+                isSuccess = false,
+                isFailure = true,
+                error = new
+                {
+                    code = "Validation.Failed",
+                    message = "Bir və ya bir neçə validasiya xətası baş verdi",
+                    type = 2,
+                    errors = validationResult.Errors.Select(e => new
+                    {
+                        code = e.Code,
+                        message = e.Message,
+                        property = ExtractPropertyName(e.Code)
+                    }).ToArray()
+                }
+            });
+        }
+
         return HandleFailure(result);
     }
 
@@ -26,6 +49,28 @@ public abstract class BaseApiController : ControllerBase
     {
         if (result.IsSuccess)
             return Ok();
+
+        // ValidationResult üçün xüsusi handling
+        if (result is ValidationResult validationResult)
+        {
+            return BadRequest(new
+            {
+                isSuccess = false,
+                isFailure = true,
+                error = new
+                {
+                    code = "Validation.Failed",
+                    message = "Bir və ya bir neçə validasiya xətası baş verdi",
+                    type = 2,
+                    errors = validationResult.Errors.Select(e => new
+                    {
+                        code = e.Code,
+                        message = e.Message,
+                        property = ExtractPropertyName(e.Code)
+                    }).ToArray()
+                }
+            });
+        }
 
         return HandleFailure(result);
     }
@@ -52,6 +97,16 @@ public abstract class BaseApiController : ControllerBase
             ErrorType.Conflict => Conflict(result.Error),
             _ => StatusCode(500, result.Error)
         };
+    }
+
+    private static string ExtractPropertyName(string errorCode)
+    {
+        // "Validation.PropertyName" formatından property name-i çıxarırıq
+        if (errorCode.StartsWith("Validation."))
+        {
+            return errorCode.Substring("Validation.".Length);
+        }
+        return errorCode;
     }
 }
 

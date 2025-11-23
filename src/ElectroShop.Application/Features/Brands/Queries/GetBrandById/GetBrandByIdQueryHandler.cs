@@ -1,6 +1,7 @@
 using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
+using ElectroShop.Application.Services;
 using MediatR;
 
 namespace ElectroShop.Application.Features.Brands.Queries.GetBrandById;
@@ -8,10 +9,14 @@ namespace ElectroShop.Application.Features.Brands.Queries.GetBrandById;
 public class GetBrandByIdQueryHandler : IRequestHandler<GetBrandByIdQuery, Result<BrandDto>>
 {
     private readonly IQueryRepository<Domain.Entities.Brand> _brandRepository;
+    private readonly IDiscountCalculationService _discountCalculationService;
 
-    public GetBrandByIdQueryHandler(IQueryRepository<Domain.Entities.Brand> brandRepository)
+    public GetBrandByIdQueryHandler(
+        IQueryRepository<Domain.Entities.Brand> brandRepository,
+        IDiscountCalculationService discountCalculationService)
     {
         _brandRepository = brandRepository;
+        _discountCalculationService = discountCalculationService;
     }
 
     public async Task<Result<BrandDto>> Handle(
@@ -27,10 +32,16 @@ public class GetBrandByIdQueryHandler : IRequestHandler<GetBrandByIdQuery, Resul
             return DomainErrors.Brand.NotFound(request.Id);
         }
 
+        // Endirim faizini hesabla
+        var discountPercent = await _discountCalculationService.GetBrandDiscountPercentAsync(
+            brand.Id,
+            cancellationToken);
+
         var brandDto = new BrandDto
         {
             Id = brand.Id,
             Name = brand.Name,
+            DiscountPercent = discountPercent,
             CreatedAt = brand.CreatedAtUtc
         };
 

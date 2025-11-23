@@ -1,6 +1,7 @@
 using ElectroShop.Application.Common.Results;
 using FluentValidation;
 using MediatR;
+using System.Collections.Generic;
 
 namespace ElectroShop.Application.Behaviours;
 
@@ -58,8 +59,12 @@ public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TReque
                 {
                     var resultType = typeof(TResponse).GetGenericArguments()[0];
                     var validationResultType = typeof(ValidationResult<>).MakeGenericType(resultType);
+                    
+                    // WithErrors metodunu tapırıq (Error[] və ya IEnumerable<Error> overload-ları)
                     var method = validationResultType.GetMethod(nameof(ValidationResult<object>.WithErrors), 
-                        new[] { typeof(Error[]) });
+                        new[] { typeof(Error[]) }) 
+                        ?? validationResultType.GetMethod(nameof(ValidationResult<object>.WithErrors), 
+                        new[] { typeof(IEnumerable<Error>) });
                     
                     if (method != null)
                     {
@@ -67,6 +72,12 @@ public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TReque
                         return (TResponse)validationResult!;
                     }
                 }
+            }
+            
+            // Non-generic Result üçün
+            if (typeof(TResponse) == typeof(Result))
+            {
+                return (TResponse)(object)ValidationResult.WithErrors(errors);
             }
 
             // Fallback: throw ValidationException for non-Result responses

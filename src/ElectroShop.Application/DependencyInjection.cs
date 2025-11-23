@@ -69,5 +69,13 @@ public static class DependencyInjection
 
         return services;
     }
+
+    public static IServiceCollection AddDiscountServices(this IServiceCollection services)
+    {
+        // Register Discount Calculation Service
+        services.AddScoped<Services.IDiscountCalculationService, Services.DiscountCalculationService>();
+
+        return services;
+    }
 }
 
