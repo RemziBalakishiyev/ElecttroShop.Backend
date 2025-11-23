@@ -25,6 +25,7 @@ public class Product : BaseCommonEntity
     public decimal VatRate { get; private set; } = 0.18m;
     public int Stock { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public Guid? ImageId { get; private set; }
 
     private Product() { }
 
@@ -143,5 +144,13 @@ public class Product : BaseCommonEntity
     public void Activate()
     {
         IsActive = true;
+    }
+
+    /// <summary>
+    /// Məhsulun şəkil ID-sini yenilə (DDD pattern)
+    /// </summary>
+    public void UpdateImageId(Guid? imageId)
+    {
+        ImageId = imageId;
     }
 }

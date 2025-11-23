@@ -56,5 +56,18 @@ public static class DependencyInjection
 
         return services;
     }
+
+    public static IServiceCollection AddImageStorage(
+        this IServiceCollection services,
+        Microsoft.Extensions.Configuration.IConfiguration configuration)
+    {
+        // Register Image Storage Service
+        services.AddScoped<Services.IImageStorage, Services.LocalImageStorage>();
+        
+        // Register Image Upload Context (for passing stream to handler)
+        services.AddScoped<Services.IImageUploadContext, Services.ImageUploadContext>();
+
+        return services;
+    }
 }
 

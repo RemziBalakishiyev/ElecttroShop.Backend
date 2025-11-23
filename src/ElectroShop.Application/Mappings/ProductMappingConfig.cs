@@ -26,6 +26,10 @@ public class ProductMappingConfig : IRegister
             .Map(dest => dest.VatRate, src => src.VatRate)
             .Map(dest => dest.Stock, src => src.Stock)
             .Map(dest => dest.IsActive, src => src.IsActive)
+            .Map(dest => dest.ImageId, src => src.ImageId)
+            .Map(dest => dest.ImageUrl, src => src.ImageId.HasValue 
+                ? $"/api/images/{src.ImageId}" 
+                : null)
             .Map(dest => dest.CreatedAt, src => src.CreatedAtUtc)
             .Map(dest => dest.UpdatedAt, src => src.UpdatedAtUtc);
 
@@ -39,7 +43,10 @@ public class ProductMappingConfig : IRegister
             .Map(dest => dest.CategoryName, src => src.Category != null ? src.Category.Name : string.Empty)
             .Map(dest => dest.BrandName, src => src.Brand != null ? src.Brand.Name : string.Empty)
             .Map(dest => dest.Stock, src => src.Stock)
-            .Map(dest => dest.IsActive, src => src.IsActive);
+            .Map(dest => dest.IsActive, src => src.IsActive)
+            .Map(dest => dest.ImageUrl, src => src.ImageId.HasValue 
+                ? $"/api/images/{src.ImageId}" 
+                : null);
 
         // CreateProductDto -> Product (handled in command handler with value objects)
         // UpdateProductDto -> Product (handled in command handler with value objects)

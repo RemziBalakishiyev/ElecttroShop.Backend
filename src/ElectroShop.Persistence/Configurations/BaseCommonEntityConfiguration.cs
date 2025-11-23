@@ -12,13 +12,19 @@ public abstract class BaseCommonEntityConfiguration<TEntity> : BaseEntityConfigu
         base.Configure(builder);
 
         builder.Property(e => e.CreatedAtUtc)
-            .IsRequired();
+            .IsRequired()
+            .HasConversion(
+                v => v.ToUniversalTime(),
+                v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
         builder.Property(e => e.CreatedBy)
             .HasMaxLength(200);
 
         builder.Property(e => e.UpdatedAtUtc)
-            .IsRequired(false);
+            .IsRequired(false)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : null);
 
         builder.Property(e => e.UpdatedBy)
             .HasMaxLength(200);
@@ -33,6 +39,10 @@ public abstract class BaseCommonEntityConfiguration<TEntity> : BaseEntityConfigu
         builder.HasQueryFilter(e => !e.IsDeleted);
     }
 }
+
+
+
+
 
 
 

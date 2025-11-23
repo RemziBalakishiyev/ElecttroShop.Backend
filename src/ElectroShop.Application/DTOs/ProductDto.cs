@@ -18,6 +18,8 @@ public record ProductDto
     public decimal VatRate { get; init; }
     public int Stock { get; init; }
     public bool IsActive { get; init; }
+    public Guid? ImageId { get; init; }
+    public string? ImageUrl { get; init; }
     public DateTime CreatedAt { get; init; }
     public DateTime? UpdatedAt { get; init; }
 }
@@ -36,6 +38,7 @@ public record ProductListDto
     public string BrandName { get; init; } = string.Empty;
     public int Stock { get; init; }
     public bool IsActive { get; init; }
+    public string? ImageUrl { get; init; }
 }
 
 /// <summary>

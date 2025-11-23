@@ -8,15 +8,28 @@ using ElectroShop.Application.Features.Products.Commands.UpdateProduct;
 using ElectroShop.Application.Features.Products.Queries.GetProductById;
 using ElectroShop.Application.Features.Products.Queries.GetProducts;
 using ElectroShop.Application.Features.Products.Queries.SearchProducts;
+using ElectroShop.Application.Services;
+using ElectroShop.WebApi.Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElectroShop.WebApi.Controllers;
 
-[Authorize]
+//[Authorize]
 public class ProductsController : BaseApiController
 {
+    private readonly ILogger<ProductsController> _logger;
+    private readonly IImageUploadContext _imageUploadContext;
+
+    public ProductsController(
+        ILogger<ProductsController> logger,
+        IImageUploadContext imageUploadContext)
+    {
+        _logger = logger;
+        _imageUploadContext = imageUploadContext;
+    }
+
     /// <summary>
     /// Məhsulların səhifələnmiş siyahısını əldə edir
     /// </summary>
@@ -150,5 +163,38 @@ public class ProductsController : BaseApiController
         var result = await Mediator.Send(changeStockCommand, cancellationToken);
         return HandleResult(result);
     }
+
+    /// <summary>
+    /// Məhsul üçün şəkil yükləyir
+    /// </summary>
+    [HttpPost("{productId:guid}/image")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> UploadImage(
+      [FromRoute] Guid productId,
+      IFormFile file,
+      CancellationToken cancellationToken)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("File is empty");
+
+        var commandResult = await FileUploadHelper
+            .CreateUploadProductImageCommandAsync(file, productId, _imageUploadContext, cancellationToken);
+
+        if (commandResult.IsFailure)
+        {
+            _logger.LogWarning(
+                "Image upload validation failed. ProductId: {ProductId}, Error: {Error}",
+                productId, commandResult.Error.Message);
+
+            return BadRequest(Result.Failure(commandResult.Error));
+        }
+
+        var result = await Mediator.Send(commandResult.Value, cancellationToken);
+        return HandleResult(result);
+    }
+
 }
 

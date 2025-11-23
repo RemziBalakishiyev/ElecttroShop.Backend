@@ -50,3 +50,7 @@ public interface IWriteRepository<TEntity> where TEntity : BaseCommonEntity
 
 
 
+
+
+
+

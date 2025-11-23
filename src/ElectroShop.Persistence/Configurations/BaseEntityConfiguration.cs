@@ -18,3 +18,7 @@ public abstract class BaseEntityConfiguration<TEntity> : IEntityTypeConfiguratio
 
 
 
+
+
+
+

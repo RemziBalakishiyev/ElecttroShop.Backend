@@ -1,5 +1,6 @@
 using ElectroShop.Application;
 using ElectroShop.Persistence;
+using ElectroShop.WebApi.Filters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -14,6 +15,7 @@ public static class WebApplicationBuilderExtensions
         // Application Layer
         builder.Services.AddApplication();
         builder.Services.AddAuthenticationServices(builder.Configuration);
+        builder.Services.AddImageStorage(builder.Configuration);
 
         // Persistence Layer
         builder.Services.AddPersistence(builder.Configuration);
@@ -96,6 +98,15 @@ public static class WebApplicationBuilderExtensions
                     Array.Empty<string>()
                 }
             });
+
+            // Stream və IFormFile type-larını Swagger schema-dan gizlət
+            c.SchemaFilter<SwaggerStreamSchemaFilter>();
+            
+            // IFormFile parametrlərini düzgün göstərmək üçün
+            c.OperationFilter<SwaggerFileOperationFilter>();
+            
+            // IFormFile və Stream type-larını document-dən tamamilə çıxar
+            c.DocumentFilter<SwaggerDocumentFilter>();
         });
 
         return builder;

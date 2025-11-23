@@ -13,3 +13,7 @@ public interface IRepository<TEntity> : IWriteRepository<TEntity>, IQueryReposit
 
 
 
+
+
+
+

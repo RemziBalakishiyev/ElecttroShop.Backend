@@ -57,6 +57,17 @@ public class ElectroShopDbContext : DbContext
                 entry.Entity.UpdatedAtUtc = DateTime.UtcNow;
                 // UpdatedBy buradan set edilebilir (ICurrentUserService kullanarak)
             }
+
+            // PostgreSQL üçün DateTime-ləri UTC-yə çevir
+            if (entry.Entity.CreatedAtUtc.Kind != DateTimeKind.Utc)
+            {
+                entry.Entity.CreatedAtUtc = DateTime.SpecifyKind(entry.Entity.CreatedAtUtc, DateTimeKind.Utc);
+            }
+
+            if (entry.Entity.UpdatedAtUtc.HasValue && entry.Entity.UpdatedAtUtc.Value.Kind != DateTimeKind.Utc)
+            {
+                entry.Entity.UpdatedAtUtc = DateTime.SpecifyKind(entry.Entity.UpdatedAtUtc.Value, DateTimeKind.Utc);
+            }
         }
     }
 }

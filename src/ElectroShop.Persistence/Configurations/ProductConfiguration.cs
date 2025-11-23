@@ -56,6 +56,9 @@ public class ProductConfiguration : BaseCommonEntityConfiguration<Product>
             .IsRequired()
             .HasDefaultValue(true);
 
+        builder.Property(p => p.ImageId)
+            .IsRequired(false);
+
         // Relationships
         builder.HasOne(p => p.Category)
             .WithMany()
