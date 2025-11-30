@@ -11,3 +11,5 @@ public record UpdateDiscountCommand(
     DateTime? EndDate = null,
     bool? IsActive = null) : IRequest<Result<DiscountDto>>;
 
+
+

@@ -10,3 +10,5 @@ namespace ElectroShop.Application.Features.Dashboard.Queries.GetDashboard;
 public record GetDashboardQuery : IRequest<Result<DashboardDto>>;
 
 
+
+

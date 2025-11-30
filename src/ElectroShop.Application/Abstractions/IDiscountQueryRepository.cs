@@ -28,3 +28,5 @@ public interface IDiscountQueryRepository : IQueryRepository<Discount>
         CancellationToken cancellationToken = default);
 }
 
+
+

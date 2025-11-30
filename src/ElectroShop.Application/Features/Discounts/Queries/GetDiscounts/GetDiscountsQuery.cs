@@ -12,3 +12,5 @@ public record GetDiscountsQuery(
     bool? IsActive = null,
     string? SearchTerm = null) : IRequest<PagedResult<DiscountListDto>>;
 
+
+
