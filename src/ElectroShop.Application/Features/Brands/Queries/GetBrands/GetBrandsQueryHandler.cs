@@ -49,6 +49,8 @@ public class GetBrandsQueryHandler : IRequestHandler<GetBrandsQuery, PagedResult
                 Id = brand.Id,
                 Name = brand.Name,
                 DiscountPercent = discountPercent,
+                IsPromotional = brand.IsPromotional,
+                DisplayOrder = brand.DisplayOrder,
                 CreatedAt = brand.CreatedAtUtc
             });
         }

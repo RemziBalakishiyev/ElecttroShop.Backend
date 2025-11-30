@@ -5,6 +5,8 @@ namespace ElectroShop.Domain.Entities;
 public class Brand : BaseCommonEntity
 {
     public string Name { get; private set; } = default!;
+    public bool IsPromotional { get; private set; } = false;
+    public int? DisplayOrder { get; private set; }
 
     private Brand() { }
 
@@ -27,6 +29,12 @@ public class Brand : BaseCommonEntity
             throw new ArgumentException("Brend adı boş ola bilməz", nameof(name));
 
         Name = name.Trim();
+    }
+
+    public void SetPromotional(bool isPromotional, int? displayOrder = null)
+    {
+        IsPromotional = isPromotional;
+        DisplayOrder = displayOrder;
     }
 }
 

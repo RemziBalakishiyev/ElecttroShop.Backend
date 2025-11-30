@@ -8,6 +8,12 @@ using ElectroShop.Application.Features.Products.Commands.UpdateProduct;
 using ElectroShop.Application.Features.Products.Queries.GetProductById;
 using ElectroShop.Application.Features.Products.Queries.GetProducts;
 using ElectroShop.Application.Features.Products.Queries.SearchProducts;
+using ElectroShop.Application.Features.Products.Queries.GetBannerProduct;
+using ElectroShop.Application.Features.Products.Queries.GetFeaturedProducts;
+using ElectroShop.Application.Features.Products.Commands.SetProductAsBanner;
+using ElectroShop.Application.Features.Products.Commands.RemoveProductFromBanner;
+using ElectroShop.Application.Features.Products.Commands.SetProductAsFeatured;
+using ElectroShop.Application.Features.Products.Commands.RemoveProductFromFeatured;
 using ElectroShop.Application.Services;
 using ElectroShop.WebApi.Helpers;
 using MediatR;
@@ -193,6 +199,100 @@ public class ProductsController : BaseApiController
         }
 
         var result = await Mediator.Send(commandResult.Value, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Banner məhsulu əldə edir
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Banner məhsul</returns>
+    [HttpGet("banner")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetBannerProduct(CancellationToken cancellationToken)
+    {
+        var query = new GetBannerProductQuery();
+        var result = await Mediator.Send(query, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Featured məhsulları əldə edir (əsas səhifə üçün 5 məhsul)
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Featured məhsul siyahısı</returns>
+    [HttpGet("featured")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetFeaturedProducts(CancellationToken cancellationToken)
+    {
+        var query = new GetFeaturedProductsQuery();
+        var result = await Mediator.Send(query, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Məhsulu Banner olaraq təyin edir
+    /// </summary>
+    /// <param name="productId">Məhsul ID-si</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Uğur mesajı</returns>
+    [HttpPost("{productId:guid}/banner")]
+    public async Task<IActionResult> SetProductAsBanner(
+        [FromRoute] Guid productId,
+        CancellationToken cancellationToken)
+    {
+        var command = new SetProductAsBannerCommand(productId);
+        var result = await Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Məhsulu Banner-dan çıxarır
+    /// </summary>
+    /// <param name="productId">Məhsul ID-si</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Uğur mesajı</returns>
+    [HttpDelete("{productId:guid}/banner")]
+    public async Task<IActionResult> RemoveProductFromBanner(
+        [FromRoute] Guid productId,
+        CancellationToken cancellationToken)
+    {
+        var command = new RemoveProductFromBannerCommand(productId);
+        var result = await Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Məhsulu Featured olaraq təyin edir (əsas səhifə üçün)
+    /// </summary>
+    /// <param name="productId">Məhsul ID-si</param>
+    /// <param name="command">Display order məlumatları</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Uğur mesajı</returns>
+    [HttpPost("{productId:guid}/featured")]
+    public async Task<IActionResult> SetProductAsFeatured(
+        [FromRoute] Guid productId,
+        [FromBody] SetProductAsFeaturedCommand command,
+        CancellationToken cancellationToken)
+    {
+        var setFeaturedCommand = command with { ProductId = productId };
+        var result = await Mediator.Send(setFeaturedCommand, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Məhsulu Featured-dan çıxarır
+    /// </summary>
+    /// <param name="productId">Məhsul ID-si</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Uğur mesajı</returns>
+    [HttpDelete("{productId:guid}/featured")]
+    public async Task<IActionResult> RemoveProductFromFeatured(
+        [FromRoute] Guid productId,
+        CancellationToken cancellationToken)
+    {
+        var command = new RemoveProductFromFeaturedCommand(productId);
+        var result = await Mediator.Send(command, cancellationToken);
         return HandleResult(result);
     }
 

@@ -18,6 +18,16 @@ public class BrandConfiguration : BaseCommonEntityConfiguration<Brand>
 
         builder.HasIndex(b => b.Name)
             .IsUnique();
+
+        builder.Property(b => b.IsPromotional)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(b => b.DisplayOrder)
+            .IsRequired(false);
+
+        builder.HasIndex(b => new { b.IsPromotional, b.DisplayOrder })
+            .HasFilter("\"IsPromotional\" = true");
     }
 }
 

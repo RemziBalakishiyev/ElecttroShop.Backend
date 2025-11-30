@@ -6,6 +6,7 @@ using ElectroShop.WebApi.Extensions;
 using ElectroShop.WebApi.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,13 +40,18 @@ try
             var context = services.GetRequiredService<ElectroShopDbContext>();
             var passwordHasher = services.GetRequiredService<ElectroShop.Application.Services.IPasswordHasher>();
 
-            // Apply migrations (only if pending)
-            var runMigrations = builder.Configuration.GetValue<bool>("RunMigrations", false);
-            if (runMigrations && context.Database.GetPendingMigrations().Any())
+            // Apply migrations (always apply pending migrations)
+            var pendingMigrations = context.Database.GetPendingMigrations().ToList();
+            if (pendingMigrations.Any())
             {
+                Log.Information($"Found {pendingMigrations.Count} pending migration(s): {string.Join(", ", pendingMigrations)}");
                 Log.Information("Applying database migrations...");
                 await context.Database.MigrateAsync();
                 Log.Information("Database migrations applied successfully");
+            }
+            else
+            {
+                Log.Information("No pending migrations found");
             }
 
             // Seed data (always run)

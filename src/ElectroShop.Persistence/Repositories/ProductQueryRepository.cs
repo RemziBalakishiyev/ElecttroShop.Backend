@@ -62,6 +62,38 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, cancellationToken);
     }
+
+    public async Task<Product?> GetBannerProductAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(p => p.Category)
+            .Include(p => p.Brand)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.IsBanner && !p.IsDeleted && p.IsActive, cancellationToken);
+    }
+
+    public async Task<List<Product>> GetFeaturedProductsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(p => p.Category)
+            .Include(p => p.Brand)
+            .AsNoTracking()
+            .Where(p => p.IsFeatured && !p.IsDeleted && p.IsActive)
+            .OrderBy(p => p.DisplayOrder)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Product?> GetFeaturedProductByBrandIdAsync(Guid brandId, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(p => p.Category)
+            .Include(p => p.Brand)
+            .AsNoTracking()
+            .Where(p => p.BrandId == brandId && p.IsFeatured && !p.IsDeleted && p.IsActive)
+            .OrderBy(p => p.DisplayOrder)
+            .ThenBy(p => p.CreatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }
 
 

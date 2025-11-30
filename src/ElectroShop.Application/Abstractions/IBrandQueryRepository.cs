@@ -15,5 +15,10 @@ public interface IBrandQueryRepository : IQueryRepository<Brand>
         int pageSize,
         string? searchTerm = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Promotional brendləri əldə et (DisplayOrder-a görə sıralanmış, maksimum 4)
+    /// </summary>
+    Task<List<Brand>> GetPromotionalBrandsAsync(CancellationToken cancellationToken = default);
 }
 

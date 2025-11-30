@@ -59,6 +59,25 @@ public class ProductConfiguration : BaseCommonEntityConfiguration<Product>
         builder.Property(p => p.ImageId)
             .IsRequired(false);
 
+        builder.Property(p => p.IsBanner)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(p => p.IsFeatured)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(p => p.DisplayOrder)
+            .IsRequired(false);
+
+        // Indexes
+        // PostgreSQL syntax for filtered indexes
+        builder.HasIndex(p => p.IsBanner)
+            .HasFilter("\"IsBanner\" = true");
+
+        builder.HasIndex(p => new { p.IsFeatured, p.DisplayOrder })
+            .HasFilter("\"IsFeatured\" = true");
+
         // Relationships
         builder.HasOne(p => p.Category)
             .WithMany()

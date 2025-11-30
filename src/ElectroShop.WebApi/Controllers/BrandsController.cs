@@ -3,6 +3,7 @@ using ElectroShop.Application.Features.Brands.Commands.DeleteBrand;
 using ElectroShop.Application.Features.Brands.Commands.UpdateBrand;
 using ElectroShop.Application.Features.Brands.Queries.GetBrandById;
 using ElectroShop.Application.Features.Brands.Queries.GetBrands;
+using ElectroShop.Application.Features.Brands.Queries.GetPromotionalBrands;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -90,6 +91,22 @@ public class BrandsController : BaseApiController
     {
         var command = new DeleteBrandCommand(id);
         var result = await Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Promotional brendləri və hər brend üçün featured məhsulu əldə edir
+    /// Maksimum 4 brend qaytarılır (ilk 2 böyük banner, qalan 2 kiçik banner)
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Promotional brendlər və featured məhsullar</returns>
+    [HttpGet("promotional")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetPromotionalBrands(
+        CancellationToken cancellationToken)
+    {
+        var query = new GetPromotionalBrandsQuery();
+        var result = await Mediator.Send(query, cancellationToken);
         return HandleResult(result);
     }
 }

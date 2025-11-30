@@ -30,5 +30,20 @@ public interface IProductQueryRepository : IQueryRepository<Product>
     Task<Product?> GetProductWithDetailsAsync(
         Guid id,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Banner məhsulu əldə et
+    /// </summary>
+    Task<Product?> GetBannerProductAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Featured məhsulları əldə et (DisplayOrder-a görə sıralanmış)
+    /// </summary>
+    Task<List<Product>> GetFeaturedProductsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Brend üçün featured məhsul əldə et (DisplayOrder-a görə sıralanmış, ilk məhsul seçilir)
+    /// </summary>
+    Task<Product?> GetFeaturedProductByBrandIdAsync(Guid brandId, CancellationToken cancellationToken = default);
 }
 

@@ -24,12 +24,23 @@ public static class QueryHelper
                 ? query.OrderByDescending(orderBy) 
                 : query.OrderBy(orderBy);
         }
+        try
+        {
+
+            var items1 = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+        }
+        catch (Exception e)
+        {
+            var ex = e;
+        }
 
         var items = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
-
         return (items, totalCount);
     }
 }

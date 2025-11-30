@@ -30,6 +30,9 @@ public class ProductMappingConfig : IRegister
             .Map(dest => dest.ImageUrl, src => src.ImageId.HasValue 
                 ? $"/api/images/{src.ImageId}" 
                 : null)
+            .Map(dest => dest.IsBanner, src => src.IsBanner)
+            .Map(dest => dest.IsFeatured, src => src.IsFeatured)
+            .Map(dest => dest.DisplayOrder, src => src.DisplayOrder)
             .Map(dest => dest.CreatedAt, src => src.CreatedAtUtc)
             .Map(dest => dest.UpdatedAt, src => src.UpdatedAtUtc);
 
@@ -46,7 +49,10 @@ public class ProductMappingConfig : IRegister
             .Map(dest => dest.IsActive, src => src.IsActive)
             .Map(dest => dest.ImageUrl, src => src.ImageId.HasValue 
                 ? $"/api/images/{src.ImageId}" 
-                : null);
+                : null)
+            .Map(dest => dest.IsBanner, src => src.IsBanner)
+            .Map(dest => dest.IsFeatured, src => src.IsFeatured)
+            .Map(dest => dest.DisplayOrder, src => src.DisplayOrder);
 
         // CreateProductDto -> Product (handled in command handler with value objects)
         // UpdateProductDto -> Product (handled in command handler with value objects)

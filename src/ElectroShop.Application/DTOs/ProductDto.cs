@@ -20,6 +20,9 @@ public record ProductDto
     public bool IsActive { get; init; }
     public Guid? ImageId { get; init; }
     public string? ImageUrl { get; init; }
+    public bool IsBanner { get; init; }
+    public bool IsFeatured { get; init; }
+    public int? DisplayOrder { get; init; }
     /// <summary>
     /// Final endirim faizi (0-100 arası)
     /// Prioritet: Məhsul > Brand > Kateqoriya
@@ -48,6 +51,9 @@ public record ProductListDto
     public int Stock { get; init; }
     public bool IsActive { get; init; }
     public string? ImageUrl { get; init; }
+    public bool IsBanner { get; init; }
+    public bool IsFeatured { get; init; }
+    public int? DisplayOrder { get; init; }
     /// <summary>
     /// Final endirim faizi (0-100 arası)
     /// </summary>

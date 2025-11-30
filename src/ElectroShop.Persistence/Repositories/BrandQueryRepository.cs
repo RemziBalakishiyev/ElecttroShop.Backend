@@ -34,6 +34,17 @@ public class BrandQueryRepository : QueryRepository<Brand>, IBrandQueryRepositor
             descending: false,
             cancellationToken);
     }
+
+    public async Task<List<Brand>> GetPromotionalBrandsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(b => b.IsPromotional && !b.IsDeleted)
+            .OrderBy(b => b.DisplayOrder)
+            .ThenBy(b => b.CreatedAtUtc)
+            .Take(4)
+            .ToListAsync(cancellationToken);
+    }
 }
 
 

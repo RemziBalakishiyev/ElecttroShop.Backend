@@ -35,7 +35,15 @@ namespace ElectroShop.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int?>("DisplayOrder")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsPromotional")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
@@ -58,6 +66,9 @@ namespace ElectroShop.Persistence.Migrations
 
                     b.HasIndex("Name")
                         .IsUnique();
+
+                    b.HasIndex("IsPromotional", "DisplayOrder")
+                        .HasFilter("\"IsPromotional\" = true");
 
                     b.ToTable("Brands", (string)null);
                 });
@@ -232,13 +243,13 @@ namespace ElectroShop.Persistence.Migrations
                     b.HasIndex("ProductId");
 
                     b.HasIndex("Type", "BrandId")
-                        .HasFilter("[BrandId] IS NOT NULL");
+                        .HasFilter("\"BrandId\" IS NOT NULL");
 
                     b.HasIndex("Type", "CategoryId")
-                        .HasFilter("[CategoryId] IS NOT NULL");
+                        .HasFilter("\"CategoryId\" IS NOT NULL");
 
                     b.HasIndex("Type", "ProductId")
-                        .HasFilter("[ProductId] IS NOT NULL");
+                        .HasFilter("\"ProductId\" IS NOT NULL");
 
                     b.HasIndex("IsActive", "StartDate", "EndDate");
 
@@ -337,6 +348,9 @@ namespace ElectroShop.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<int?>("DisplayOrder")
+                        .HasColumnType("integer");
+
                     b.Property<Guid?>("ImageId")
                         .HasColumnType("uuid");
 
@@ -345,7 +359,17 @@ namespace ElectroShop.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
+                    b.Property<bool>("IsBanner")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsFeatured")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
@@ -374,7 +398,13 @@ namespace ElectroShop.Persistence.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("IsBanner")
+                        .HasFilter("\"IsBanner\" = true");
+
                     b.HasIndex("IsDeleted");
+
+                    b.HasIndex("IsFeatured", "DisplayOrder")
+                        .HasFilter("\"IsFeatured\" = true");
 
                     b.ToTable("Products", (string)null);
                 });

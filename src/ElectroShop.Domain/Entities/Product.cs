@@ -26,6 +26,9 @@ public class Product : BaseCommonEntity
     public int Stock { get; private set; }
     public bool IsActive { get; private set; } = true;
     public Guid? ImageId { get; private set; }
+    public bool IsBanner { get; private set; } = false;
+    public bool IsFeatured { get; private set; } = false;
+    public int? DisplayOrder { get; private set; }
 
     private Product() { }
 
@@ -152,5 +155,56 @@ public class Product : BaseCommonEntity
     public void UpdateImageId(Guid? imageId)
     {
         ImageId = imageId;
+    }
+
+    /// <summary>
+    /// Məhsulu Banner olaraq təyin et
+    /// </summary>
+    public void SetAsBanner()
+    {
+        IsBanner = true;
+    }
+
+    /// <summary>
+    /// Məhsulu Banner-dan çıxar
+    /// </summary>
+    public void RemoveFromBanner()
+    {
+        IsBanner = false;
+    }
+
+    /// <summary>
+    /// Məhsulu Featured olaraq təyin et
+    /// </summary>
+    public void SetAsFeatured(int displayOrder)
+    {
+        if (displayOrder < 1 || displayOrder > 5)
+            throw new ArgumentException("Display order 1-5 arasında olmalıdır", nameof(displayOrder));
+        
+        IsFeatured = true;
+        DisplayOrder = displayOrder;
+    }
+
+    /// <summary>
+    /// Məhsulu Featured-dan çıxar
+    /// </summary>
+    public void RemoveFromFeatured()
+    {
+        IsFeatured = false;
+        DisplayOrder = null;
+    }
+
+    /// <summary>
+    /// Featured məhsulun display order-ini yenilə
+    /// </summary>
+    public void UpdateDisplayOrder(int displayOrder)
+    {
+        if (!IsFeatured)
+            throw new InvalidOperationException("Yalnız featured məhsulların display order-i yenilənə bilər");
+        
+        if (displayOrder < 1 || displayOrder > 5)
+            throw new ArgumentException("Display order 1-5 arasında olmalıdır", nameof(displayOrder));
+        
+        DisplayOrder = displayOrder;
     }
 }

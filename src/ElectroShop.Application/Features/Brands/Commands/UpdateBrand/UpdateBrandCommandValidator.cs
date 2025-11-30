@@ -25,6 +25,11 @@ public class UpdateBrandCommandValidator : AbstractValidator<UpdateBrandCommand>
             .WithMessage("Brend adı maksimum 200 simvol ola bilər")
             .MinimumLength(2)
             .WithMessage("Brend adı minimum 2 simvol olmalıdır");
+
+        RuleFor(x => x.DisplayOrder)
+            .GreaterThanOrEqualTo(0)
+            .When(x => x.DisplayOrder.HasValue)
+            .WithMessage("DisplayOrder 0 və ya daha böyük olmalıdır");
     }
 
     private async Task<bool> BrandExists(Guid id, CancellationToken cancellationToken)

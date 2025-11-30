@@ -1,6 +1,7 @@
 using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
+using ElectroShop.Application.Services;
 using ElectroShop.Domain.Entities;
 using MediatR;
 
@@ -11,15 +12,18 @@ public class UpdateBrandCommandHandler : IRequestHandler<UpdateBrandCommand, Res
     private readonly IWriteRepository<Brand> _brandRepository;
     private readonly IQueryRepository<Brand> _brandQueryRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IDiscountCalculationService _discountCalculationService;
 
     public UpdateBrandCommandHandler(
         IWriteRepository<Brand> brandRepository,
         IQueryRepository<Brand> brandQueryRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IDiscountCalculationService discountCalculationService)
     {
         _brandRepository = brandRepository;
         _brandQueryRepository = brandQueryRepository;
         _unitOfWork = unitOfWork;
+        _discountCalculationService = discountCalculationService;
     }
 
     public async Task<Result<BrandDto>> Handle(
@@ -35,6 +39,12 @@ public class UpdateBrandCommandHandler : IRequestHandler<UpdateBrandCommand, Res
         try
         {
             brand.Update(request.Name);
+            
+            // Promotional status-u yenilə
+            if (request.IsPromotional.HasValue)
+            {
+                brand.SetPromotional(request.IsPromotional.Value, request.DisplayOrder);
+            }
         }
         catch (ArgumentException ex)
         {
@@ -44,10 +54,18 @@ public class UpdateBrandCommandHandler : IRequestHandler<UpdateBrandCommand, Res
         _brandRepository.Update(brand);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // Endirim faizini hesabla
+        var discountPercent = await _discountCalculationService.GetBrandDiscountPercentAsync(
+            brand.Id,
+            cancellationToken);
+
         var brandDto = new BrandDto
         {
             Id = brand.Id,
             Name = brand.Name,
+            DiscountPercent = discountPercent,
+            IsPromotional = brand.IsPromotional,
+            DisplayOrder = brand.DisplayOrder,
             CreatedAt = brand.CreatedAtUtc
         };
 
