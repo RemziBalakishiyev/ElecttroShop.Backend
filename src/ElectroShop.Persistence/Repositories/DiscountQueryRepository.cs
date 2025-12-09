@@ -73,3 +73,4 @@ public class DiscountQueryRepository : QueryRepository<Discount>, IDiscountQuery
 
 
 
+

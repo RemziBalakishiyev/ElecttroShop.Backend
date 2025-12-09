@@ -14,6 +14,12 @@ using ElectroShop.Application.Features.Products.Commands.SetProductAsBanner;
 using ElectroShop.Application.Features.Products.Commands.RemoveProductFromBanner;
 using ElectroShop.Application.Features.Products.Commands.SetProductAsFeatured;
 using ElectroShop.Application.Features.Products.Commands.RemoveProductFromFeatured;
+using ElectroShop.Application.Features.Products.Commands.AddProductImage;
+using ElectroShop.Application.Features.Products.Commands.RemoveProductImage;
+using ElectroShop.Application.Features.Products.Commands.SetPrimaryImage;
+using ElectroShop.Application.Features.Products.Commands.CreateProductVariant;
+using ElectroShop.Application.Features.Products.Commands.UpdateProductVariant;
+using ElectroShop.Application.Features.Products.Commands.DeleteProductVariant;
 using ElectroShop.Application.Services;
 using ElectroShop.WebApi.Helpers;
 using MediatR;
@@ -292,6 +298,91 @@ public class ProductsController : BaseApiController
         CancellationToken cancellationToken)
     {
         var command = new RemoveProductFromFeaturedCommand(productId);
+        var result = await Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Məhsula şəkil əlavə edir
+    /// </summary>
+    [HttpPost("{productId:guid}/images")]
+    public async Task<IActionResult> AddProductImage(
+        [FromRoute] Guid productId,
+        [FromBody] AddProductImageCommand command,
+        CancellationToken cancellationToken)
+    {
+        var addCommand = command with { ProductId = productId };
+        var result = await Mediator.Send(addCommand, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Məhsuldan şəkil silir
+    /// </summary>
+    [HttpDelete("{productId:guid}/images/{imageId:guid}")]
+    public async Task<IActionResult> RemoveProductImage(
+        [FromRoute] Guid productId,
+        [FromRoute] Guid imageId,
+        CancellationToken cancellationToken)
+    {
+        var command = new RemoveProductImageCommand(productId, imageId);
+        var result = await Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Məhsulun əsas şəklini təyin edir
+    /// </summary>
+    [HttpPost("{productId:guid}/images/{imageId:guid}/primary")]
+    public async Task<IActionResult> SetPrimaryImage(
+        [FromRoute] Guid productId,
+        [FromRoute] Guid imageId,
+        CancellationToken cancellationToken)
+    {
+        var command = new SetPrimaryImageCommand(productId, imageId);
+        var result = await Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Məhsul variantı yaradır
+    /// </summary>
+    [HttpPost("{productId:guid}/variants")]
+    public async Task<IActionResult> CreateProductVariant(
+        [FromRoute] Guid productId,
+        [FromBody] CreateProductVariantCommand command,
+        CancellationToken cancellationToken)
+    {
+        var createCommand = command with { ProductId = productId };
+        var result = await Mediator.Send(createCommand, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Məhsul variantını yeniləyir
+    /// </summary>
+    [HttpPut("{productId:guid}/variants/{variantId:guid}")]
+    public async Task<IActionResult> UpdateProductVariant(
+        [FromRoute] Guid productId,
+        [FromRoute] Guid variantId,
+        [FromBody] UpdateProductVariantCommand command,
+        CancellationToken cancellationToken)
+    {
+        var updateCommand = command with { Id = variantId, ProductId = productId };
+        var result = await Mediator.Send(updateCommand, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Məhsul variantını silir (deaktiv edir)
+    /// </summary>
+    [HttpDelete("{productId:guid}/variants/{variantId:guid}")]
+    public async Task<IActionResult> DeleteProductVariant(
+        [FromRoute] Guid productId,
+        [FromRoute] Guid variantId,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeleteProductVariantCommand(productId, variantId);
         var result = await Mediator.Send(command, cancellationToken);
         return HandleResult(result);
     }

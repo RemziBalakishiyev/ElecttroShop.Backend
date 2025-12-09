@@ -235,13 +235,13 @@ namespace ElectroShop.Persistence.Migrations
                     b.HasIndex("ProductId");
 
                     b.HasIndex("Type", "BrandId")
-                        .HasFilter("[BrandId] IS NOT NULL");
+                        .HasFilter("\"BrandId\" IS NOT NULL");
 
                     b.HasIndex("Type", "CategoryId")
-                        .HasFilter("[CategoryId] IS NOT NULL");
+                        .HasFilter("\"CategoryId\" IS NOT NULL");
 
                     b.HasIndex("Type", "ProductId")
-                        .HasFilter("[ProductId] IS NOT NULL");
+                        .HasFilter("\"ProductId\" IS NOT NULL");
 
                     b.HasIndex("IsActive", "StartDate", "EndDate");
 

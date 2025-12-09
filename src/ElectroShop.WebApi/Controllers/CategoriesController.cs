@@ -1,9 +1,16 @@
 using ElectroShop.Application.Features.Categories.Commands.CreateCategory;
 using ElectroShop.Application.Features.Categories.Commands.DeleteCategory;
 using ElectroShop.Application.Features.Categories.Commands.UpdateCategory;
+using ElectroShop.Application.Features.Categories.Commands.CreateCategoryAttribute;
+using ElectroShop.Application.Features.Categories.Commands.UpdateCategoryAttribute;
+using ElectroShop.Application.Features.Categories.Commands.DeleteCategoryAttribute;
+using ElectroShop.Application.Features.Categories.Commands.AddCategoryAttributeValue;
+using ElectroShop.Application.Features.Categories.Commands.UpdateCategoryAttributeValue;
+using ElectroShop.Application.Features.Categories.Commands.DeleteCategoryAttributeValue;
 using ElectroShop.Application.Features.Categories.Queries.GetCategories;
 using ElectroShop.Application.Features.Categories.Queries.GetCategoryById;
 using ElectroShop.Application.Features.Categories.Queries.GetCategoryBySlug;
+using ElectroShop.Application.Features.Categories.Queries.GetCategoryAttributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -107,6 +114,101 @@ public class CategoriesController : BaseApiController
         CancellationToken cancellationToken)
     {
         var command = new DeleteCategoryCommand(id);
+        var result = await Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Kateqoriya atributlarını əldə edir (dəyərlərlə birlikdə)
+    /// </summary>
+    [HttpGet("{categoryId:guid}/attributes")]
+    public async Task<IActionResult> GetCategoryAttributes(
+        [FromRoute] Guid categoryId,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetCategoryAttributesQuery(categoryId);
+        var result = await Mediator.Send(query, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Kateqoriya atributu yaradır
+    /// </summary>
+    [HttpPost("{categoryId:guid}/attributes")]
+    public async Task<IActionResult> CreateCategoryAttribute(
+        [FromRoute] Guid categoryId,
+        [FromBody] CreateCategoryAttributeCommand command,
+        CancellationToken cancellationToken)
+    {
+        var createCommand = command with { CategoryId = categoryId };
+        var result = await Mediator.Send(createCommand, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Kateqoriya atributunu yeniləyir
+    /// </summary>
+    [HttpPut("attributes/{id:guid}")]
+    public async Task<IActionResult> UpdateCategoryAttribute(
+        [FromRoute] Guid id,
+        [FromBody] UpdateCategoryAttributeCommand command,
+        CancellationToken cancellationToken)
+    {
+        var updateCommand = command with { Id = id };
+        var result = await Mediator.Send(updateCommand, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Kateqoriya atributunu silir
+    /// </summary>
+    [HttpDelete("attributes/{id:guid}")]
+    public async Task<IActionResult> DeleteCategoryAttribute(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeleteCategoryAttributeCommand(id);
+        var result = await Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Kateqoriya atributuna dəyər əlavə edir
+    /// </summary>
+    [HttpPost("attributes/{attributeId:guid}/values")]
+    public async Task<IActionResult> AddCategoryAttributeValue(
+        [FromRoute] Guid attributeId,
+        [FromBody] AddCategoryAttributeValueCommand command,
+        CancellationToken cancellationToken)
+    {
+        var addCommand = command with { CategoryAttributeId = attributeId };
+        var result = await Mediator.Send(addCommand, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Kateqoriya atribut dəyərini yeniləyir
+    /// </summary>
+    [HttpPut("attributes/values/{id:guid}")]
+    public async Task<IActionResult> UpdateCategoryAttributeValue(
+        [FromRoute] Guid id,
+        [FromBody] UpdateCategoryAttributeValueCommand command,
+        CancellationToken cancellationToken)
+    {
+        var updateCommand = command with { Id = id };
+        var result = await Mediator.Send(updateCommand, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Kateqoriya atribut dəyərini silir
+    /// </summary>
+    [HttpDelete("attributes/values/{id:guid}")]
+    public async Task<IActionResult> DeleteCategoryAttributeValue(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeleteCategoryAttributeValueCommand(id);
         var result = await Mediator.Send(command, cancellationToken);
         return HandleResult(result);
     }

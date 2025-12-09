@@ -6,3 +6,4 @@ namespace ElectroShop.Application.Features.Products.Commands.SetProductAsBanner;
 public record SetProductAsBannerCommand(Guid ProductId) : IRequest<Result>;
 
 
+

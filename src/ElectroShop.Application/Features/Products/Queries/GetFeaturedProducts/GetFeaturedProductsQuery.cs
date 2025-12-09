@@ -7,3 +7,4 @@ namespace ElectroShop.Application.Features.Products.Queries.GetFeaturedProducts;
 public record GetFeaturedProductsQuery() : IRequest<Result<List<ProductListDto>>>;
 
 
+

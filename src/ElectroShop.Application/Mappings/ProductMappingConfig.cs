@@ -1,6 +1,7 @@
 using ElectroShop.Application.DTOs;
 using ElectroShop.Domain.Entities;
 using Mapster;
+using System.Text.Json;
 
 namespace ElectroShop.Application.Mappings;
 
@@ -26,10 +27,15 @@ public class ProductMappingConfig : IRegister
             .Map(dest => dest.VatRate, src => src.VatRate)
             .Map(dest => dest.Stock, src => src.Stock)
             .Map(dest => dest.IsActive, src => src.IsActive)
-            .Map(dest => dest.ImageId, src => src.ImageId)
-            .Map(dest => dest.ImageUrl, src => src.ImageId.HasValue 
-                ? $"/api/images/{src.ImageId}" 
-                : null)
+            .Map(dest => dest.Images, src => src.ProductImages.Select(pi => new ProductImageDto
+            {
+                Id = pi.Id,
+                ImageId = pi.ImageId,
+                ImageUrl = $"/api/images/{pi.ImageId}",
+                DisplayOrder = pi.DisplayOrder,
+                IsPrimary = pi.IsPrimary
+            }).ToList())
+            .Ignore(dest => dest.Variants)
             .Map(dest => dest.IsBanner, src => src.IsBanner)
             .Map(dest => dest.IsFeatured, src => src.IsFeatured)
             .Map(dest => dest.DisplayOrder, src => src.DisplayOrder)
@@ -47,9 +53,7 @@ public class ProductMappingConfig : IRegister
             .Map(dest => dest.BrandName, src => src.Brand != null ? src.Brand.Name : string.Empty)
             .Map(dest => dest.Stock, src => src.Stock)
             .Map(dest => dest.IsActive, src => src.IsActive)
-            .Map(dest => dest.ImageUrl, src => src.ImageId.HasValue 
-                ? $"/api/images/{src.ImageId}" 
-                : null)
+            .Ignore(dest => dest.PrimaryImageUrl)
             .Map(dest => dest.IsBanner, src => src.IsBanner)
             .Map(dest => dest.IsFeatured, src => src.IsFeatured)
             .Map(dest => dest.DisplayOrder, src => src.DisplayOrder);

@@ -41,16 +41,11 @@ public class GetBannerProductQueryHandler : IRequestHandler<GetBannerProductQuer
             product.Price.Amount,
             discountPercent);
 
-        var imageUrl = product.ImageId.HasValue
-            ? $"/api/images/{product.ImageId.Value}"
-            : null;
-
         var productDto = product.Adapt<ProductDto>();
         productDto = productDto with
         {
             FinalDiscountPercent = discountPercent,
             FinalPrice = finalPrice,
-            ImageUrl = imageUrl,
             IsBanner = true,
             IsFeatured = product.IsFeatured,
             DisplayOrder = product.DisplayOrder

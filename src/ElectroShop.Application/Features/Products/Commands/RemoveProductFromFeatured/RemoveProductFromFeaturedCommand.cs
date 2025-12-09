@@ -6,3 +6,4 @@ namespace ElectroShop.Application.Features.Products.Commands.RemoveProductFromFe
 public record RemoveProductFromFeaturedCommand(Guid ProductId) : IRequest<Result>;
 
 
+

@@ -48,3 +48,4 @@ namespace ElectroShop.Persistence.Migrations
     }
 }
 
+

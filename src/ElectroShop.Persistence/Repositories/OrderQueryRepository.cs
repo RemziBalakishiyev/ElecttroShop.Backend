@@ -261,23 +261,34 @@ public class OrderQueryRepository : QueryRepository<Order>, IOrderQueryRepositor
         var orderItems = await _context.Set<OrderItem>()
             .Include(oi => oi.Product)
                 .ThenInclude(p => p.Category)
+            .Include(oi => oi.Product)
+                .ThenInclude(p => p.ProductImages)
             .Where(oi => paidOrderIds.Contains(oi.OrderId))
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 
         var grouped = orderItems
             .GroupBy(oi => oi.ProductId)
-            .Select(g => new TopProductChartDataDto
+            .Select(g =>
             {
-                ProductId = g.Key,
-                ProductName = g.First().Product.Name,
-                ImageUrl = g.First().Product.ImageId.HasValue
-                    ? $"/api/images/{g.First().Product.ImageId}"
-                    : null,
-                TotalQuantitySold = g.Sum(oi => oi.Quantity),
-                TotalRevenue = g.Sum(oi => oi.LineTotal.Amount),
-                Currency = "AZN",
-                OrderCount = g.Select(oi => oi.OrderId).Distinct().Count()
+                var product = g.First().Product;
+                var primaryImage = product.ProductImages.FirstOrDefault(pi => pi.IsPrimary);
+                var imageUrl = primaryImage != null
+                    ? $"/api/images/{primaryImage.ImageId}"
+                    : (product.ProductImages.Any()
+                        ? $"/api/images/{product.ProductImages.OrderBy(pi => pi.DisplayOrder).First().ImageId}"
+                        : null);
+
+                return new TopProductChartDataDto
+                {
+                    ProductId = g.Key,
+                    ProductName = product.Name,
+                    ImageUrl = imageUrl,
+                    TotalQuantitySold = g.Sum(oi => oi.Quantity),
+                    TotalRevenue = g.Sum(oi => oi.LineTotal.Amount),
+                    Currency = "AZN",
+                    OrderCount = g.Select(oi => oi.OrderId).Distinct().Count()
+                };
             })
             .OrderByDescending(x => x.TotalQuantitySold)
             .Take(count)

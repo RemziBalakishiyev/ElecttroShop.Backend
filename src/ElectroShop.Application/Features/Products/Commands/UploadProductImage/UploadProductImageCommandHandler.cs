@@ -47,15 +47,20 @@ public class UploadProductImageCommandHandler : IRequestHandler<UploadProductIma
                 Error.Validation("ImageStream.Required", "Şəkil stream-i tələb olunur"));
         }
 
-        var product = await _productQueryRepository.GetByIdAsync(request.ProductId, cancellationToken);
+        var product = await _productQueryRepositoryWithDetails.GetProductWithImagesAndVariantsAsync(
+            request.ProductId, 
+            cancellationToken);
         if (product is null)
         {
             return DomainErrors.Product.NotFound(request.ProductId);
         }
 
-        if (product.ImageId.HasValue)
+        // Köhnə primary şəkli sil
+        var primaryImage = product.ProductImages.FirstOrDefault(pi => pi.IsPrimary);
+        if (primaryImage != null)
         {
-            await _imageStorage.DeleteImageAsync(product.ImageId.Value, cancellationToken);
+            await _imageStorage.DeleteImageAsync(primaryImage.ImageId, cancellationToken);
+            product.RemoveImage(primaryImage.ImageId);
         }
 
         var imageId = await _imageStorage.UploadImageAsync(
@@ -64,7 +69,12 @@ public class UploadProductImageCommandHandler : IRequestHandler<UploadProductIma
             request.ContentType,
             cancellationToken);
 
-        product.UpdateImageId(imageId);
+        // Yeni şəkli primary olaraq əlavə et
+        var displayOrder = product.ProductImages.Any() 
+            ? product.ProductImages.Max(pi => pi.DisplayOrder) + 1 
+            : 0;
+        product.AddImage(imageId, displayOrder, isPrimary: true);
+        
         _productWriteRepository.Update(product);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

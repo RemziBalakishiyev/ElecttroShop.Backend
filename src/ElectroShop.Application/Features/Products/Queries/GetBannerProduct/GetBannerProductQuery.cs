@@ -7,3 +7,4 @@ namespace ElectroShop.Application.Features.Products.Queries.GetBannerProduct;
 public record GetBannerProductQuery() : IRequest<Result<ProductDto>>;
 
 
+

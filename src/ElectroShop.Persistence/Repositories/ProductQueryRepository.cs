@@ -59,6 +59,8 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
         return await _dbSet
             .Include(p => p.Category)
             .Include(p => p.Brand)
+            .Include(p => p.ProductImages.OrderBy(pi => pi.DisplayOrder))
+            .Include(p => p.ProductVariants.Where(pv => pv.IsActive && !pv.IsDeleted))
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, cancellationToken);
     }
@@ -93,6 +95,14 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
             .OrderBy(p => p.DisplayOrder)
             .ThenBy(p => p.CreatedAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<Product?> GetProductWithImagesAndVariantsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(p => p.ProductImages.OrderBy(pi => pi.DisplayOrder))
+            .Include(p => p.ProductVariants)
+            .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, cancellationToken);
     }
 }
 

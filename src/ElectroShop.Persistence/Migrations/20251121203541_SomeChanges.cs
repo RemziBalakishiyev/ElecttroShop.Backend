@@ -45,7 +45,7 @@ namespace ElectroShop.Persistence.Migrations
                 table: "Customers",
                 column: "Phone",
                 unique: true,
-                filter: "[Phone] IS NOT NULL");
+                filter: "\"Phone\" IS NOT NULL");
         }
     }
 }

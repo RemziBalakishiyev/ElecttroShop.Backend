@@ -19,3 +19,4 @@ public class SetProductAsFeaturedCommandValidator : AbstractValidator<SetProduct
 }
 
 
+

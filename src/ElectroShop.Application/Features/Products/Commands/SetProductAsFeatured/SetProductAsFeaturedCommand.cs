@@ -6,3 +6,4 @@ namespace ElectroShop.Application.Features.Products.Commands.SetProductAsFeature
 public record SetProductAsFeaturedCommand(Guid ProductId, int DisplayOrder) : IRequest<Result>;
 
 
+

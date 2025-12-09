@@ -51,6 +51,47 @@ public class CategoryQueryRepository : QueryRepository<Category>, ICategoryQuery
             .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<List<CategoryAttribute>> GetCategoryAttributesAsync(
+        Guid categoryId, 
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.CategoryAttributes
+            .Include(ca => ca.Values.OrderBy(cav => cav.DisplayOrder))
+            .AsNoTracking()
+            .Where(ca => ca.CategoryId == categoryId && !ca.IsDeleted)
+            .OrderBy(ca => ca.DisplayOrder)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<CategoryAttribute?> GetCategoryAttributeWithValuesAsync(
+        Guid attributeId, 
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.CategoryAttributes
+            .Include(ca => ca.Values.OrderBy(cav => cav.DisplayOrder))
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ca => ca.Id == attributeId && !ca.IsDeleted, cancellationToken);
+    }
+
+    public async Task<(CategoryAttribute Attribute, CategoryAttributeValue Value)?> GetAttributeAndValueByValueIdAsync(
+        Guid valueId, 
+        CancellationToken cancellationToken = default)
+    {
+        var attribute = await _context.CategoryAttributes
+            .Include(ca => ca.Values)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ca => ca.Values.Any(v => v.Id == valueId) && !ca.IsDeleted, cancellationToken);
+
+        if (attribute == null)
+            return null;
+
+        var value = attribute.Values.FirstOrDefault(v => v.Id == valueId);
+        if (value == null)
+            return null;
+
+        return (attribute, value);
+    }
 }
 
 

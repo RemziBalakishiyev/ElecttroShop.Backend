@@ -166,7 +166,7 @@ namespace ElectroShop.Persistence.Migrations
 
                     b.HasIndex("Phone")
                         .IsUnique()
-                        .HasFilter("[Phone] IS NOT NULL");
+                        .HasFilter("\"Phone\" IS NOT NULL");
 
                     b.ToTable("Customers", (string)null);
                 });

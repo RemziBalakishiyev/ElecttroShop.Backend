@@ -43,16 +43,11 @@ public class GetFeaturedProductsQueryHandler : IRequestHandler<GetFeaturedProduc
                 product.Price.Amount,
                 discountPercent);
 
-            var imageUrl = product.ImageId.HasValue
-                ? $"/api/images/{product.ImageId.Value}"
-                : null;
-
             var productDto = product.Adapt<ProductListDto>();
             productDto = productDto with
             {
                 FinalDiscountPercent = discountPercent,
                 FinalPrice = finalPrice,
-                ImageUrl = imageUrl,
                 IsFeatured = true,
                 DisplayOrder = product.DisplayOrder
             };

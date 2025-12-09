@@ -25,10 +25,13 @@ public class Product : BaseCommonEntity
     public decimal VatRate { get; private set; } = 0.18m;
     public int Stock { get; private set; }
     public bool IsActive { get; private set; } = true;
-    public Guid? ImageId { get; private set; }
     public bool IsBanner { get; private set; } = false;
     public bool IsFeatured { get; private set; } = false;
     public int? DisplayOrder { get; private set; }
+    
+    // Navigation properties
+    public List<ProductImage> ProductImages { get; private set; } = [];
+    public List<ProductVariant> ProductVariants { get; private set; } = [];
 
     private Product() { }
 
@@ -150,11 +153,42 @@ public class Product : BaseCommonEntity
     }
 
     /// <summary>
-    /// Məhsulun şəkil ID-sini yenilə (DDD pattern)
+    /// Məhsula şəkil əlavə et
     /// </summary>
-    public void UpdateImageId(Guid? imageId)
+    public void AddImage(Guid imageId, int displayOrder, bool isPrimary = false)
     {
-        ImageId = imageId;
+        var productImage = ProductImage.Create(Id, imageId, displayOrder, isPrimary);
+        ProductImages.Add(productImage);
+    }
+
+    /// <summary>
+    /// Məhsuldan şəkil sil
+    /// </summary>
+    public void RemoveImage(Guid imageId)
+    {
+        var image = ProductImages.FirstOrDefault(img => img.ImageId == imageId);
+        if (image != null)
+        {
+            ProductImages.Remove(image);
+        }
+    }
+
+    /// <summary>
+    /// Əsas şəkili təyin et
+    /// </summary>
+    public void SetPrimaryImage(Guid imageId)
+    {
+        foreach (var image in ProductImages)
+        {
+            if (image.ImageId == imageId)
+            {
+                image.SetAsPrimary();
+            }
+            else
+            {
+                image.RemoveAsPrimary();
+            }
+        }
     }
 
     /// <summary>

@@ -8,3 +8,4 @@ public record DeleteDiscountCommand(Guid Id) : IRequest<Result<bool>>;
 
 
 
+

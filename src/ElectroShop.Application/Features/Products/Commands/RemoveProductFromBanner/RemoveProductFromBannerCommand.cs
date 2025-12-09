@@ -6,3 +6,4 @@ namespace ElectroShop.Application.Features.Products.Commands.RemoveProductFromBa
 public record RemoveProductFromBannerCommand(Guid ProductId) : IRequest<Result>;
 
 
+

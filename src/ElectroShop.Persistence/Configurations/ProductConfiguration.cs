@@ -56,9 +56,6 @@ public class ProductConfiguration : BaseCommonEntityConfiguration<Product>
             .IsRequired()
             .HasDefaultValue(true);
 
-        builder.Property(p => p.ImageId)
-            .IsRequired(false);
-
         builder.Property(p => p.IsBanner)
             .IsRequired()
             .HasDefaultValue(false);
@@ -88,5 +85,16 @@ public class ProductConfiguration : BaseCommonEntityConfiguration<Product>
             .WithMany()
             .HasForeignKey(p => p.BrandId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Relationships
+        builder.HasMany(p => p.ProductImages)
+            .WithOne(pi => pi.Product)
+            .HasForeignKey(pi => pi.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(p => p.ProductVariants)
+            .WithOne(pv => pv.Product)
+            .HasForeignKey(pv => pv.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

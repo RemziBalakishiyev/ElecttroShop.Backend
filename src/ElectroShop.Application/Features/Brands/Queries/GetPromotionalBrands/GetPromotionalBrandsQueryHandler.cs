@@ -101,3 +101,4 @@ public class GetPromotionalBrandsQueryHandler : IRequestHandler<GetPromotionalBr
     }
 }
 
+

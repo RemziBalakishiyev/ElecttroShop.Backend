@@ -4,6 +4,7 @@ using ElectroShop.Application.DTOs;
 using ElectroShop.Domain.Entities;
 using Mapster;
 using MediatR;
+using System.Text.Json;
 
 namespace ElectroShop.Application.Features.Products.Commands.CreateProduct;
 
@@ -15,17 +16,20 @@ namespace ElectroShop.Application.Features.Products.Commands.CreateProduct;
 public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, Result<ProductDto>>
 {
     private readonly IWriteRepository<Product> _productRepository;
+    private readonly IWriteRepository<ProductVariant> _variantRepository;
     private readonly IQueryRepository<Category> _categoryRepository;
     private readonly IQueryRepository<Brand> _brandRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateProductCommandHandler(
         IWriteRepository<Product> productRepository,
+        IWriteRepository<ProductVariant> variantRepository,
         IQueryRepository<Category> categoryRepository,
         IQueryRepository<Brand> brandRepository,
         IUnitOfWork unitOfWork)
     {
         _productRepository = productRepository;
+        _variantRepository = variantRepository;
         _categoryRepository = categoryRepository;
         _brandRepository = brandRepository;
         _unitOfWork = unitOfWork;
@@ -61,9 +65,40 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
                 Error.Validation("Product.InvalidData", ex.Message));
         }
 
+        // Şəkilləri əlavə et
+        if (request.ImageIds.Any())
+        {
+            for (int i = 0; i < request.ImageIds.Count; i++)
+            {
+                var isPrimary = i == 0; // İlk şəkil əsas şəkil olur
+                product.AddImage(request.ImageIds[i], i, isPrimary);
+            }
+        }
+
         // Yadda saxla
         await _productRepository.AddAsync(product, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Variantları əlavə et (product yaradıldıqdan sonra)
+        foreach (var variantDto in request.Variants)
+        {
+            var attributesJson = JsonSerializer.Serialize(variantDto.Attributes);
+            var variant = ProductVariant.Create(
+                product.Id,
+                variantDto.Sku,
+                variantDto.Price,
+                variantDto.Currency,
+                variantDto.Stock,
+                attributesJson,
+                variantDto.ImageId
+            );
+            await _variantRepository.AddAsync(variant, cancellationToken);
+        }
+
+        if (request.Variants.Any())
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
 
         var productDto = new ProductDto
         {
