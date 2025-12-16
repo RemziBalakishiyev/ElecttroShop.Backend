@@ -11,6 +11,7 @@ using ElectroShop.Application.Features.Categories.Queries.GetCategories;
 using ElectroShop.Application.Features.Categories.Queries.GetCategoryById;
 using ElectroShop.Application.Features.Categories.Queries.GetCategoryBySlug;
 using ElectroShop.Application.Features.Categories.Queries.GetCategoryAttributes;
+using ElectroShop.Application.Features.Categories.Queries.GetCategoriesLookup;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -210,6 +211,19 @@ public class CategoriesController : BaseApiController
     {
         var command = new DeleteCategoryAttributeValueCommand(id);
         var result = await Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Kateqoriyalar üçün lookup API - Key-Value formatında
+    /// Cache management ilə - Select boxlar üçün
+    /// </summary>
+    [HttpGet("lookup")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetCategoriesLookup(CancellationToken cancellationToken)
+    {
+        var query = new GetCategoriesLookupQuery();
+        var result = await Mediator.Send(query, cancellationToken);
         return HandleResult(result);
     }
 }

@@ -6,3 +6,4 @@ namespace ElectroShop.Application.Features.Categories.Commands.DeleteCategoryAtt
 public record DeleteCategoryAttributeValueCommand(Guid Id) : IRequest<Result>;
 
 
+

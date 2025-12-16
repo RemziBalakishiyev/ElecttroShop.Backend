@@ -7,11 +7,8 @@ using System.Text.Json;
 
 namespace ElectroShop.Application.Features.Products.Commands.UpdateProduct;
 
-/// <summary>
-/// UpdateProductCommand üçün Handler
-/// DDD və Clean Architecture prinsiplərinə uyğun
-/// </summary>
-public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand, Result<ProductDto>>
+public class UpdateProductCommandHandler
+    : IRequestHandler<UpdateProductCommand, Result<ProductDto>>
 {
     private readonly IWriteRepository<Product> _productRepository;
     private readonly IWriteRepository<ProductVariant> _variantRepository;
@@ -40,152 +37,132 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
         UpdateProductCommand request,
         CancellationToken cancellationToken)
     {
-        // Bütün validasiyalar FluentValidation tərəfindən edilib
+        // 1️⃣ Product load (tracked)
+        var product = await _productQueryRepository
+            .GetProductWithImagesAndVariantsAsync(request.Id, cancellationToken);
 
-        // Məhsulu tap (şəkillər və variantlarla birlikdə)
-        var product = await _productQueryRepository.GetProductWithImagesAndVariantsAsync(
-            request.Id, 
-            cancellationToken);
-        
         if (product is null)
-        {
             return DomainErrors.Product.NotFound(request.Id);
-        }
 
-        // Navigation entities-ləri götür
+        // 2️⃣ Navigation entities
         var category = await _categoryRepository.GetByIdAsync(request.CategoryId, cancellationToken);
         var brand = await _brandRepository.GetByIdAsync(request.BrandId, cancellationToken);
 
-        // Domain method istifadə edərək yenilə
-        try
-        {
-            product.Update(
-                name: request.Name,
-                description: request.Description,
-                price: request.Price,
-                currency: request.Currency,
-                categoryId: request.CategoryId,
-                brandId: request.BrandId,
-                vatRate: request.VatRate,
-                stock: request.Stock
-            );
-        }
-        catch (ArgumentException ex)
-        {
+        if (category is null || brand is null)
             return Result.Failure<ProductDto>(
-                Error.Validation("Product.InvalidData", ex.Message));
-        }
+                Error.Validation("Product.InvalidRelation", "Category or Brand not found"));
 
-        // Şəkilləri yenilə
-        // Köhnə şəkilləri sil
-        var existingImageIds = product.ProductImages.Select(pi => pi.ImageId).ToList();
-        var imagesToRemove = product.ProductImages
-            .Where(pi => !request.ImageIds.Contains(pi.ImageId))
+        // 3️⃣ Core product update (Domain method)
+        product.Update(
+            name: request.Name,
+            description: request.Description,
+            price: request.Price,
+            currency: request.Currency,
+            categoryId: request.CategoryId,
+            brandId: request.BrandId,
+            vatRate: request.VatRate,
+            stock: request.Stock
+        );
+
+        // ===================== IMAGES (SAFE DIFF UPDATE) =====================
+
+        var existingImageIds = product.ProductImages
+            .Select(x => x.ImageId)
             .ToList();
-        
-        // Şəkilləri məhsuldan sil (domain method istifadə et)
+
+        // Remove
+        var imagesToRemove = product.ProductImages
+            .Where(x => !request.ImageIds.Contains(x.ImageId))
+            .ToList();
+
         foreach (var image in imagesToRemove)
         {
             product.RemoveImage(image.ImageId);
         }
 
-        // Yeni şəkilləri əlavə et
-        var newImageIds = request.ImageIds.Where(id => !existingImageIds.Contains(id)).ToList();
-        var currentMaxOrder = product.ProductImages.Any() 
-            ? product.ProductImages.Max(pi => pi.DisplayOrder) + 1 
-            : 0;
-
-        foreach (var imageId in newImageIds)
+        // Add
+        foreach (var imageId in request.ImageIds)
         {
-            var isPrimary = !product.ProductImages.Any(pi => pi.IsPrimary) && imageId == newImageIds.First();
-            product.AddImage(imageId, currentMaxOrder++, isPrimary);
-        }
-
-        // Şəkil sırasını yenilə
-        for (int i = 0; i < request.ImageIds.Count; i++)
-        {
-            var image = product.ProductImages.FirstOrDefault(pi => pi.ImageId == request.ImageIds[i]);
-            if (image != null)
+            if (!existingImageIds.Contains(imageId))
             {
-                image.UpdateDisplayOrder(i);
-                if (i == 0 && !image.IsPrimary)
-                {
-                    product.SetPrimaryImage(image.ImageId);
-                }
+                var order = request.ImageIds.IndexOf(imageId);
+                var isPrimary = order == 0;
+                product.AddImage(imageId, order, isPrimary);
             }
         }
 
-        // Variantları yenilə
-        var existingVariantIds = product.ProductVariants.Select(pv => pv.Id).ToList();
-        
-        // Yeni variantları əlavə et
+        // ===================== VARIANTS =====================
+
+        // Add new variants
         foreach (var variantDto in request.Variants.Where(v => !v.Id.HasValue))
         {
             var attributesJson = JsonSerializer.Serialize(variantDto.Attributes);
+
             var variant = ProductVariant.Create(
                 product.Id,
-                variantDto.Sku,
-                variantDto.Price,
-                variantDto.Currency,
-                variantDto.Stock,
                 attributesJson,
                 variantDto.ImageId
             );
+
             if (!variantDto.IsActive)
-            {
                 variant.Deactivate();
-            }
+
             await _variantRepository.AddAsync(variant, cancellationToken);
         }
 
-        // Mövcud variantları yenilə
+        // Update existing variants
         foreach (var variantDto in request.Variants.Where(v => v.Id.HasValue))
         {
-            var variant = product.ProductVariants.FirstOrDefault(pv => pv.Id == variantDto.Id!.Value);
-            if (variant != null)
-            {
-                var attributesJson = JsonSerializer.Serialize(variantDto.Attributes);
-                variant.Update(
-                    variantDto.Sku,
-                    variantDto.Price,
-                    variantDto.Currency,
-                    variantDto.Stock,
-                    attributesJson,
-                    variantDto.ImageId
-                );
-                if (variantDto.IsActive && !variant.IsActive)
-                {
-                    variant.Activate();
-                }
-                else if (!variantDto.IsActive && variant.IsActive)
-                {
-                    variant.Deactivate();
-                }
-                _variantRepository.Update(variant);
-            }
+            var variant = product.ProductVariants
+                .FirstOrDefault(x => x.Id == variantDto.Id!.Value);
+
+            if (variant is null)
+                continue;
+
+            var attributesJson = JsonSerializer.Serialize(variantDto.Attributes);
+
+            variant.Update(attributesJson, variantDto.ImageId);
+
+            if (variantDto.IsActive)
+                variant.Activate();
+            else
+                variant.Deactivate();
+
+            _variantRepository.Update(variant);
         }
 
-        // Silinmiş variantları deaktiv et
-        var variantIdsToKeep = request.Variants
+        // Deactivate removed variants
+        var activeVariantIds = request.Variants
             .Where(v => v.Id.HasValue)
             .Select(v => v.Id!.Value)
             .ToList();
-        var variantsToDeactivate = product.ProductVariants
-            .Where(pv => !variantIdsToKeep.Contains(pv.Id))
-            .ToList();
-        
-        foreach (var variant in variantsToDeactivate)
+
+        foreach (var variant in product.ProductVariants
+                     .Where(v => !activeVariantIds.Contains(v.Id)))
         {
             variant.Deactivate();
             _variantRepository.Update(variant);
         }
 
-        // Dəyişiklikləri saxla
-        _productRepository.Update(product);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        // ===================== SAVE (CONCURRENCY SAFE) =====================
 
-        // DTO yarat
-        var productDto = new ProductDto
+        try
+        {
+            _productRepository.Update(product);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception)
+        {
+            return Result.Failure<ProductDto>(
+                Error.Conflict(
+                    "Product.ConcurrencyError",
+                    "Məhsul başqa istifadəçi tərəfindən dəyişdirilib. Yenidən cəhd edin."
+                ));
+        }
+
+        // ===================== DTO =====================
+
+        var dto = new ProductDto
         {
             Id = product.Id,
             Name = product.Name,
@@ -194,9 +171,9 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
             Currency = product.Price.Currency,
             Sku = product.Sku.Value,
             CategoryId = product.CategoryId,
-            CategoryName = category!.Name,
+            CategoryName = category.Name,
             BrandId = product.BrandId,
-            BrandName = brand!.Name,
+            BrandName = brand.Name,
             VatRate = product.VatRate,
             Stock = product.Stock,
             IsActive = product.IsActive,
@@ -204,7 +181,6 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
             UpdatedAt = product.UpdatedAtUtc
         };
 
-        return Result.Success(productDto);
+        return Result.Success(dto);
     }
 }
-

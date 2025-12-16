@@ -7,3 +7,4 @@ public record SetProductAsFeaturedCommand(Guid ProductId, int DisplayOrder) : IR
 
 
 
+

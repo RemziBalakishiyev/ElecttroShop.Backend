@@ -6,3 +6,4 @@ namespace ElectroShop.Application.Features.Products.Commands.DeleteProductVarian
 public record DeleteProductVariantCommand(Guid ProductId, Guid VariantId) : IRequest<Result>;
 
 
+

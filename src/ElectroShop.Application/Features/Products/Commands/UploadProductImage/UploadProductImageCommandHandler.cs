@@ -55,12 +55,11 @@ public class UploadProductImageCommandHandler : IRequestHandler<UploadProductIma
             return DomainErrors.Product.NotFound(request.ProductId);
         }
 
-        // Köhnə primary şəkli sil
-        var primaryImage = product.ProductImages.FirstOrDefault(pi => pi.IsPrimary);
-        if (primaryImage != null)
+        // Köhnə primary şəklini deaktiv et (silin, yalnız IsPrimary-ni false et)
+        var existingPrimaryImage = product.ProductImages.FirstOrDefault(pi => pi.IsPrimary);
+        if (existingPrimaryImage != null)
         {
-            await _imageStorage.DeleteImageAsync(primaryImage.ImageId, cancellationToken);
-            product.RemoveImage(primaryImage.ImageId);
+            existingPrimaryImage.RemoveAsPrimary();
         }
 
         var imageId = await _imageStorage.UploadImageAsync(

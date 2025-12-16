@@ -49,10 +49,6 @@ public class UpdateProductVariantCommandHandler
 
         var attributesJson = JsonSerializer.Serialize(request.Attributes);
         variant.Update(
-            request.Sku,
-            request.Price,
-            request.Currency,
-            request.Stock,
             attributesJson,
             request.ImageId
         );
@@ -69,7 +65,7 @@ public class UpdateProductVariantCommandHandler
         _variantRepository.Update(variant);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Endirim hesabla
+        // Endirim hesabla (Product-dan)
         var discountPercent = await _discountCalculationService.CalculateFinalDiscountPercentAsync(
             product.Id,
             product.CategoryId,
@@ -77,16 +73,16 @@ public class UpdateProductVariantCommandHandler
             cancellationToken);
 
         var finalPrice = _discountCalculationService.CalculateDiscountedPrice(
-            variant.Price.Amount,
+            product.Price.Amount,
             discountPercent);
 
         var variantDto = new ProductVariantDto
         {
             Id = variant.Id,
-            Sku = variant.Sku.Value,
-            Price = variant.Price.Amount,
-            Currency = variant.Price.Currency,
-            Stock = variant.Stock,
+            Sku = product.Sku.Value, // Product-dan
+            Price = product.Price.Amount, // Product-dan
+            Currency = product.Price.Currency, // Product-dan
+            Stock = product.Stock, // Product-dan
             IsActive = variant.IsActive,
             ImageId = variant.ImageId,
             ImageUrl = variant.ImageId.HasValue ? $"/api/images/{variant.ImageId}" : null,
@@ -98,5 +94,6 @@ public class UpdateProductVariantCommandHandler
         return Result.Success(variantDto);
     }
 }
+
 
 

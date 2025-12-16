@@ -11,13 +11,16 @@ public class GetBannerProductQueryHandler : IRequestHandler<GetBannerProductQuer
 {
     private readonly IProductQueryRepository _productRepository;
     private readonly IDiscountCalculationService _discountCalculationService;
+    private readonly IImageStorage _imageStorage;
 
     public GetBannerProductQueryHandler(
         IProductQueryRepository productRepository,
-        IDiscountCalculationService discountCalculationService)
+        IDiscountCalculationService discountCalculationService,
+        IImageStorage imageStorage)
     {
         _productRepository = productRepository;
         _discountCalculationService = discountCalculationService;
+        _imageStorage = imageStorage;
     }
 
     public async Task<Result<ProductDto>> Handle(GetBannerProductQuery request, CancellationToken cancellationToken)
@@ -41,6 +44,21 @@ public class GetBannerProductQueryHandler : IRequestHandler<GetBannerProductQuer
             product.Price.Amount,
             discountPercent);
 
+        // PrimaryImageUrl-i set et
+        var primaryImage = product.ProductImages
+            .OrderBy(pi => pi.IsPrimary ? 0 : 1)
+            .ThenBy(pi => pi.DisplayOrder)
+            .FirstOrDefault();
+        
+        string? primaryImageUrl = null;
+        if (primaryImage != null)
+        {
+            var extension = await _imageStorage.GetImageExtensionAsync(primaryImage.ImageId, cancellationToken);
+            primaryImageUrl = extension != null 
+                ? $"/api/images/{primaryImage.ImageId}{extension}" 
+                : $"/api/images/{primaryImage.ImageId}";
+        }
+
         var productDto = product.Adapt<ProductDto>();
         productDto = productDto with
         {
@@ -48,7 +66,8 @@ public class GetBannerProductQueryHandler : IRequestHandler<GetBannerProductQuer
             FinalPrice = finalPrice,
             IsBanner = true,
             IsFeatured = product.IsFeatured,
-            DisplayOrder = product.DisplayOrder
+            DisplayOrder = product.DisplayOrder,
+            PrimaryImageUrl = primaryImageUrl
         };
 
         return Result.Success(productDto);

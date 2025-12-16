@@ -9,16 +9,13 @@ namespace ElectroShop.Application.Features.Categories.Commands.AddCategoryAttrib
 public class AddCategoryAttributeValueCommandHandler 
     : IRequestHandler<AddCategoryAttributeValueCommand, Result<CategoryAttributeValueDto>>
 {
-    private readonly IWriteRepository<CategoryAttribute> _attributeRepository;
     private readonly ICategoryQueryRepository _categoryQueryRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public AddCategoryAttributeValueCommandHandler(
-        IWriteRepository<CategoryAttribute> attributeRepository,
         ICategoryQueryRepository categoryQueryRepository,
         IUnitOfWork unitOfWork)
     {
-        _attributeRepository = attributeRepository;
         _categoryQueryRepository = categoryQueryRepository;
         _unitOfWork = unitOfWork;
     }
@@ -27,7 +24,8 @@ public class AddCategoryAttributeValueCommandHandler
         AddCategoryAttributeValueCommand request,
         CancellationToken cancellationToken)
     {
-        var attribute = await _categoryQueryRepository.GetCategoryAttributeWithValuesAsync(
+        // Attribute'u tracking ile al (update üçün)
+        var attribute = await _categoryQueryRepository.GetCategoryAttributeWithValuesForUpdateAsync(
             request.CategoryAttributeId, 
             cancellationToken);
 
@@ -52,8 +50,8 @@ public class AddCategoryAttributeValueCommandHandler
             request.ColorCode
         );
 
-        attribute.AddValue(value);
-        _attributeRepository.Update(attribute);
+        // Value'yu repository üzerinden ekle
+        await _categoryQueryRepository.AddCategoryAttributeValueAsync(value, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var valueDto = new CategoryAttributeValueDto

@@ -50,5 +50,10 @@ public interface IProductQueryRepository : IQueryRepository<Product>
     /// Məhsulu şəkillər və variantlarla birlikdə əldə et (Update üçün)
     /// </summary>
     Task<Product?> GetProductWithImagesAndVariantsAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// ProductImages-i silir (Update üçün - EF Core tracking)
+    /// </summary>
+    Task DeleteProductImagesByIdsAsync(List<Guid> imageIds, CancellationToken cancellationToken = default);
 }
 

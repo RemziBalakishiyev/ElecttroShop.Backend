@@ -29,13 +29,33 @@ public interface ICategoryQueryRepository : IQueryRepository<Category>
     Task<List<CategoryAttribute>> GetCategoryAttributesAsync(Guid categoryId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Kateqoriya atributunu dəyərlərlə birlikdə əldə et
+    /// Kateqoriya atributunu dəyərlərlə birlikdə əldə et (AsNoTracking - read-only)
     /// </summary>
     Task<CategoryAttribute?> GetCategoryAttributeWithValuesAsync(Guid attributeId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Value ID-sinə görə atribut və dəyəri əldə et
+    /// Kateqoriya atributunu dəyərlərlə birlikdə əldə et (tracking ilə - update üçün)
+    /// </summary>
+    Task<CategoryAttribute?> GetCategoryAttributeWithValuesForUpdateAsync(Guid attributeId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Value ID-sinə görə atribut və dəyəri əldə et (AsNoTracking - read-only)
     /// </summary>
     Task<(CategoryAttribute Attribute, CategoryAttributeValue Value)?> GetAttributeAndValueByValueIdAsync(Guid valueId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// CategoryAttributeValue'yu tracking ilə əldə et (update üçün)
+    /// </summary>
+    Task<CategoryAttributeValue?> GetCategoryAttributeValueForUpdateAsync(Guid valueId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// CategoryAttributeValue əlavə et
+    /// </summary>
+    Task AddCategoryAttributeValueAsync(CategoryAttributeValue value, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// CategoryAttributeValue güncəllə
+    /// </summary>
+    void UpdateCategoryAttributeValue(CategoryAttributeValue value);
 }
 

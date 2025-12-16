@@ -12,35 +12,6 @@ public class ProductVariantConfiguration : BaseCommonEntityConfiguration<Product
 
         builder.ToTable("ProductVariants");
 
-        // SKU Value Object configuration
-        builder.OwnsOne(pv => pv.Sku, sku =>
-        {
-            sku.Property(s => s.Value)
-                .HasColumnName("Sku")
-                .IsRequired()
-                .HasMaxLength(50);
-
-            sku.HasIndex(s => s.Value)
-                .IsUnique();
-        });
-
-        // Money Value Object configuration
-        builder.OwnsOne(pv => pv.Price, price =>
-        {
-            price.Property(m => m.Amount)
-                .HasColumnName("Price")
-                .HasColumnType("decimal(18,2)")
-                .IsRequired();
-
-            price.Property(m => m.Currency)
-                .HasColumnName("Currency")
-                .IsRequired()
-                .HasMaxLength(3);
-        });
-
-        builder.Property(pv => pv.Stock)
-            .IsRequired();
-
         builder.Property(pv => pv.IsActive)
             .IsRequired()
             .HasDefaultValue(true);
@@ -62,5 +33,6 @@ public class ProductVariantConfiguration : BaseCommonEntityConfiguration<Product
         builder.HasIndex(pv => new { pv.ProductId, pv.IsActive });
     }
 }
+
 
 

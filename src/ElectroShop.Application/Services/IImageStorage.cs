@@ -42,6 +42,14 @@ public interface IImageStorage
     /// <param name="imageId">Şəkil ID-si</param>
     /// <param name="cancellationToken">Cancellation token</param>
     Task<bool> ImageExistsAsync(Guid imageId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Şəklin extension-ını qaytarır
+    /// </summary>
+    /// <param name="imageId">Şəkil ID-si</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Extension (məsələn: ".jpg", ".png") və ya null</returns>
+    Task<string?> GetImageExtensionAsync(Guid imageId, CancellationToken cancellationToken = default);
 }
 
 

@@ -20,3 +20,4 @@ VALUES ('20251130200000_AddPromotionalFieldsToBrand', '8.0.21')
 ON CONFLICT ("MigrationId") DO NOTHING;
 
 
+

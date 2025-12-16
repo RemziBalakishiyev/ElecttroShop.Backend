@@ -12,15 +12,18 @@ public class GetPromotionalBrandsQueryHandler : IRequestHandler<GetPromotionalBr
     private readonly IBrandQueryRepository _brandRepository;
     private readonly IProductQueryRepository _productRepository;
     private readonly IDiscountCalculationService _discountCalculationService;
+    private readonly IImageStorage _imageStorage;
 
     public GetPromotionalBrandsQueryHandler(
         IBrandQueryRepository brandRepository,
         IProductQueryRepository productRepository,
-        IDiscountCalculationService discountCalculationService)
+        IDiscountCalculationService discountCalculationService,
+        IImageStorage imageStorage)
     {
         _brandRepository = brandRepository;
         _productRepository = productRepository;
         _discountCalculationService = discountCalculationService;
+        _imageStorage = imageStorage;
     }
 
     public async Task<Result<List<PromotionalBrandDto>>> Handle(
@@ -65,6 +68,21 @@ public class GetPromotionalBrandsQueryHandler : IRequestHandler<GetPromotionalBr
                 featuredProduct.Price.Amount,
                 productDiscountPercent);
 
+            // PrimaryImageUrl-i set et
+            var primaryImage = featuredProduct.ProductImages
+                .OrderBy(pi => pi.IsPrimary ? 0 : 1)
+                .ThenBy(pi => pi.DisplayOrder)
+                .FirstOrDefault();
+            
+            string? primaryImageUrl = null;
+            if (primaryImage != null)
+            {
+                var extension = await _imageStorage.GetImageExtensionAsync(primaryImage.ImageId, cancellationToken);
+                primaryImageUrl = extension != null 
+                    ? $"/api/images/{primaryImage.ImageId}{extension}" 
+                    : $"/api/images/{primaryImage.ImageId}";
+            }
+
             // ProductDto yarat
             var productDto = featuredProduct.Adapt<ProductDto>();
             productDto = productDto with
@@ -77,7 +95,8 @@ public class GetPromotionalBrandsQueryHandler : IRequestHandler<GetPromotionalBr
                 Price = featuredProduct.Price.Amount,
                 Currency = featuredProduct.Price.Currency,
                 CreatedAt = featuredProduct.CreatedAtUtc,
-                UpdatedAt = featuredProduct.UpdatedAtUtc
+                UpdatedAt = featuredProduct.UpdatedAtUtc,
+                PrimaryImageUrl = primaryImageUrl
             };
 
             // BrandInfoDto yarat
@@ -100,5 +119,6 @@ public class GetPromotionalBrandsQueryHandler : IRequestHandler<GetPromotionalBr
         return Result.Success(result);
     }
 }
+
 
 

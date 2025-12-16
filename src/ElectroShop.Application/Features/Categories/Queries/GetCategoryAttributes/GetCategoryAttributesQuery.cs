@@ -7,3 +7,4 @@ namespace ElectroShop.Application.Features.Categories.Queries.GetCategoryAttribu
 public record GetCategoryAttributesQuery(Guid CategoryId) : IRequest<Result<List<CategoryAttributeDto>>>;
 
 
+

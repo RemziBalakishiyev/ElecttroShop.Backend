@@ -4,6 +4,7 @@ using ElectroShop.Application.Features.Brands.Commands.UpdateBrand;
 using ElectroShop.Application.Features.Brands.Queries.GetBrandById;
 using ElectroShop.Application.Features.Brands.Queries.GetBrands;
 using ElectroShop.Application.Features.Brands.Queries.GetPromotionalBrands;
+using ElectroShop.Application.Features.Brands.Queries.GetBrandsLookup;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -106,6 +107,19 @@ public class BrandsController : BaseApiController
         CancellationToken cancellationToken)
     {
         var query = new GetPromotionalBrandsQuery();
+        var result = await Mediator.Send(query, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Brendlər üçün lookup API - Key-Value formatında
+    /// Cache management ilə - Select boxlar üçün
+    /// </summary>
+    [HttpGet("lookup")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetBrandsLookup(CancellationToken cancellationToken)
+    {
+        var query = new GetBrandsLookupQuery();
         var result = await Mediator.Send(query, cancellationToken);
         return HandleResult(result);
     }

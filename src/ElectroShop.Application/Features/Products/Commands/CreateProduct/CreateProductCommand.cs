@@ -25,10 +25,6 @@ public record CreateProductCommand : IRequest<Result<ProductDto>>
 
 public record CreateProductVariantDto
 {
-    public string Sku { get; init; } = string.Empty;
-    public decimal Price { get; init; }
-    public string Currency { get; init; } = "AZN";
-    public int Stock { get; init; }
     public Guid? ImageId { get; init; }
     public Dictionary<string, string> Attributes { get; init; } = new();
 }

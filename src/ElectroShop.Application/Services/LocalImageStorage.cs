@@ -141,6 +141,20 @@ public class LocalImageStorage : IImageStorage
         return Task.FromResult(exists);
     }
 
+    public Task<string?> GetImageExtensionAsync(Guid imageId, CancellationToken cancellationToken = default)
+    {
+        // Bütün mümkün uzantıları yoxla
+        foreach (var extension in AllowedExtensions)
+        {
+            var filePath = Path.Combine(_basePath, $"{imageId}{extension}");
+            if (File.Exists(filePath))
+                return Task.FromResult<string?>(extension);
+        }
+
+        // Əgər heç biri tapılmadısa, null qaytar
+        return Task.FromResult<string?>(null);
+    }
+
     private string GetImagePath(Guid imageId)
     {
         // Bütün mümkün uzantıları yoxla

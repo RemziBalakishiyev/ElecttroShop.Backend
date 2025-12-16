@@ -1,6 +1,7 @@
 using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
+using ElectroShop.Application.Services;
 using Mapster;
 using MediatR;
 
@@ -16,19 +17,22 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Resul
     private readonly ICustomerQueryRepository _customerRepository;
     private readonly ICategoryQueryRepository _categoryRepository;
     private readonly IBrandQueryRepository _brandRepository;
+    private readonly IImageStorage _imageStorage;
 
     public GetDashboardQueryHandler(
         IProductQueryRepository productRepository,
         IOrderQueryRepository orderRepository,
         ICustomerQueryRepository customerRepository,
         ICategoryQueryRepository categoryRepository,
-        IBrandQueryRepository brandRepository)
+        IBrandQueryRepository brandRepository,
+        IImageStorage imageStorage)
     {
         _productRepository = productRepository;
         _orderRepository = orderRepository;
         _customerRepository = customerRepository;
         _categoryRepository = categoryRepository;
         _brandRepository = brandRepository;
+        _imageStorage = imageStorage;
     }
 
     public async Task<Result<DashboardDto>> Handle(
@@ -85,7 +89,33 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Resul
             pageSize: 5,
             cancellationToken: cancellationToken);
 
-        return products.Adapt<List<ProductListDto>>();
+        var productDtos = new List<ProductListDto>();
+        foreach (var product in products)
+        {
+            // PrimaryImageUrl-i set et
+            var primaryImage = product.ProductImages
+                .OrderBy(pi => pi.IsPrimary ? 0 : 1)
+                .ThenBy(pi => pi.DisplayOrder)
+                .FirstOrDefault();
+            
+            string? primaryImageUrl = null;
+            if (primaryImage != null)
+            {
+                var extension = await _imageStorage.GetImageExtensionAsync(primaryImage.ImageId, cancellationToken);
+                primaryImageUrl = extension != null 
+                    ? $"/api/images/{primaryImage.ImageId}{extension}" 
+                    : $"/api/images/{primaryImage.ImageId}";
+            }
+
+            var productDto = product.Adapt<ProductListDto>();
+            productDto = productDto with
+            {
+                PrimaryImageUrl = primaryImageUrl
+            };
+            productDtos.Add(productDto);
+        }
+
+        return productDtos;
     }
 
     private async Task<List<OrderSummaryDto>> GetRecentOrdersAsync(CancellationToken cancellationToken)

@@ -25,3 +25,4 @@ public record GetChartDataQuery : IRequest<Result<ChartDataDto>>
 
 
 
+

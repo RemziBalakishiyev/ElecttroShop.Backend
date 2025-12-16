@@ -85,10 +85,6 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
             var attributesJson = JsonSerializer.Serialize(variantDto.Attributes);
             var variant = ProductVariant.Create(
                 product.Id,
-                variantDto.Sku,
-                variantDto.Price,
-                variantDto.Currency,
-                variantDto.Stock,
                 attributesJson,
                 variantDto.ImageId
             );

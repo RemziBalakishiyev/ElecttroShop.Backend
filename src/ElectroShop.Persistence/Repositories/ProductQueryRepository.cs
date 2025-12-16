@@ -4,6 +4,7 @@ using ElectroShop.Domain.Entities;
 using ElectroShop.Persistence.Contexts;
 using ElectroShop.Persistence.Helpers;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace ElectroShop.Persistence.Repositories;
 
@@ -27,6 +28,7 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
         var query = _dbSet
             .Include(p => p.Category)
             .Include(p => p.Brand)
+            .Include(p => p.ProductImages.OrderBy(pi => pi.DisplayOrder))
             .AsNoTracking();
 
         var search = searchTerm?.ToLower();
@@ -70,6 +72,7 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
         return await _dbSet
             .Include(p => p.Category)
             .Include(p => p.Brand)
+            .Include(p => p.ProductImages.OrderBy(pi => pi.DisplayOrder))
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.IsBanner && !p.IsDeleted && p.IsActive, cancellationToken);
     }
@@ -79,6 +82,7 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
         return await _dbSet
             .Include(p => p.Category)
             .Include(p => p.Brand)
+            .Include(p => p.ProductImages.OrderBy(pi => pi.DisplayOrder))
             .AsNoTracking()
             .Where(p => p.IsFeatured && !p.IsDeleted && p.IsActive)
             .OrderBy(p => p.DisplayOrder)
@@ -90,6 +94,7 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
         return await _dbSet
             .Include(p => p.Category)
             .Include(p => p.Brand)
+            .Include(p => p.ProductImages.OrderBy(pi => pi.DisplayOrder))
             .AsNoTracking()
             .Where(p => p.BrandId == brandId && p.IsFeatured && !p.IsDeleted && p.IsActive)
             .OrderBy(p => p.DisplayOrder)
@@ -103,6 +108,23 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
             .Include(p => p.ProductImages.OrderBy(pi => pi.DisplayOrder))
             .Include(p => p.ProductVariants)
             .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, cancellationToken);
+    }
+
+    public async Task DeleteProductImagesByIdsAsync(List<Guid> imageIds, CancellationToken cancellationToken = default)
+    {
+        if (imageIds == null || imageIds.Count == 0)
+            return;
+
+        // ProductImages-i ID-lərə görə tap və sil (EF Core tracking üçün)
+        var productImageDbSet = _context.Set<Domain.Entities.ProductImage>();
+        var imagesToDelete = await productImageDbSet
+            .Where(pi => imageIds.Contains(pi.Id))
+            .ToListAsync(cancellationToken);
+        
+        if (imagesToDelete.Count > 0)
+        {
+            productImageDbSet.RemoveRange(imagesToDelete);
+        }
     }
 }
 

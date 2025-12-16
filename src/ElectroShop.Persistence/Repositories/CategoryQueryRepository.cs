@@ -92,6 +92,37 @@ public class CategoryQueryRepository : QueryRepository<Category>, ICategoryQuery
 
         return (attribute, value);
     }
+
+    public async Task<CategoryAttribute?> GetCategoryAttributeWithValuesForUpdateAsync(
+        Guid attributeId, 
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.CategoryAttributes
+            .Include(ca => ca.Values.OrderBy(cav => cav.DisplayOrder))
+            .FirstOrDefaultAsync(ca => ca.Id == attributeId && !ca.IsDeleted, cancellationToken);
+    }
+
+    public async Task<CategoryAttributeValue?> GetCategoryAttributeValueForUpdateAsync(
+        Guid valueId, 
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.CategoryAttributeValues
+            .Include(cav => cav.CategoryAttribute)
+            .ThenInclude(ca => ca.Values)
+            .FirstOrDefaultAsync(cav => cav.Id == valueId, cancellationToken);
+    }
+
+    public async Task AddCategoryAttributeValueAsync(
+        CategoryAttributeValue value, 
+        CancellationToken cancellationToken = default)
+    {
+        await _context.CategoryAttributeValues.AddAsync(value, cancellationToken);
+    }
+
+    public void UpdateCategoryAttributeValue(CategoryAttributeValue value)
+    {
+        _context.CategoryAttributeValues.Update(value);
+    }
 }
 
 

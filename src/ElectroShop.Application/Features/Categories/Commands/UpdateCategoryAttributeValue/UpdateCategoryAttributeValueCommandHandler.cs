@@ -10,16 +10,13 @@ public class UpdateCategoryAttributeValueCommandHandler
     : IRequestHandler<UpdateCategoryAttributeValueCommand, Result<CategoryAttributeValueDto>>
 {
     private readonly ICategoryQueryRepository _categoryQueryRepository;
-    private readonly IWriteRepository<CategoryAttribute> _attributeRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public UpdateCategoryAttributeValueCommandHandler(
         ICategoryQueryRepository categoryQueryRepository,
-        IWriteRepository<CategoryAttribute> attributeRepository,
         IUnitOfWork unitOfWork)
     {
         _categoryQueryRepository = categoryQueryRepository;
-        _attributeRepository = attributeRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -27,19 +24,17 @@ public class UpdateCategoryAttributeValueCommandHandler
         UpdateCategoryAttributeValueCommand request,
         CancellationToken cancellationToken)
     {
-        // ICategoryQueryRepository-dən istifadə et (Persistence layer-də)
-        // Amma bu Application layer-də ola bilməz. 
-        // Ona görə də ICategoryQueryRepository-də metod əlavə etdik
-        var result = await _categoryQueryRepository.GetAttributeAndValueByValueIdAsync(
+        // Value'yu tracking ile al (update üçün)
+        var value = await _categoryQueryRepository.GetCategoryAttributeValueForUpdateAsync(
             request.Id, 
             cancellationToken);
 
-        if (result == null)
+        if (value == null)
         {
             return DomainErrors.Category.NotFound(request.Id);
         }
 
-        var (parentAttribute, value) = result.Value;
+        var parentAttribute = value.CategoryAttribute;
 
         // Eyni dəyərin başqa value-da olub-olmadığını yoxla
         if (parentAttribute.Values.Any(v => v.Value == request.Value && v.Id != request.Id))
@@ -56,7 +51,8 @@ public class UpdateCategoryAttributeValueCommandHandler
             request.ColorCode
         );
 
-        _attributeRepository.Update(parentAttribute);
+        // Value'yu repository üzerinden güncelle
+        _categoryQueryRepository.UpdateCategoryAttributeValue(value);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var valueDto = new CategoryAttributeValueDto

@@ -19,6 +19,7 @@ public record ProductDto
     public int Stock { get; init; }
     public bool IsActive { get; init; }
     public List<ProductImageDto> Images { get; init; } = [];
+    public string? PrimaryImageUrl { get; init; }
     public bool IsBanner { get; init; }
     public bool IsFeatured { get; init; }
     public int? DisplayOrder { get; init; }

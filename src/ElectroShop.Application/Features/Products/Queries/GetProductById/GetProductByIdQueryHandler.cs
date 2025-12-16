@@ -12,15 +12,18 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
     private readonly IProductQueryRepository _productRepository;
     private readonly ICategoryQueryRepository _categoryRepository;
     private readonly IDiscountCalculationService _discountCalculationService;
+    private readonly IImageStorage _imageStorage;
 
     public GetProductByIdQueryHandler(
         IProductQueryRepository productRepository,
         ICategoryQueryRepository categoryRepository,
-        IDiscountCalculationService discountCalculationService)
+        IDiscountCalculationService discountCalculationService,
+        IImageStorage imageStorage)
     {
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;
         _discountCalculationService = discountCalculationService;
+        _imageStorage = imageStorage;
     }
 
     public async Task<Result<ProductDto>> Handle(
@@ -36,26 +39,48 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
 
         var productDto = product.Adapt<ProductDto>();
 
-        // Variants-ı manual set et (çünki mapping-də ignore etdik)
-        productDto = productDto with
+        // PrimaryImageUrl-i set et - ilk şəkil və ya primary şəkil
+        var primaryImage = product.ProductImages
+            .OrderBy(pi => pi.IsPrimary ? 0 : 1)
+            .ThenBy(pi => pi.DisplayOrder)
+            .FirstOrDefault();
+        
+        string? primaryImageUrl = null;
+        if (primaryImage != null)
         {
-            Variants = product.ProductVariants.Select(pv =>
+            var extension = await _imageStorage.GetImageExtensionAsync(primaryImage.ImageId, cancellationToken);
+            primaryImageUrl = extension != null 
+                ? $"/api/images/{primaryImage.ImageId}{extension}" 
+                : $"/api/images/{primaryImage.ImageId}";
+        }
+
+        // Variants-ı manual set et (Product məlumatları ilə)
+        var variants = new List<ProductVariantDto>();
+        foreach (var pv in product.ProductVariants)
+        {
+            var attributes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(pv.AttributesJson);
+            string? imageUrl = null;
+            if (pv.ImageId.HasValue)
             {
-                var attributes = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(pv.AttributesJson);
-                return new ProductVariantDto
-                {
-                    Id = pv.Id,
-                    Sku = pv.Sku.Value,
-                    Price = pv.Price.Amount,
-                    Currency = pv.Price.Currency,
-                    Stock = pv.Stock,
-                    IsActive = pv.IsActive,
-                    ImageId = pv.ImageId,
-                    ImageUrl = pv.ImageId.HasValue ? $"/api/images/{pv.ImageId.Value}" : null,
-                    Attributes = attributes ?? new Dictionary<string, string>()
-                };
-            }).ToList()
-        };
+                var variantExtension = await _imageStorage.GetImageExtensionAsync(pv.ImageId.Value, cancellationToken);
+                imageUrl = variantExtension != null 
+                    ? $"/api/images/{pv.ImageId.Value}{variantExtension}" 
+                    : $"/api/images/{pv.ImageId.Value}";
+            }
+            
+            variants.Add(new ProductVariantDto
+            {
+                Id = pv.Id,
+                Sku = product.Sku.Value, // Product-dan
+                Price = product.Price.Amount, // Product-dan
+                Currency = product.Price.Currency, // Product-dan
+                Stock = product.Stock, // Product-dan
+                IsActive = pv.IsActive,
+                ImageId = pv.ImageId,
+                ImageUrl = imageUrl,
+                Attributes = attributes ?? new Dictionary<string, string>()
+            });
+        }
 
         // Endirim hesablaması
         var discountPercent = await _discountCalculationService.CalculateFinalDiscountPercentAsync(
@@ -73,30 +98,17 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
             product.CategoryId, 
             cancellationToken);
 
-        // Variantlar üçün endirim hesabla
-        var variantsWithDiscounts = new List<ProductVariantDto>();
-        foreach (var variant in productDto.Variants)
+        // Variantlar üçün endirim hesabla (hamısı eyni Product-dan gəlir)
+        var variantsWithDiscounts = productDto.Variants.Select(variant => variant with
         {
-            var variantDiscountPercent = await _discountCalculationService.CalculateFinalDiscountPercentAsync(
-                product.Id,
-                product.CategoryId,
-                product.BrandId,
-                cancellationToken);
-
-            var variantFinalPrice = _discountCalculationService.CalculateDiscountedPrice(
-                variant.Price,
-                variantDiscountPercent);
-
-            variantsWithDiscounts.Add(variant with
-            {
-                FinalDiscountPercent = variantDiscountPercent,
-                FinalPrice = variantFinalPrice
-            });
-        }
+            FinalDiscountPercent = discountPercent,
+            FinalPrice = finalPrice
+        }).ToList();
 
         // Endirim məlumatlarını və kateqoriya atributlarını DTO-ya əlavə et
         productDto = productDto with
         {
+            PrimaryImageUrl = primaryImageUrl,
             FinalDiscountPercent = discountPercent,
             FinalPrice = finalPrice,
             CategoryAttributes = categoryAttributes.Select(ca => new CategoryAttributeDto

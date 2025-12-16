@@ -1,4 +1,5 @@
 using ElectroShop.Application.Common.Results;
+using ElectroShop.Application.Features.Images.Commands.UploadImage;
 using ElectroShop.Application.Features.Products.Commands.UploadProductImage;
 using ElectroShop.Application.Services;
 using Microsoft.AspNetCore.Http;
@@ -34,6 +35,34 @@ public static class FileUploadHelper
         var command = new UploadProductImageCommand
         {
             ProductId = productId,
+            FileName = file.FileName,
+            ContentType = file.ContentType
+        };
+
+        return Result.Success(command);
+    }
+
+    /// <summary>
+    /// IFormFile-dan UploadImageCommand yaradır və stream-i context-ə yazır (standalone)
+    /// </summary>
+    public static async Task<Result<UploadImageCommand>> CreateUploadImageCommandAsync(
+        IFormFile file,
+        IImageUploadContext imageUploadContext,
+        CancellationToken cancellationToken = default)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return Result.Failure<UploadImageCommand>(
+                Error.Validation("Image.Required", "Şəkil faylı tələb olunur"));
+        }
+
+        var memoryStream = await ConvertToMemoryStreamAsync(file, cancellationToken);
+        
+        // Stream-i context-ə yazırıq (handler buradan alacaq)
+        imageUploadContext.ImageStream = memoryStream;
+
+        var command = new UploadImageCommand
+        {
             FileName = file.FileName,
             ContentType = file.ContentType
         };

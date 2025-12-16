@@ -26,10 +26,6 @@ public record UpdateProductCommand : IRequest<Result<ProductDto>>
 public record UpdateProductVariantDto
 {
     public Guid? Id { get; init; } // Null olarsa yeni variant yaradılacaq
-    public string Sku { get; init; } = string.Empty;
-    public decimal Price { get; init; }
-    public string Currency { get; init; } = "AZN";
-    public int Stock { get; init; }
     public Guid? ImageId { get; init; }
     public Dictionary<string, string> Attributes { get; init; } = new();
     public bool IsActive { get; init; } = true;

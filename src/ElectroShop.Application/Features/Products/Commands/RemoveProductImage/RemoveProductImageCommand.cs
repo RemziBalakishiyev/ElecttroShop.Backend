@@ -6,3 +6,4 @@ namespace ElectroShop.Application.Features.Products.Commands.RemoveProductImage;
 public record RemoveProductImageCommand(Guid ProductId, Guid ImageId) : IRequest<Result>;
 
 
+

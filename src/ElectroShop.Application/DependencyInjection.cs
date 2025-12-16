@@ -4,6 +4,7 @@ using Mapster;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Caching.Memory;
 using ElectroShop.Application.Behaviours;
 
 namespace ElectroShop.Application;
@@ -16,6 +17,9 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         var assembly = Assembly.GetExecutingAssembly();
+
+        // Register Memory Cache (for Lookup API-ləri)
+        services.AddMemoryCache();
 
         // Register MediatR
         services.AddMediatR(config =>
