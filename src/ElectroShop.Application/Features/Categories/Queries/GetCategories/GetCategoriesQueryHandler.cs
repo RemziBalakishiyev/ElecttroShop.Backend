@@ -33,6 +33,7 @@ public class GetCategoriesQueryHandler : IRequestHandler<GetCategoriesQuery, Pag
             request.SearchTerm,
             request.ParentId,
             request.IncludeChildren,
+            request.IncludeAll,
             cancellationToken);
 
         if (totalCount == 0)

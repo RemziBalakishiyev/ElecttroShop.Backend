@@ -1,6 +1,7 @@
 using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
+using ElectroShop.Application.Services;
 using ElectroShop.Domain.Entities;
 using MediatR;
 
@@ -11,15 +12,18 @@ public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryComman
     private readonly IWriteRepository<Category> _categoryRepository;
     private readonly IQueryRepository<Category> _categoryQueryRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILookupCacheInvalidator _lookupCacheInvalidator;
 
     public CreateCategoryCommandHandler(
         IWriteRepository<Category> categoryRepository,
         IQueryRepository<Category> categoryQueryRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILookupCacheInvalidator lookupCacheInvalidator)
     {
         _categoryRepository = categoryRepository;
         _categoryQueryRepository = categoryQueryRepository;
         _unitOfWork = unitOfWork;
+        _lookupCacheInvalidator = lookupCacheInvalidator;
     }
 
     public async Task<Result<CategoryDto>> Handle(
@@ -48,6 +52,8 @@ public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryComman
 
         await _categoryRepository.AddAsync(category, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _lookupCacheInvalidator.InvalidateCategoriesLookup();
 
         var categoryDto = new CategoryDto
         {

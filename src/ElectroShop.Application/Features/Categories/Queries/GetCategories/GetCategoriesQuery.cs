@@ -9,5 +9,6 @@ public record GetCategoriesQuery(
     int PageSize = 10,
     string? SearchTerm = null,
     Guid? ParentId = null,
-    bool IncludeChildren = false) : IRequest<PagedResult<CategoryDto>>;
+    bool IncludeChildren = false,
+    bool IncludeAll = false) : IRequest<PagedResult<CategoryDto>>;
 

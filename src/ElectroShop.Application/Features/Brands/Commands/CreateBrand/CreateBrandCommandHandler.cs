@@ -1,6 +1,7 @@
 using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
+using ElectroShop.Application.Services;
 using ElectroShop.Domain.Entities;
 using MediatR;
 
@@ -10,13 +11,16 @@ public class CreateBrandCommandHandler : IRequestHandler<CreateBrandCommand, Res
 {
     private readonly IWriteRepository<Brand> _brandRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILookupCacheInvalidator _lookupCacheInvalidator;
 
     public CreateBrandCommandHandler(
         IWriteRepository<Brand> brandRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILookupCacheInvalidator lookupCacheInvalidator)
     {
         _brandRepository = brandRepository;
         _unitOfWork = unitOfWork;
+        _lookupCacheInvalidator = lookupCacheInvalidator;
     }
 
     public async Task<Result<BrandDto>> Handle(
@@ -35,6 +39,8 @@ public class CreateBrandCommandHandler : IRequestHandler<CreateBrandCommand, Res
 
         await _brandRepository.AddAsync(brand, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _lookupCacheInvalidator.InvalidateBrandsLookup();
 
         var brandDto = new BrandDto
         {

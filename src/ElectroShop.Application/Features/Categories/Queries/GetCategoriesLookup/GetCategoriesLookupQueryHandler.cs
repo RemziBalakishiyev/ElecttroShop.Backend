@@ -1,4 +1,5 @@
 using ElectroShop.Application.Abstractions;
+using ElectroShop.Application.Common;
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
 using ElectroShop.Domain.Entities;
@@ -11,7 +12,7 @@ public class GetCategoriesLookupQueryHandler : IRequestHandler<GetCategoriesLook
 {
     private readonly IQueryRepository<Category> _categoryRepository;
     private readonly IMemoryCache _memoryCache;
-    private const string CacheKey = "CategoriesLookup";
+    private const string CacheKey = LookupCacheKeys.Categories;
     private static readonly TimeSpan CacheExpiration = TimeSpan.FromHours(1);
 
     public GetCategoriesLookupQueryHandler(

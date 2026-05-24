@@ -16,6 +16,7 @@ public interface ICategoryQueryRepository : IQueryRepository<Category>
         string? searchTerm = null,
         Guid? parentId = null,
         bool includeChildren = false,
+        bool includeAll = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>

@@ -20,6 +20,7 @@ public static class DependencyInjection
 
         // Register Memory Cache (for Lookup API-ləri)
         services.AddMemoryCache();
+        services.AddSingleton<Services.ILookupCacheInvalidator, Services.LookupCacheInvalidator>();
 
         // Register MediatR
         services.AddMediatR(config =>

@@ -21,7 +21,7 @@ public class ProductVariantConfiguration : BaseCommonEntityConfiguration<Product
 
         builder.Property(pv => pv.AttributesJson)
             .IsRequired()
-            .HasColumnType("jsonb"); // PostgreSQL JSONB type
+            .HasColumnType("jsonb");
 
         // Relationships
         builder.HasOne(pv => pv.Product)

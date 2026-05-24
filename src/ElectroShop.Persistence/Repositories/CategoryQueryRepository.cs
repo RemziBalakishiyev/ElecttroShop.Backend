@@ -19,6 +19,7 @@ public class CategoryQueryRepository : QueryRepository<Category>, ICategoryQuery
         string? searchTerm = null,
         Guid? parentId = null,
         bool includeChildren = false,
+        bool includeAll = false,
         CancellationToken cancellationToken = default)
     {
         var query = _dbSet.Include(c => c.Parent).AsNoTracking();
@@ -32,7 +33,7 @@ public class CategoryQueryRepository : QueryRepository<Category>, ICategoryQuery
             .And(c => !c.IsDeleted)
             .AndIf(!string.IsNullOrWhiteSpace(search), c => c.Name.ToLower().Contains(search!))
             .AndIf(parentId.HasValue, c => c.ParentId == parentId!.Value)
-            .AndIf(!parentId.HasValue, c => c.ParentId == null);
+            .AndIf(!parentId.HasValue && !includeAll, c => c.ParentId == null);
 
         return await QueryHelper.ExecutePagedAsync(
             query.Where(predicate),

@@ -1,4 +1,5 @@
 using ElectroShop.Application.Abstractions;
+using ElectroShop.Application.Common;
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
 using ElectroShop.Domain.Entities;
@@ -11,7 +12,7 @@ public class GetBrandsLookupQueryHandler : IRequestHandler<GetBrandsLookupQuery,
 {
     private readonly IQueryRepository<Brand> _brandRepository;
     private readonly IMemoryCache _memoryCache;
-    private const string CacheKey = "BrandsLookup";
+    private const string CacheKey = LookupCacheKeys.Brands;
     private static readonly TimeSpan CacheExpiration = TimeSpan.FromHours(1);
 
     public GetBrandsLookupQueryHandler(

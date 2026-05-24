@@ -1,5 +1,6 @@
 using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common.Results;
+using ElectroShop.Application.Services;
 using ElectroShop.Domain.Entities;
 using MediatR;
 
@@ -10,15 +11,18 @@ public class DeleteBrandCommandHandler : IRequestHandler<DeleteBrandCommand, Res
     private readonly IWriteRepository<Brand> _brandRepository;
     private readonly IQueryRepository<Brand> _brandQueryRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILookupCacheInvalidator _lookupCacheInvalidator;
 
     public DeleteBrandCommandHandler(
         IWriteRepository<Brand> brandRepository,
         IQueryRepository<Brand> brandQueryRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILookupCacheInvalidator lookupCacheInvalidator)
     {
         _brandRepository = brandRepository;
         _brandQueryRepository = brandQueryRepository;
         _unitOfWork = unitOfWork;
+        _lookupCacheInvalidator = lookupCacheInvalidator;
     }
 
     public async Task<Result> Handle(DeleteBrandCommand request, CancellationToken cancellationToken)
@@ -33,6 +37,8 @@ public class DeleteBrandCommandHandler : IRequestHandler<DeleteBrandCommand, Res
 
         _brandRepository.Update(brand);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _lookupCacheInvalidator.InvalidateBrandsLookup();
 
         return Result.Success();
     }

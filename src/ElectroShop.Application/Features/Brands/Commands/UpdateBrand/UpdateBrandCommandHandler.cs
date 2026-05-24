@@ -13,17 +13,20 @@ public class UpdateBrandCommandHandler : IRequestHandler<UpdateBrandCommand, Res
     private readonly IQueryRepository<Brand> _brandQueryRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDiscountCalculationService _discountCalculationService;
+    private readonly ILookupCacheInvalidator _lookupCacheInvalidator;
 
     public UpdateBrandCommandHandler(
         IWriteRepository<Brand> brandRepository,
         IQueryRepository<Brand> brandQueryRepository,
         IUnitOfWork unitOfWork,
-        IDiscountCalculationService discountCalculationService)
+        IDiscountCalculationService discountCalculationService,
+        ILookupCacheInvalidator lookupCacheInvalidator)
     {
         _brandRepository = brandRepository;
         _brandQueryRepository = brandQueryRepository;
         _unitOfWork = unitOfWork;
         _discountCalculationService = discountCalculationService;
+        _lookupCacheInvalidator = lookupCacheInvalidator;
     }
 
     public async Task<Result<BrandDto>> Handle(
@@ -53,6 +56,8 @@ public class UpdateBrandCommandHandler : IRequestHandler<UpdateBrandCommand, Res
 
         _brandRepository.Update(brand);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _lookupCacheInvalidator.InvalidateBrandsLookup();
 
         // Endirim faizini hesabla
         var discountPercent = await _discountCalculationService.GetBrandDiscountPercentAsync(
