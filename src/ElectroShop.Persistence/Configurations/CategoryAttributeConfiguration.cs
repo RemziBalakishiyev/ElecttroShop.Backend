@@ -84,3 +84,6 @@ public class CategoryAttributeValueConfiguration : BaseEntityConfiguration<Categ
 
 
 
+
+
+

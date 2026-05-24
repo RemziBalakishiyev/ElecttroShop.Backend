@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ElectroShop.Domain.Entities;
 
-public class Product : BaseCommonEntity
+public class Product : AggregateRoot
 {
     public string Name { get; private set; } = default!;
     public Sku Sku { get; private set; } = new("UNSET");
@@ -240,5 +240,175 @@ public class Product : BaseCommonEntity
             throw new ArgumentException("Display order 1-5 arasında olmalıdır", nameof(displayOrder));
         
         DisplayOrder = displayOrder;
+    }
+
+    /// <summary>
+    /// Məhsul məlumatlarını yenilə (UpdateDetails - daha aydın ad)
+    /// </summary>
+    public void UpdateDetails(
+        string name,
+        string? description,
+        decimal price,
+        string currency,
+        Guid categoryId,
+        Guid brandId,
+        decimal vatRate,
+        int stock)
+    {
+        Update(name, description, price, currency, categoryId, brandId, vatRate, stock);
+    }
+
+    /// <summary>
+    /// Şəkilləri sinxronizasiya et (DDD Aggregate pattern)
+    /// Yalnız aggregate root vasitəsilə child entity-lər dəyişdirilir
+    /// </summary>
+    public void SyncImages(List<Guid> imageIds)
+    {
+        if (imageIds == null)
+            throw new ArgumentNullException(nameof(imageIds));
+
+        // Silinməli şəkillər
+        var imagesToRemove = ProductImages
+            .Where(x => !imageIds.Contains(x.ImageId))
+            .ToList();
+
+        foreach (var image in imagesToRemove)
+        {
+            ProductImages.Remove(image);
+        }
+
+        for (int i = 0; i < imageIds.Count; i++)
+        {
+            var imageId = imageIds[i];
+            var existingImage = ProductImages.FirstOrDefault(img => img.ImageId == imageId);
+
+            if (existingImage is null)
+            {
+                AddImage(imageId, i, isPrimary: i == 0);
+            }
+            else
+            {
+                existingImage.UpdateDisplayOrder(i);
+                if (i == 0)
+                    SetPrimaryImage(imageId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Variantları sinxronizasiya et (DDD Aggregate pattern)
+    /// Yalnız aggregate root vasitəsilə child entity-lər dəyişdirilir
+    /// </summary>
+    public void SyncVariants(
+        List<(Guid? Id, string AttributesJson, Guid? ImageId, bool IsActive)> variants)
+    {
+        if (variants == null)
+            throw new ArgumentNullException(nameof(variants));
+
+        var existingVariantIds = ProductVariants.Select(v => v.Id).ToList();
+
+        // Yeni variantlar
+        foreach (var variantData in variants.Where(v => !v.Id.HasValue))
+        {
+            if (string.IsNullOrWhiteSpace(variantData.AttributesJson))
+                throw new ArgumentException("Variant atributları boş ola bilməz", nameof(variants));
+
+            var variant = ProductVariant.Create(
+                Id,
+                variantData.AttributesJson,
+                variantData.ImageId
+            );
+
+            if (!variantData.IsActive)
+                variant.Deactivate();
+
+            ProductVariants.Add(variant);
+        }
+
+        // Mövcud variantları yenilə
+        foreach (var variantData in variants.Where(v => v.Id.HasValue))
+        {
+            var variantId = variantData.Id!.Value;
+            var variant = ProductVariants.FirstOrDefault(v => v.Id == variantId);
+            
+            if (variant == null)
+                throw new InvalidOperationException($"Variant tapılmadı: {variantId}");
+
+            if (string.IsNullOrWhiteSpace(variantData.AttributesJson))
+                throw new ArgumentException("Variant atributları boş ola bilməz", nameof(variants));
+
+            variant.Update(variantData.AttributesJson, variantData.ImageId);
+
+            if (variantData.IsActive)
+                variant.Activate();
+            else
+                variant.Deactivate();
+        }
+    }
+
+    /// <summary>
+    /// Verilmiş siyahıda olmayan variantları deaktiv et
+    /// </summary>
+    public void DeactivateMissingVariants(List<Guid> activeVariantIds)
+    {
+        if (activeVariantIds == null)
+            throw new ArgumentNullException(nameof(activeVariantIds));
+
+        var variantsToDeactivate = ProductVariants
+            .Where(v => !activeVariantIds.Contains(v.Id))
+            .ToList();
+
+        foreach (var variant in variantsToDeactivate)
+        {
+            variant.Deactivate();
+        }
+    }
+
+    /// <summary>
+    /// Variant əlavə et (DDD Aggregate pattern)
+    /// </summary>
+    public ProductVariant AddVariant(string attributesJson, Guid? imageId = null)
+    {
+        if (string.IsNullOrWhiteSpace(attributesJson))
+            throw new ArgumentException("Variant atributları boş ola bilməz", nameof(attributesJson));
+
+        var variant = ProductVariant.Create(Id, attributesJson, imageId);
+        ProductVariants.Add(variant);
+        return variant;
+    }
+
+    /// <summary>
+    /// Variant yenilə (DDD Aggregate pattern)
+    /// </summary>
+    public void UpdateVariant(Guid variantId, string attributesJson, Guid? imageId = null, bool? isActive = null)
+    {
+        var variant = ProductVariants.FirstOrDefault(v => v.Id == variantId);
+        if (variant == null)
+            throw new InvalidOperationException($"Variant tapılmadı: {variantId}");
+
+        if (string.IsNullOrWhiteSpace(attributesJson))
+            throw new ArgumentException("Variant atributları boş ola bilməz", nameof(attributesJson));
+
+        variant.Update(attributesJson, imageId);
+
+        if (isActive.HasValue)
+        {
+            if (isActive.Value)
+                variant.Activate();
+            else
+                variant.Deactivate();
+        }
+    }
+
+    /// <summary>
+    /// Variant sil (deaktiv et) (DDD Aggregate pattern)
+    /// </summary>
+    public void RemoveVariant(Guid variantId)
+    {
+        var variant = ProductVariants.FirstOrDefault(v => v.Id == variantId);
+        if (variant == null)
+            throw new InvalidOperationException($"Variant tapılmadı: {variantId}");
+
+        variant.Deactivate();
     }
 }

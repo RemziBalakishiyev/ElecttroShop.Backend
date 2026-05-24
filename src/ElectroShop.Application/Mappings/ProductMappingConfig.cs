@@ -40,7 +40,8 @@ public class ProductMappingConfig : IRegister
             .Map(dest => dest.IsFeatured, src => src.IsFeatured)
             .Map(dest => dest.DisplayOrder, src => src.DisplayOrder)
             .Map(dest => dest.CreatedAt, src => src.CreatedAtUtc)
-            .Map(dest => dest.UpdatedAt, src => src.UpdatedAtUtc);
+            .Map(dest => dest.UpdatedAt, src => src.UpdatedAtUtc)
+            .Map(dest => dest.RowVersion, src => src.RowVersion);
 
         // Product -> ProductListDto
         config.NewConfig<Product, ProductListDto>()

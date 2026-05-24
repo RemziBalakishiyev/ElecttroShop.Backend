@@ -50,13 +50,13 @@ public class DiscountConfiguration : BaseCommonEntityConfiguration<Discount>
 
         // Indexes
         builder.HasIndex(d => new { d.Type, d.ProductId })
-            .HasFilter("\"ProductId\" IS NOT NULL");
+            .HasFilter("[ProductId] IS NOT NULL");
 
         builder.HasIndex(d => new { d.Type, d.BrandId })
-            .HasFilter("\"BrandId\" IS NOT NULL");
+            .HasFilter("[BrandId] IS NOT NULL");
 
         builder.HasIndex(d => new { d.Type, d.CategoryId })
-            .HasFilter("\"CategoryId\" IS NOT NULL");
+            .HasFilter("[CategoryId] IS NOT NULL");
 
         builder.HasIndex(d => new { d.IsActive, d.StartDate, d.EndDate });
     }

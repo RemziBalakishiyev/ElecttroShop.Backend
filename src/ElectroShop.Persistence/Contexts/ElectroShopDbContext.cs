@@ -1,4 +1,4 @@
-﻿using ElectroShop.Domain.Entities;
+using ElectroShop.Domain.Entities;
 using ElectroShop.Domain.Primitives;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +22,8 @@ public class ElectroShopDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Discount> Discounts => Set<Discount>();
+    public DbSet<ForwardingFreight> ForwardingFreights => Set<ForwardingFreight>();
+    public DbSet<Shipper> Shippers => Set<Shipper>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -63,7 +65,7 @@ public class ElectroShopDbContext : DbContext
                 // UpdatedBy buradan set edilebilir (ICurrentUserService kullanarak)
             }
 
-            // PostgreSQL üçün DateTime-ləri UTC-yə çevir
+            // DateTime-ləri UTC-yə çevir (datetime2 ilə uyğunluq)
             if (entry.Entity.CreatedAtUtc.Kind != DateTimeKind.Utc)
             {
                 entry.Entity.CreatedAtUtc = DateTime.SpecifyKind(entry.Entity.CreatedAtUtc, DateTimeKind.Utc);

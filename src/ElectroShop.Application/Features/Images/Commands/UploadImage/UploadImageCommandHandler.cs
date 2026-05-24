@@ -40,4 +40,3 @@ public class UploadImageCommandHandler : IRequestHandler<UploadImageCommand, Res
         return Result.Success(imageId);
     }
 }
-

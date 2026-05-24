@@ -13,3 +13,6 @@ public class GetFeaturedProductsQueryValidator : AbstractValidator<GetFeaturedPr
 
 
 
+
+
+

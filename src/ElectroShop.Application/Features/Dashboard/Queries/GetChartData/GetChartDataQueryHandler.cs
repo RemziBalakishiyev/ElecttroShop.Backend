@@ -55,3 +55,6 @@ public class GetChartDataQueryHandler : IRequestHandler<GetChartDataQuery, Resul
 
 
 
+
+
+

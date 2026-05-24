@@ -15,3 +15,6 @@ public class SetProductAsBannerCommandValidator : AbstractValidator<SetProductAs
 
 
 
+
+
+

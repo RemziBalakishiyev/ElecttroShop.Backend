@@ -1,3 +1,4 @@
+# PostgreSQL for ElectroShop. Port 5434 avoids conflict with other stacks on 5432 (e.g. catalogdb).
 services:
   postgres:
     image: postgres:16-alpine
@@ -7,7 +8,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

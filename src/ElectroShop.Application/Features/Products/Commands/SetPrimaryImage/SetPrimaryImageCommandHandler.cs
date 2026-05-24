@@ -7,16 +7,13 @@ namespace ElectroShop.Application.Features.Products.Commands.SetPrimaryImage;
 public class SetPrimaryImageCommandHandler 
     : IRequestHandler<SetPrimaryImageCommand, Result>
 {
-    private readonly IWriteRepository<Domain.Entities.Product> _productRepository;
     private readonly IProductQueryRepository _productQueryRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public SetPrimaryImageCommandHandler(
-        IWriteRepository<Domain.Entities.Product> productRepository,
         IProductQueryRepository productQueryRepository,
         IUnitOfWork unitOfWork)
     {
-        _productRepository = productRepository;
         _productQueryRepository = productQueryRepository;
         _unitOfWork = unitOfWork;
     }
@@ -34,9 +31,11 @@ public class SetPrimaryImageCommandHandler
             return Result.Failure(DomainErrors.Product.NotFound(request.ProductId));
         }
 
+        await _productQueryRepository.EnsureProductImagesAttachedAsync(product, cancellationToken);
+
         product.SetPrimaryImage(request.ImageId);
 
-        _productRepository.Update(product);
+        await _unitOfWork.PrepareProductAggregateForSaveAsync(product.Id, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

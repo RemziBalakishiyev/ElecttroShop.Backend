@@ -1,23 +1,25 @@
 using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common.Results;
+using ElectroShop.Domain.Exceptions;
 using MediatR;
 
 namespace ElectroShop.Application.Features.Products.Commands.DeleteProductVariant;
 
+/// <summary>
+/// DeleteProductVariantCommandHandler - DDD Aggregate pattern
+/// Variant yalnız Product aggregate vasitəsilə silinir (deaktiv edilir)
+/// </summary>
 public class DeleteProductVariantCommandHandler 
     : IRequestHandler<DeleteProductVariantCommand, Result>
 {
-    private readonly IWriteRepository<Domain.Entities.ProductVariant> _variantRepository;
-    private readonly IQueryRepository<Domain.Entities.ProductVariant> _variantQueryRepository;
+    private readonly IProductQueryRepository _productQueryRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public DeleteProductVariantCommandHandler(
-        IWriteRepository<Domain.Entities.ProductVariant> variantRepository,
-        IQueryRepository<Domain.Entities.ProductVariant> variantQueryRepository,
+        IProductQueryRepository productQueryRepository,
         IUnitOfWork unitOfWork)
     {
-        _variantRepository = variantRepository;
-        _variantQueryRepository = variantQueryRepository;
+        _productQueryRepository = productQueryRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -25,15 +27,39 @@ public class DeleteProductVariantCommandHandler
         DeleteProductVariantCommand request,
         CancellationToken cancellationToken)
     {
-        var variant = await _variantQueryRepository.GetByIdAsync(request.VariantId, cancellationToken);
-        if (variant is null || variant.ProductId != request.ProductId)
+        // Product aggregate load (tracked) - variantlar daxil olmaqla
+        var product = await _productQueryRepository.GetProductWithImagesAndVariantsAsync(
+            request.ProductId, 
+            cancellationToken);
+        
+        if (product is null)
+        {
+            return Result.Failure(DomainErrors.Product.NotFound(request.ProductId));
+        }
+
+        // Aggregate metod vasitəsilə variant sil (deaktiv et)
+        try
+        {
+            product.RemoveVariant(request.VariantId);
+        }
+        catch (InvalidOperationException)
         {
             return Result.Failure(DomainErrors.Product.NotFound(request.VariantId));
         }
 
-        variant.Deactivate();
-        _variantRepository.Update(variant);
+        // Tracked entity üçün Update() çağırmaq QADAĞANDIR
+        try
+        {
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (ConcurrencyException ex)
+        {
+            return Result.Failure(
+                Error.Conflict(
+                    "Product.ConcurrencyConflict",
+                    ex.Message
+                ));
+        }
 
         return Result.Success();
     }

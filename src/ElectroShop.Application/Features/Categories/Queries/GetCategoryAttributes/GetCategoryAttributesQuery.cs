@@ -8,3 +8,6 @@ public record GetCategoryAttributesQuery(Guid CategoryId) : IRequest<Result<List
 
 
 
+
+
+

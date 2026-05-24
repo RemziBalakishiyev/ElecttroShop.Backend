@@ -28,7 +28,7 @@ public class CustomerConfiguration : BaseCommonEntityConfiguration<Customer>
 
         builder.HasIndex(c => c.Phone)
             .IsUnique()
-            .HasFilter("\"Phone\" IS NOT NULL");
+            .HasFilter("[Phone] IS NOT NULL");
 
         builder.Property(c => c.PasswordHash)
             .HasMaxLength(500);

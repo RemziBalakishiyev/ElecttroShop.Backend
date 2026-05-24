@@ -21,6 +21,11 @@ public record UpdateProductCommand : IRequest<Result<ProductDto>>
     public int Stock { get; init; }
     public List<Guid> ImageIds { get; init; } = [];
     public List<UpdateProductVariantDto> Variants { get; init; } = [];
+    /// <summary>
+    /// RowVersion - Optimistic Concurrency Control üçün
+    /// Client-dən gəlir, DB-dəki RowVersion ilə müqayisə edilir
+    /// </summary>
+    public uint RowVersion { get; init; }
 }
 
 public record UpdateProductVariantDto

@@ -36,6 +36,11 @@ public record ProductDto
     public List<ProductVariantDto> Variants { get; init; } = [];
     public DateTime CreatedAt { get; init; }
     public DateTime? UpdatedAt { get; init; }
+    /// <summary>
+    /// RowVersion - Optimistic Concurrency Control üçün
+    /// Client-dən gəlir və update zamanı yenidən set edilir
+    /// </summary>
+    public uint RowVersion { get; init; }
 }
 
 /// <summary>

@@ -1,4 +1,6 @@
 using ElectroShop.Application.Common.Results;
+using ElectroShop.Domain.Exceptions;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Text.Json;
 
@@ -57,6 +59,13 @@ public class ExceptionHandlingMiddleware
             result = Result.Failure(Error.Unauthorized(
                 "Authentication.Unauthorized",
                 "Bu əməliyyat üçün icazəniz yoxdur."));
+        }
+        else if (exception is ConcurrencyException or DbUpdateConcurrencyException)
+        {
+            code = HttpStatusCode.Conflict;
+            result = Result.Failure(Error.Conflict(
+                "Entity.ConcurrencyConflict",
+                "Məlumat başqa istifadəçi tərəfindən dəyişdirilib. Zəhmət olmasa yenidən yükləyin."));
         }
 
         var response = context.Response;

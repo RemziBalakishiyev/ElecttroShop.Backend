@@ -2,31 +2,36 @@ using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
 using ElectroShop.Domain.Entities;
+using ElectroShop.Domain.Exceptions;
 using MediatR;
 using System.Text.Json;
 
 namespace ElectroShop.Application.Features.Products.Commands.UpdateProduct;
 
+/// <summary>
+/// UpdateProductCommandHandler - DDD və EF Core Optimistic Concurrency best practices
+/// 
+/// PRINCIPLES:
+/// 1. Product aggregate root kimi davranır
+/// 2. Child entity-lər (ProductVariant, ProductImage) yalnız aggregate metodları vasitəsilə dəyişdirilir
+/// 3. Tracked entity üçün Update() çağırılmır - ChangeTracker avtomatik işləyir
+/// 4. RowVersion manual yoxlanılır (PostgreSQL xmin SaveChanges-dən sonra yenilənir)
+/// 5. DbUpdateConcurrencyException xüsusi olaraq tutulur
+/// </summary>
 public class UpdateProductCommandHandler
     : IRequestHandler<UpdateProductCommand, Result<ProductDto>>
 {
-    private readonly IWriteRepository<Product> _productRepository;
-    private readonly IWriteRepository<ProductVariant> _variantRepository;
     private readonly IProductQueryRepository _productQueryRepository;
     private readonly IQueryRepository<Category> _categoryRepository;
     private readonly IQueryRepository<Brand> _brandRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public UpdateProductCommandHandler(
-        IWriteRepository<Product> productRepository,
-        IWriteRepository<ProductVariant> variantRepository,
         IProductQueryRepository productQueryRepository,
         IQueryRepository<Category> categoryRepository,
         IQueryRepository<Brand> brandRepository,
         IUnitOfWork unitOfWork)
     {
-        _productRepository = productRepository;
-        _variantRepository = variantRepository;
         _productQueryRepository = productQueryRepository;
         _categoryRepository = categoryRepository;
         _brandRepository = brandRepository;
@@ -37,14 +42,18 @@ public class UpdateProductCommandHandler
         UpdateProductCommand request,
         CancellationToken cancellationToken)
     {
-        // 1️⃣ Product load (tracked)
         var product = await _productQueryRepository
             .GetProductWithImagesAndVariantsAsync(request.Id, cancellationToken);
 
         if (product is null)
             return DomainErrors.Product.NotFound(request.Id);
 
-        // 2️⃣ Navigation entities
+        await _productQueryRepository.EnsureProductImagesAttachedAsync(product, cancellationToken);
+
+        // RowVersion client-dən yalnız informasiya üçündür — /images kimi aralıq
+        // API çağırışları xmin-i dəyişir; manual pre-check false-positive 409 yaradır.
+        // Real concurrency SaveChanges zamanı EF xmin ilə yoxlanılır.
+
         var category = await _categoryRepository.GetByIdAsync(request.CategoryId, cancellationToken);
         var brand = await _brandRepository.GetByIdAsync(request.BrandId, cancellationToken);
 
@@ -52,8 +61,7 @@ public class UpdateProductCommandHandler
             return Result.Failure<ProductDto>(
                 Error.Validation("Product.InvalidRelation", "Category or Brand not found"));
 
-        // 3️⃣ Core product update (Domain method)
-        product.Update(
+        product.UpdateDetails(
             name: request.Name,
             description: request.Description,
             price: request.Price,
@@ -64,103 +72,38 @@ public class UpdateProductCommandHandler
             stock: request.Stock
         );
 
-        // ===================== IMAGES (SAFE DIFF UPDATE) =====================
+        product.SyncImages(request.ImageIds);
 
-        var existingImageIds = product.ProductImages
-            .Select(x => x.ImageId)
-            .ToList();
+        var variantData = request.Variants.Select(v => (
+            Id: v.Id,
+            AttributesJson: JsonSerializer.Serialize(v.Attributes),
+            ImageId: v.ImageId,
+            IsActive: v.IsActive
+        )).ToList();
 
-        // Remove
-        var imagesToRemove = product.ProductImages
-            .Where(x => !request.ImageIds.Contains(x.ImageId))
-            .ToList();
+        product.SyncVariants(variantData);
 
-        foreach (var image in imagesToRemove)
-        {
-            product.RemoveImage(image.ImageId);
-        }
-
-        // Add
-        foreach (var imageId in request.ImageIds)
-        {
-            if (!existingImageIds.Contains(imageId))
-            {
-                var order = request.ImageIds.IndexOf(imageId);
-                var isPrimary = order == 0;
-                product.AddImage(imageId, order, isPrimary);
-            }
-        }
-
-        // ===================== VARIANTS =====================
-
-        // Add new variants
-        foreach (var variantDto in request.Variants.Where(v => !v.Id.HasValue))
-        {
-            var attributesJson = JsonSerializer.Serialize(variantDto.Attributes);
-
-            var variant = ProductVariant.Create(
-                product.Id,
-                attributesJson,
-                variantDto.ImageId
-            );
-
-            if (!variantDto.IsActive)
-                variant.Deactivate();
-
-            await _variantRepository.AddAsync(variant, cancellationToken);
-        }
-
-        // Update existing variants
-        foreach (var variantDto in request.Variants.Where(v => v.Id.HasValue))
-        {
-            var variant = product.ProductVariants
-                .FirstOrDefault(x => x.Id == variantDto.Id!.Value);
-
-            if (variant is null)
-                continue;
-
-            var attributesJson = JsonSerializer.Serialize(variantDto.Attributes);
-
-            variant.Update(attributesJson, variantDto.ImageId);
-
-            if (variantDto.IsActive)
-                variant.Activate();
-            else
-                variant.Deactivate();
-
-            _variantRepository.Update(variant);
-        }
-
-        // Deactivate removed variants
         var activeVariantIds = request.Variants
             .Where(v => v.Id.HasValue)
             .Select(v => v.Id!.Value)
             .ToList();
 
-        foreach (var variant in product.ProductVariants
-                     .Where(v => !activeVariantIds.Contains(v.Id)))
-        {
-            variant.Deactivate();
-            _variantRepository.Update(variant);
-        }
+        product.DeactivateMissingVariants(activeVariantIds);
 
-        // ===================== SAVE (CONCURRENCY SAFE) =====================
+        await _unitOfWork.PrepareProductAggregateForSaveAsync(product.Id, cancellationToken);
 
         try
         {
-            _productRepository.Update(product);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        catch (Exception)
+        catch (ConcurrencyException)
         {
-            return Result.Failure<ProductDto>(
-                Error.Conflict(
-                    "Product.ConcurrencyError",
-                    "Məhsul başqa istifadəçi tərəfindən dəyişdirilib. Yenidən cəhd edin."
+                return Result.Failure<ProductDto>(
+                Error.Conflict( 
+                    "Product.ConcurrencyConflict",
+                    "The data has been modified by another user. Please reload and try again."
                 ));
         }
-
-        // ===================== DTO =====================
 
         var dto = new ProductDto
         {
@@ -178,7 +121,8 @@ public class UpdateProductCommandHandler
             Stock = product.Stock,
             IsActive = product.IsActive,
             CreatedAt = product.CreatedAtUtc,
-            UpdatedAt = product.UpdatedAtUtc
+            UpdatedAt = product.UpdatedAtUtc,
+            RowVersion = product.RowVersion
         };
 
         return Result.Success(dto);

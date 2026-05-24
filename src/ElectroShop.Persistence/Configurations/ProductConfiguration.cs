@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ElectroShop.Persistence.Configurations;
 
-public class ProductConfiguration : BaseCommonEntityConfiguration<Product>
+public class ProductConfiguration : AggregateRootConfiguration<Product>
 {
     public override void Configure(EntityTypeBuilder<Product> builder)
     {
@@ -67,13 +67,12 @@ public class ProductConfiguration : BaseCommonEntityConfiguration<Product>
         builder.Property(p => p.DisplayOrder)
             .IsRequired(false);
 
-        // Indexes
-        // PostgreSQL syntax for filtered indexes
+        // Filtered indexes (SQL Server)
         builder.HasIndex(p => p.IsBanner)
-            .HasFilter("\"IsBanner\" = true");
+            .HasFilter("[IsBanner] = 1");
 
         builder.HasIndex(p => new { p.IsFeatured, p.DisplayOrder })
-            .HasFilter("\"IsFeatured\" = true");
+            .HasFilter("[IsFeatured] = 1");
 
         // Relationships
         builder.HasOne(p => p.Category)

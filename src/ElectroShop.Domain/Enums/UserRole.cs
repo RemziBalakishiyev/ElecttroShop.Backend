@@ -3,6 +3,8 @@ namespace ElectroShop.Domain.Enums;
 public enum UserRole
 {
     Admin = 1,
-    Agent = 2
+    Agent = 2,
+    ForwardingFreight = 3,
+    Shipper = 4
 }
 

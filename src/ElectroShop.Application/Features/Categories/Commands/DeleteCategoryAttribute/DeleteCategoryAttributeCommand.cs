@@ -7,3 +7,6 @@ public record DeleteCategoryAttributeCommand(Guid Id) : IRequest<Result>;
 
 
 
+
+
+

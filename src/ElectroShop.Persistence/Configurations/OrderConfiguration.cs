@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ElectroShop.Persistence.Configurations;
 
-public class OrderConfiguration : BaseCommonEntityConfiguration<Order>
+public class OrderConfiguration : AggregateRootConfiguration<Order>
 {
     public override void Configure(EntityTypeBuilder<Order> builder)
     {

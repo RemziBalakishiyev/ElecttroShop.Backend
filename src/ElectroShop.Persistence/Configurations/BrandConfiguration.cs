@@ -27,7 +27,7 @@ public class BrandConfiguration : BaseCommonEntityConfiguration<Brand>
             .IsRequired(false);
 
         builder.HasIndex(b => new { b.IsPromotional, b.DisplayOrder })
-            .HasFilter("\"IsPromotional\" = true");
+            .HasFilter("[IsPromotional] = 1");
     }
 }
 

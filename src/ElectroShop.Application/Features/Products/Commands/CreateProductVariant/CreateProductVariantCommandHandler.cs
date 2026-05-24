@@ -3,27 +3,29 @@ using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
 using ElectroShop.Application.Services;
 using ElectroShop.Domain.Entities;
+using ElectroShop.Domain.Exceptions;
 using MediatR;
 using System.Text.Json;
 
 namespace ElectroShop.Application.Features.Products.Commands.CreateProductVariant;
 
+/// <summary>
+/// CreateProductVariantCommandHandler - DDD Aggregate pattern
+/// Variant yalnız Product aggregate vasitəsilə əlavə edilir
+/// </summary>
 public class CreateProductVariantCommandHandler 
     : IRequestHandler<CreateProductVariantCommand, Result<ProductVariantDto>>
 {
-    private readonly IWriteRepository<ProductVariant> _variantRepository;
-    private readonly IQueryRepository<Product> _productRepository;
+    private readonly IProductQueryRepository _productQueryRepository;
     private readonly IDiscountCalculationService _discountCalculationService;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateProductVariantCommandHandler(
-        IWriteRepository<ProductVariant> variantRepository,
-        IQueryRepository<Product> productRepository,
+        IProductQueryRepository productQueryRepository,
         IDiscountCalculationService discountCalculationService,
         IUnitOfWork unitOfWork)
     {
-        _variantRepository = variantRepository;
-        _productRepository = productRepository;
+        _productQueryRepository = productQueryRepository;
         _discountCalculationService = discountCalculationService;
         _unitOfWork = unitOfWork;
     }
@@ -32,21 +34,33 @@ public class CreateProductVariantCommandHandler
         CreateProductVariantCommand request,
         CancellationToken cancellationToken)
     {
-        var product = await _productRepository.GetByIdAsync(request.ProductId, cancellationToken);
+        // Product aggregate load (tracked)
+        var product = await _productQueryRepository.GetProductWithImagesAndVariantsAsync(
+            request.ProductId, 
+            cancellationToken);
+        
         if (product is null)
         {
             return DomainErrors.Product.NotFound(request.ProductId);
         }
 
+        // Aggregate metod vasitəsilə variant əlavə et
         var attributesJson = JsonSerializer.Serialize(request.Attributes);
-        var variant = ProductVariant.Create(
-            request.ProductId,
-            attributesJson,
-            request.ImageId
-        );
+        var variant = product.AddVariant(attributesJson, request.ImageId);
 
-        await _variantRepository.AddAsync(variant, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        // Tracked entity üçün Update() çağırmaq QADAĞANDIR
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (ConcurrencyException ex)
+        {
+            return Result.Failure<ProductVariantDto>(
+                Error.Conflict(
+                    "Product.ConcurrencyConflict",
+                    ex.Message
+                ));
+        }
 
         // Endirim hesabla (Product-dan)
         var discountPercent = await _discountCalculationService.CalculateFinalDiscountPercentAsync(

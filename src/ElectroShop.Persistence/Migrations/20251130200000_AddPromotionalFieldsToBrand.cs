@@ -50,3 +50,6 @@ namespace ElectroShop.Persistence.Migrations
 
 
 
+
+
+

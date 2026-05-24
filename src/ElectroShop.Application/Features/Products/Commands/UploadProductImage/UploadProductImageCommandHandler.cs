@@ -14,24 +14,18 @@ namespace ElectroShop.Application.Features.Products.Commands.UploadProductImage;
 /// </summary>
 public class UploadProductImageCommandHandler : IRequestHandler<UploadProductImageCommand, Result<ProductDto>>
 {
-    private readonly IQueryRepository<Product> _productQueryRepository;
-    private readonly IWriteRepository<Product> _productWriteRepository;
-    private readonly IProductQueryRepository _productQueryRepositoryWithDetails;
+    private readonly IProductQueryRepository _productQueryRepository;
     private readonly IImageStorage _imageStorage;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IImageUploadContext _imageUploadContext;
 
     public UploadProductImageCommandHandler(
-        IQueryRepository<Product> productQueryRepository,
-        IWriteRepository<Product> productWriteRepository,
-        IProductQueryRepository productQueryRepositoryWithDetails,
+        IProductQueryRepository productQueryRepository,
         IImageStorage imageStorage,
         IUnitOfWork unitOfWork,
         IImageUploadContext imageUploadContext)
     {
         _productQueryRepository = productQueryRepository;
-        _productWriteRepository = productWriteRepository;
-        _productQueryRepositoryWithDetails = productQueryRepositoryWithDetails;
         _imageStorage = imageStorage;
         _unitOfWork = unitOfWork;
         _imageUploadContext = imageUploadContext;
@@ -47,20 +41,17 @@ public class UploadProductImageCommandHandler : IRequestHandler<UploadProductIma
                 Error.Validation("ImageStream.Required", "Şəkil stream-i tələb olunur"));
         }
 
-        var product = await _productQueryRepositoryWithDetails.GetProductWithImagesAndVariantsAsync(
-            request.ProductId, 
+        var product = await _productQueryRepository.GetProductWithImagesAndVariantsAsync(
+            request.ProductId,
             cancellationToken);
-        if (product is null)
-        {
-            return DomainErrors.Product.NotFound(request.ProductId);
-        }
 
-        // Köhnə primary şəklini deaktiv et (silin, yalnız IsPrimary-ni false et)
-        var existingPrimaryImage = product.ProductImages.FirstOrDefault(pi => pi.IsPrimary);
-        if (existingPrimaryImage != null)
-        {
-            existingPrimaryImage.RemoveAsPrimary();
-        }
+        if (product is null)
+            return DomainErrors.Product.NotFound(request.ProductId);
+
+        await _productQueryRepository.EnsureProductImagesAttachedAsync(product, cancellationToken);
+
+        foreach (var image in product.ProductImages.Where(pi => pi.IsPrimary))
+            image.RemoveAsPrimary();
 
         var imageId = await _imageStorage.UploadImageAsync(
             _imageUploadContext.ImageStream,
@@ -68,23 +59,22 @@ public class UploadProductImageCommandHandler : IRequestHandler<UploadProductIma
             request.ContentType,
             cancellationToken);
 
-        // Yeni şəkli primary olaraq əlavə et
-        var displayOrder = product.ProductImages.Any() 
-            ? product.ProductImages.Max(pi => pi.DisplayOrder) + 1 
+        var displayOrder = product.ProductImages.Any()
+            ? product.ProductImages.Max(pi => pi.DisplayOrder) + 1
             : 0;
+
         product.AddImage(imageId, displayOrder, isPrimary: true);
-        
-        _productWriteRepository.Update(product);
+
+        await _unitOfWork.PrepareProductAggregateForSaveAsync(product.Id, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var updatedProduct = await _productQueryRepositoryWithDetails.GetProductWithDetailsAsync(request.ProductId, cancellationToken);
-        if (updatedProduct is null)
-        {
-            return DomainErrors.Product.NotFound(request.ProductId);
-        }
+        var updatedProduct = await _productQueryRepository.GetProductWithDetailsAsync(
+            request.ProductId,
+            cancellationToken);
 
-        var productDto = updatedProduct.Adapt<ProductDto>();
-        return Result.Success(productDto);
+        if (updatedProduct is null)
+            return DomainErrors.Product.NotFound(request.ProductId);
+
+        return Result.Success(updatedProduct.Adapt<ProductDto>());
     }
 }
-

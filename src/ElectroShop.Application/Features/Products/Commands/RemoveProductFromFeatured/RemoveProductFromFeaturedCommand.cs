@@ -8,3 +8,6 @@ public record RemoveProductFromFeaturedCommand(Guid ProductId) : IRequest<Result
 
 
 
+
+
+

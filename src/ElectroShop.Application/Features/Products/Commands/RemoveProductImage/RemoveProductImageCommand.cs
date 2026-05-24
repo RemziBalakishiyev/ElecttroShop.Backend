@@ -7,3 +7,6 @@ public record RemoveProductImageCommand(Guid ProductId, Guid ImageId) : IRequest
 
 
 
+
+
+

@@ -8,3 +8,6 @@ public record SetProductAsBannerCommand(Guid ProductId) : IRequest<Result>;
 
 
 
+
+
+

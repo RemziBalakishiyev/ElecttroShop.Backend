@@ -3,30 +3,29 @@ using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
 using ElectroShop.Application.Services;
 using ElectroShop.Domain.Entities;
+using ElectroShop.Domain.Exceptions;
 using MediatR;
 using System.Text.Json;
 
 namespace ElectroShop.Application.Features.Products.Commands.UpdateProductVariant;
 
+/// <summary>
+/// UpdateProductVariantCommandHandler - DDD Aggregate pattern
+/// Variant yalnız Product aggregate vasitəsilə yenilənir
+/// </summary>
 public class UpdateProductVariantCommandHandler 
     : IRequestHandler<UpdateProductVariantCommand, Result<ProductVariantDto>>
 {
-    private readonly IWriteRepository<ProductVariant> _variantRepository;
-    private readonly IQueryRepository<ProductVariant> _variantQueryRepository;
-    private readonly IQueryRepository<Product> _productRepository;
+    private readonly IProductQueryRepository _productQueryRepository;
     private readonly IDiscountCalculationService _discountCalculationService;
     private readonly IUnitOfWork _unitOfWork;
 
     public UpdateProductVariantCommandHandler(
-        IWriteRepository<ProductVariant> variantRepository,
-        IQueryRepository<ProductVariant> variantQueryRepository,
-        IQueryRepository<Product> productRepository,
+        IProductQueryRepository productQueryRepository,
         IDiscountCalculationService discountCalculationService,
         IUnitOfWork unitOfWork)
     {
-        _variantRepository = variantRepository;
-        _variantQueryRepository = variantQueryRepository;
-        _productRepository = productRepository;
+        _productQueryRepository = productQueryRepository;
         _discountCalculationService = discountCalculationService;
         _unitOfWork = unitOfWork;
     }
@@ -35,35 +34,53 @@ public class UpdateProductVariantCommandHandler
         UpdateProductVariantCommand request,
         CancellationToken cancellationToken)
     {
-        var variant = await _variantQueryRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (variant is null)
-        {
-            return DomainErrors.Product.NotFound(request.Id);
-        }
-
-        var product = await _productRepository.GetByIdAsync(request.ProductId, cancellationToken);
+        // Product aggregate load (tracked) - variantlar daxil olmaqla
+        var product = await _productQueryRepository.GetProductWithImagesAndVariantsAsync(
+            request.ProductId, 
+            cancellationToken);
+        
         if (product is null)
         {
             return DomainErrors.Product.NotFound(request.ProductId);
         }
 
+        // Variantın mövcud olduğunu yoxla
+        var variant = product.ProductVariants.FirstOrDefault(v => v.Id == request.Id);
+        if (variant is null)
+        {
+            return DomainErrors.Product.NotFound(request.Id);
+        }
+
+        // Aggregate metod vasitəsilə variant yenilə
         var attributesJson = JsonSerializer.Serialize(request.Attributes);
-        variant.Update(
+        product.UpdateVariant(
+            request.Id,
             attributesJson,
-            request.ImageId
+            request.ImageId,
+            request.IsActive
         );
 
-        if (request.IsActive && !variant.IsActive)
+        // Tracked entity üçün Update() çağırmaq QADAĞANDIR
+        try
         {
-            variant.Activate();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        else if (!request.IsActive && variant.IsActive)
+        catch (ConcurrencyException ex)
         {
-            variant.Deactivate();
+            return Result.Failure<ProductVariantDto>(
+                Error.Conflict(
+                    "Product.ConcurrencyConflict",
+                    ex.Message
+                ));
         }
 
-        _variantRepository.Update(variant);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        // Variantı yenidən tap (update-dən sonra)
+        variant = product.ProductVariants.FirstOrDefault(v => v.Id == request.Id);
+        if (variant == null)
+        {
+            return Result.Failure<ProductVariantDto>(
+                DomainErrors.Product.NotFound(request.Id));
+        }
 
         // Endirim hesabla (Product-dan)
         var discountPercent = await _discountCalculationService.CalculateFinalDiscountPercentAsync(

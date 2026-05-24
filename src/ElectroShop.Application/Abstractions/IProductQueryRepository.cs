@@ -52,6 +52,11 @@ public interface IProductQueryRepository : IQueryRepository<Product>
     Task<Product?> GetProductWithImagesAndVariantsAsync(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// DB-də olan ProductImage-ləri tracked collection-a əlavə edir (Include cartesian bug fix)
+    /// </summary>
+    Task EnsureProductImagesAttachedAsync(Product product, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// ProductImages-i silir (Update üçün - EF Core tracking)
     /// </summary>
     Task DeleteProductImagesByIdsAsync(List<Guid> imageIds, CancellationToken cancellationToken = default);

@@ -11,18 +11,15 @@ namespace ElectroShop.Application.Features.Products.Commands.DeleteProduct;
 /// </summary>
 public class DeleteProductCommandHandler : IRequestHandler<DeleteProductCommand, Result>
 {
-    private readonly IWriteRepository<Product> _productRepository;
     private readonly IQueryRepository<Product> _productQueryRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public DeleteProductCommandHandler(
-        IWriteRepository<Product> productRepository,
         IQueryRepository<Product> productQueryRepository,
-        IUnitOfWork _unitOfWork)
+        IUnitOfWork unitOfWork)
     {
-        _productRepository = productRepository;
         _productQueryRepository = productQueryRepository;
-        this._unitOfWork = _unitOfWork;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result> Handle(
@@ -42,8 +39,7 @@ public class DeleteProductCommandHandler : IRequestHandler<DeleteProductCommand,
         // Məhsulu deaktiv et
         product.Deactivate();
 
-        // Dəyişiklikləri saxla
-        _productRepository.Update(product);
+        // Tracked entity üçün Update() çağırmaq QADAĞANDIR
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

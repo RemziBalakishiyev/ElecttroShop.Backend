@@ -11,3 +11,6 @@ public record GetDiscountByIdQuery(Guid Id) : IRequest<Result<DiscountDto>>;
 
 
 
+
+
+

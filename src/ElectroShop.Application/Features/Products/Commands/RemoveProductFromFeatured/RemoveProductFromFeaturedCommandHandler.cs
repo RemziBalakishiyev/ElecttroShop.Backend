@@ -41,3 +41,6 @@ public class RemoveProductFromFeaturedCommandHandler : IRequestHandler<RemovePro
 
 
 
+
+
+

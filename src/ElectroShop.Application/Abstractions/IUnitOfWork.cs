@@ -24,6 +24,16 @@ public interface IUnitOfWork : IDisposable
     /// Transaction'ı rollback eder
     /// </summary>
     Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Entity-ni bazadan yenidən yükləyir (Concurrency Retry üçün)
+    /// </summary>
+    Task ReloadAsync(object entity, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Product aggregate child entity-lərinin EF state-ini SaveChanges-dən əvvəl düzəldir
+    /// </summary>
+    Task PrepareProductAggregateForSaveAsync(Guid productId, CancellationToken cancellationToken = default);
 }
 
 

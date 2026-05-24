@@ -105,9 +105,26 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
     public async Task<Product?> GetProductWithImagesAndVariantsAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _dbSet
+            .AsSplitQuery()
             .Include(p => p.ProductImages.OrderBy(pi => pi.DisplayOrder))
             .Include(p => p.ProductVariants)
             .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, cancellationToken);
+    }
+
+    public async Task EnsureProductImagesAttachedAsync(Product product, CancellationToken cancellationToken = default)
+    {
+        var trackedIds = product.ProductImages.Select(pi => pi.Id).ToHashSet();
+        var productImageDbSet = _context.Set<ProductImage>();
+
+        var missingImages = await productImageDbSet
+            .Where(pi => pi.ProductId == product.Id && !trackedIds.Contains(pi.Id))
+            .ToListAsync(cancellationToken);
+
+        foreach (var image in missingImages)
+        {
+            productImageDbSet.Attach(image);
+            product.ProductImages.Add(image);
+        }
     }
 
     public async Task DeleteProductImagesByIdsAsync(List<Guid> imageIds, CancellationToken cancellationToken = default)
