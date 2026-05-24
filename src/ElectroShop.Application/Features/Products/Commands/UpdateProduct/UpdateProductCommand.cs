@@ -20,19 +20,12 @@ public record UpdateProductCommand : IRequest<Result<ProductDto>>
     public decimal VatRate { get; init; } = 0.18m;
     public int Stock { get; init; }
     public List<Guid> ImageIds { get; init; } = [];
-    public List<UpdateProductVariantDto> Variants { get; init; } = [];
+    public List<InlineProductAttributeDto>? InlineAttributes { get; init; }
+    public List<ProductVariantRequestDto> Variants { get; init; } = [];
     /// <summary>
     /// RowVersion - Optimistic Concurrency Control üçün
     /// Client-dən gəlir, DB-dəki RowVersion ilə müqayisə edilir
     /// </summary>
     public uint RowVersion { get; init; }
-}
-
-public record UpdateProductVariantDto
-{
-    public Guid? Id { get; init; } // Null olarsa yeni variant yaradılacaq
-    public Guid? ImageId { get; init; }
-    public Dictionary<string, string> Attributes { get; init; } = new();
-    public bool IsActive { get; init; } = true;
 }
 

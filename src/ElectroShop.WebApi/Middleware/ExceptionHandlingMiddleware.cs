@@ -1,5 +1,6 @@
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Domain.Exceptions;
+using ElectroShop.Persistence.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Text.Json;
@@ -66,6 +67,12 @@ public class ExceptionHandlingMiddleware
             result = Result.Failure(Error.Conflict(
                 "Entity.ConcurrencyConflict",
                 "Məlumat başqa istifadəçi tərəfindən dəyişdirilib. Zəhmət olmasa yenidən yükləyin."));
+        }
+        else if (exception is DbUpdateException dbUpdateEx
+                 && DatabaseExceptionMapper.TryMap(dbUpdateEx) is { } mappedError)
+        {
+            code = HttpStatusCode.Conflict;
+            result = Result.Failure(mappedError);
         }
 
         var response = context.Response;

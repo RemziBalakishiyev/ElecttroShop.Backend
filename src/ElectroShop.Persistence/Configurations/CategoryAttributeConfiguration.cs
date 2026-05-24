@@ -43,6 +43,16 @@ public class CategoryAttributeConfiguration : BaseCommonEntityConfiguration<Cate
             .HasForeignKey(cav => cav.CategoryAttributeId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Normalized columns for PostgreSQL unique constraints (stored generated)
+        builder.Property<string>("NormalizedAttributeType")
+            .HasMaxLength(50)
+            .HasComputedColumnSql("LOWER(TRIM(\"AttributeType\"))", stored: true);
+
+        builder.HasIndex("CategoryId", "NormalizedAttributeType")
+            .IsUnique()
+            .HasDatabaseName("UX_CategoryAttributes_CategoryId_NormalizedAttributeType")
+            .HasFilter("\"IsDeleted\" = false");
+
         // Indexes
         builder.HasIndex(ca => new { ca.CategoryId, ca.DisplayOrder });
         builder.HasIndex(ca => ca.AttributeType);
@@ -76,6 +86,15 @@ public class CategoryAttributeValueConfiguration : BaseEntityConfiguration<Categ
             .WithMany(ca => ca.Values)
             .HasForeignKey(cav => cav.CategoryAttributeId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Case-sensitive trimmed value uniqueness (16GB != 16gb — matches application ValueEquals)
+        builder.Property<string>("NormalizedValue")
+            .HasMaxLength(100)
+            .HasComputedColumnSql("TRIM(\"Value\")", stored: true);
+
+        builder.HasIndex("CategoryAttributeId", "NormalizedValue")
+            .IsUnique()
+            .HasDatabaseName("UX_CategoryAttributeValues_CategoryAttributeId_NormalizedValue");
 
         // Indexes
         builder.HasIndex(cav => new { cav.CategoryAttributeId, cav.DisplayOrder });

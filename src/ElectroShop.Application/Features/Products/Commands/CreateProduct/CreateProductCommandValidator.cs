@@ -1,4 +1,6 @@
 using ElectroShop.Application.Abstractions;
+using ElectroShop.Application.Common;
+using ElectroShop.Application.DTOs;
 using ElectroShop.Domain.Entities;
 using ElectroShop.Domain.ValueObjects;
 using FluentValidation;
@@ -25,7 +27,6 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
         _categoryRepository = categoryRepository;
         _brandRepository = brandRepository;
 
-        // Əsas validasiyalar
         RuleFor(x => x.Name)
             .NotEmpty()
             .WithMessage("Məhsulun adı boş ola bilməz")
@@ -84,6 +85,69 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
         RuleFor(x => x.Stock)
             .GreaterThanOrEqualTo(0)
             .WithMessage("Stok miqdarı mənfi ola bilməz");
+
+        RuleForEach(x => x.InlineAttributes)
+            .ChildRules(inline =>
+            {
+                inline.RuleFor(a => a.Name)
+                    .NotEmpty()
+                    .WithMessage("Attribute adı boş ola bilməz");
+
+                inline.RuleFor(a => a.AttributeType)
+                    .NotEmpty()
+                    .WithMessage("AttributeType boş ola bilməz");
+            })
+            .When(x => x.InlineAttributes is not null);
+
+        RuleFor(x => x.InlineAttributes)
+            .Must(NotHaveDuplicateAttributeTypes!)
+            .WithMessage("Inline attribute siyahısında eyni AttributeType təkrarlanır")
+            .When(x => x.InlineAttributes is not null);
+
+        RuleForEach(x => x.InlineAttributes!)
+            .Must(inline => NotHaveDuplicateValues(inline.Values))
+            .WithMessage("Inline attribute dəyərləri təkrarlanır")
+            .When(x => x.InlineAttributes is not null);
+
+        RuleForEach(x => x.Variants)
+            .Must(v => v.Attributes is not null && v.Attributes.Count > 0)
+            .WithMessage("Variant attribute-ları boş ola bilməz")
+            .When(x => x.Variants.Count > 0);
+    }
+
+    private static bool NotHaveDuplicateAttributeTypes(IReadOnlyList<InlineProductAttributeDto> inlineAttributes)
+    {
+        if (inlineAttributes.Count == 0)
+            return true;
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var inline in inlineAttributes)
+        {
+            var key = AttributeTypeNormalizer.Normalize(inline.AttributeType);
+            if (string.IsNullOrEmpty(key))
+                continue;
+
+            if (!seen.Add(key))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static bool NotHaveDuplicateValues(IReadOnlyList<InlineProductAttributeValueDto> values)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var value in values)
+        {
+            var normalized = AttributeTypeNormalizer.NormalizeValue(value.Value);
+            if (string.IsNullOrEmpty(normalized))
+                continue;
+
+            if (!seen.Add(normalized))
+                return false;
+        }
+
+        return true;
     }
 
     private async Task<bool> BeUniqueSku(string sku, CancellationToken cancellationToken)
@@ -106,4 +170,3 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
         return await _brandRepository.AnyAsync(b => b.Id == brandId, cancellationToken);
     }
 }
-

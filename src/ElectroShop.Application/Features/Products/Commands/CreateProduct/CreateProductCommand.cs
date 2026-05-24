@@ -20,12 +20,7 @@ public record CreateProductCommand : IRequest<Result<ProductDto>>
     public decimal VatRate { get; init; } = 0.18m;
     public int Stock { get; init; }
     public List<Guid> ImageIds { get; init; } = [];
-    public List<CreateProductVariantDto> Variants { get; init; } = [];
-}
-
-public record CreateProductVariantDto
-{
-    public Guid? ImageId { get; init; }
-    public Dictionary<string, string> Attributes { get; init; } = new();
+    public List<InlineProductAttributeDto>? InlineAttributes { get; init; }
+    public List<ProductVariantRequestDto> Variants { get; init; } = [];
 }
 

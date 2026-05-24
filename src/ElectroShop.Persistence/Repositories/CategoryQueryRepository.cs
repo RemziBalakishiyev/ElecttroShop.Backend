@@ -113,6 +113,17 @@ public class CategoryQueryRepository : QueryRepository<Category>, ICategoryQuery
             .FirstOrDefaultAsync(cav => cav.Id == valueId, cancellationToken);
     }
 
+    public async Task<List<CategoryAttribute>> GetCategoryAttributesForUpdateAsync(
+        Guid categoryId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.CategoryAttributes
+            .Include(ca => ca.Values.OrderBy(cav => cav.DisplayOrder))
+            .Where(ca => ca.CategoryId == categoryId && !ca.IsDeleted)
+            .OrderBy(ca => ca.DisplayOrder)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddCategoryAttributeValueAsync(
         CategoryAttributeValue value, 
         CancellationToken cancellationToken = default)

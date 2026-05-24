@@ -44,6 +44,9 @@ public static class DependencyInjection
         // 2. Validation - validates requests before processing
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
 
+        services.AddScoped<Abstractions.IProductAttributeSchemaResolver, Services.ProductAttributeSchemaResolver>();
+        services.AddScoped<Abstractions.IProductVariantAttributeValidator, Services.ProductVariantAttributeValidator>();
+
         return services;
     }
 

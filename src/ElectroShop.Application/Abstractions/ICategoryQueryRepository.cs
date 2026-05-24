@@ -58,5 +58,12 @@ public interface ICategoryQueryRepository : IQueryRepository<Category>
     /// CategoryAttributeValue güncəllə
     /// </summary>
     void UpdateCategoryAttributeValue(CategoryAttributeValue value);
+
+    /// <summary>
+    /// Kateqoriya atributlarını tracking ilə əldə et (upsert üçün)
+    /// </summary>
+    Task<List<CategoryAttribute>> GetCategoryAttributesForUpdateAsync(
+        Guid categoryId,
+        CancellationToken cancellationToken = default);
 }
 

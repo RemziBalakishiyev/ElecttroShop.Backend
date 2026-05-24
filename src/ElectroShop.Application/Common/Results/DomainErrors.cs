@@ -48,6 +48,49 @@ public static class DomainErrors
             "Məhsul stokda yoxdur.");
     }
 
+    public static class ProductVariant
+    {
+        public static Error AttributeAlreadyExists(string type) => Error.Conflict(
+            "ProductVariant.AttributeAlreadyExists",
+            $"{type} attribute artıq bu kateqoriyada mövcuddur");
+
+        public static Error ValueAlreadyExists(string value, string type) => Error.Conflict(
+            "ProductVariant.ValueAlreadyExists",
+            $"{value} dəyəri {type} attribute-u üçün artıq mövcuddur");
+
+        public static Error AttributeDuplicateConstraint => Error.Conflict(
+            "ProductVariant.AttributeDuplicateConstraint",
+            "Bu attribute artıq kateqoriyada mövcuddur");
+
+        public static Error ValueDuplicateConstraint => Error.Conflict(
+            "ProductVariant.ValueDuplicateConstraint",
+            "Bu value artıq attribute üçün mövcuddur");
+
+        public static Error DuplicateCombination => Error.Conflict(
+            "ProductVariant.DuplicateCombination",
+            "Bu variant kombinasiyası artıq məhsulda mövcuddur");
+
+        public static Error RequiredAttributeMissing(string type) => Error.Validation(
+            "ProductVariant.RequiredAttributeMissing",
+            $"{type} required attribute-dur və variantda göndərilməyib");
+
+        public static Error EmptyAttributes => Error.Validation(
+            "ProductVariant.EmptyAttributes",
+            "Variant attribute-ları boş ola bilməz");
+
+        public static Error AttributeNotFound(string type) => Error.Validation(
+            "ProductVariant.AttributeNotFound",
+            $"{type} attribute bu kateqoriyada mövcud deyil");
+
+        public static Error ValueNotFound(string value, string type) => Error.Validation(
+            "ProductVariant.ValueNotFound",
+            $"{value} dəyəri {type} attribute-u üçün mövcud deyil");
+
+        public static Error CategoryChangeIncompatible => Error.Validation(
+            "ProductVariant.CategoryChangeIncompatible",
+            "Məhsulun kateqoriyası dəyişdirildiyi üçün mövcud variant attribute-ları uyğun deyil");
+    }
+
     public static class Category
     {
         public static Error NotFound(Guid id) => Error.NotFound(
