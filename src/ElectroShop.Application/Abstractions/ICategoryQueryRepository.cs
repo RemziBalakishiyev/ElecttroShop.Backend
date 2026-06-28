@@ -25,6 +25,15 @@ public interface ICategoryQueryRepository : IQueryRepository<Category>
     Task<List<Category>> GetRootCategoriesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Lookup və select box-lar üçün kateqoriya siyahısı.
+    /// GetCategories ilə eyni filter qaydalarını tətbiq edir.
+    /// </summary>
+    Task<List<Category>> GetCategoriesForLookupAsync(
+        bool includeAll = false,
+        Guid? parentId = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Kateqoriya atributlarını əldə et (dəyərlərlə birlikdə)
     /// </summary>
     Task<List<CategoryAttribute>> GetCategoryAttributesAsync(Guid categoryId, CancellationToken cancellationToken = default);

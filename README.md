@@ -92,8 +92,9 @@ ElectronicNumberOne/
 # 1. PostgreSQL (Docker)
 docker-compose up -d
 
-# 2. Connection string-i yoxla (Port 5434 üçün docker-compose)
-# src/ElectroShop.WebApi/appsettings.json
+# 2. Environment dəyişənlərini təyin et (.env.example-dan kopyala)
+cp .env.example .env
+# ConnectionStrings__DefaultConnection, JWT__Key və s. doldurun
 
 # 3. Layihəni işə sal
 dotnet run --project src/ElectroShop.WebApi
@@ -103,6 +104,98 @@ dotnet run --project src/ElectroShop.WebApi
 - **Default admin:** `admin@electroshop.az` / `Admin123!`
 
 Ətraflı setup: [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)
+
+---
+
+## Render-də Production Deploy
+
+### 1. PostgreSQL (Render Database)
+
+1. [Render Dashboard](https://dashboard.render.com) → **New** → **PostgreSQL**
+2. Name, region və plan seçin
+3. Database yaradıldıqdan sonra **Internal Database URL** və ya **External Database URL** kopyalayın
+4. Web Service ilə eyni region-da saxlayın (internal URL daha sürətlidir)
+
+### 2. Backend Web Service (Docker)
+
+1. **New** → **Web Service** → GitHub repo-nu bağlayın
+2. Parametrlər:
+
+| Parametr | Dəyər |
+|----------|-------|
+| **Environment** | Docker |
+| **Dockerfile Path** | `src/ElectroShop.WebApi/Dockerfile` |
+| **Docker Build Context** | `.` (repo root) |
+| **Health Check Path** | `/health` |
+
+3. **Environment Variables** (Render dashboard-da):
+
+| Variable | Dəyər |
+|----------|-------|
+| `ASPNETCORE_ENVIRONMENT` | `Production` |
+| `ASPNETCORE_URLS` | `http://0.0.0.0:10000` |
+| `ConnectionStrings__DefaultConnection` | Render PostgreSQL connection string |
+| `MIGRATE_ON_STARTUP` | `true` *(yalnız ilk deploy üçün; sonra `false` edin)* |
+| `FRONTEND_URL` | Static Site URL (məs: `https://electroshop.onrender.com`) |
+| `JWT__Key` | Min 32 simvol təsadüfi secret |
+| `JWT__Issuer` | `ElectroShop` |
+| `JWT__Audience` | `ElectroShop` |
+
+4. Deploy tamamlandıqdan sonra `https://<api-service>.onrender.com/health` → `OK` qaytarmalıdır
+
+### 3. Frontend Static Site (React / Vite)
+
+Frontend ayrı repo və ya monorepo qovluğundadırsa:
+
+1. **New** → **Static Site** → eyni GitHub repo (və ya frontend repo)
+2. **Build Command:** `npm install && npm run build`
+3. **Publish Directory:** `dist`
+4. **Environment Variables:**
+
+| Variable | Dəyər |
+|----------|-------|
+| `VITE_API_BASE_URL` | Backend Web Service URL (məs: `https://electroshop-api.onrender.com`) |
+
+5. **Redirects/Rewrites** (React Router üçün):
+
+| Source | Destination |
+|--------|-------------|
+| `/*` | `/index.html` |
+
+6. Frontend API client-lər `import.meta.env.VITE_API_BASE_URL` istifadə etməlidir — hardcoded URL olmamalıdır
+
+### 4. Lokal development
+
+```bash
+# .env.example → .env kopyalayın və dəyərləri doldurun
+cp .env.example .env
+
+# PostgreSQL
+docker-compose up -d
+
+# Backend (env dəyişənləri ilə)
+dotnet run --project src/ElectroShop.WebApi
+```
+
+Lokal JWT və DB üçün `dotnet user-secrets` və ya `.env` + `ConnectionStrings__DefaultConnection` istifadə edin.
+
+### 5. Docker build (lokal yoxlama)
+
+```bash
+docker build -f src/ElectroShop.WebApi/Dockerfile -t electroshop-api .
+docker run -p 10000:10000 \
+  -e ASPNETCORE_ENVIRONMENT=Production \
+  -e ASPNETCORE_URLS=http://0.0.0.0:10000 \
+  -e ConnectionStrings__DefaultConnection="Host=host.docker.internal;Port=5434;Database=ElectroShopDb;Username=postgres;Password=YOUR_PASSWORD" \
+  -e JWT__Key="your-local-jwt-secret-at-least-32-chars" \
+  -e JWT__Issuer=ElectroShop \
+  -e JWT__Audience=ElectroShop \
+  -e MIGRATE_ON_STARTUP=true \
+  -e FRONTEND_URL=http://localhost:5173 \
+  electroshop-api
+```
+
+Ətraflı: [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ---
 

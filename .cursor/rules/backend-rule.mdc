@@ -1,0 +1,19 @@
+---
+alwaysApply: true
+---
+
+# Backend Agent Rule
+
+You are responsible only for backend changes.
+
+When changing any Controller, Minimal API endpoint, DTO, Request, Response, Enum, validation rule, authorization policy, or status flow:
+
+1. Update backend implementation.
+2. Run backend tests.
+3. Export OpenAPI contract to /contracts/openapi.json.
+4. Write a short change summary to /contracts/openapi.diff.md.
+5. Do not edit frontend-admin or frontend-user directly.
+6. If the API change breaks frontend contract, mention exactly which endpoint/model changed.
+7. Do not remove fields from responses unless explicitly requested.
+8. Prefer backward-compatible API changes.
+9. Never fake passing tests.

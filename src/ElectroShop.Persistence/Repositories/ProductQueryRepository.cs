@@ -89,6 +89,19 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<Product>> GetPopularProductsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(p => p.Category)
+            .Include(p => p.Brand)
+            .Include(p => p.ProductImages.OrderBy(pi => pi.DisplayOrder))
+            .AsNoTracking()
+            .Where(p => p.IsPopular && !p.IsDeleted && p.IsActive)
+            .OrderBy(p => p.PopularDisplayOrder)
+            .Take(4)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<Product?> GetFeaturedProductByBrandIdAsync(Guid brandId, CancellationToken cancellationToken = default)
     {
         return await _dbSet

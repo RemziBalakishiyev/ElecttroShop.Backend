@@ -53,6 +53,25 @@ public class CategoryQueryRepository : QueryRepository<Category>, ICategoryQuery
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<Category>> GetCategoriesForLookupAsync(
+        bool includeAll = false,
+        Guid? parentId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _dbSet
+            .AsNoTracking()
+            .Where(c => !c.IsDeleted);
+
+        if (parentId.HasValue)
+            query = query.Where(c => c.ParentId == parentId.Value);
+        else if (!includeAll)
+            query = query.Where(c => c.ParentId == null);
+
+        return await query
+            .OrderBy(c => c.Name)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<List<CategoryAttribute>> GetCategoryAttributesAsync(
         Guid categoryId, 
         CancellationToken cancellationToken = default)

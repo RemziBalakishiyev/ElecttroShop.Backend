@@ -67,12 +67,22 @@ public class ProductConfiguration : AggregateRootConfiguration<Product>
         builder.Property(p => p.DisplayOrder)
             .IsRequired(false);
 
+        builder.Property(p => p.IsPopular)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(p => p.PopularDisplayOrder)
+            .IsRequired(false);
+
         // Filtered indexes (SQL Server)
         builder.HasIndex(p => p.IsBanner)
             .HasFilter("[IsBanner] = 1");
 
         builder.HasIndex(p => new { p.IsFeatured, p.DisplayOrder })
             .HasFilter("[IsFeatured] = 1");
+
+        builder.HasIndex(p => new { p.IsPopular, p.PopularDisplayOrder })
+            .HasFilter("[IsPopular] = 1");
 
         // Relationships
         builder.HasOne(p => p.Category)

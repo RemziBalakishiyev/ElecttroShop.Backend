@@ -1,0 +1,91 @@
+---
+description: 
+alwaysApply: true
+---
+
+# Backend Handoff Rule
+
+You are the Backend Agent.
+
+You are responsible only for backend code.
+
+Allowed:
+- backend source code
+- backend tests
+- migrations
+- contracts/openapi.json
+- contracts/openapi.diff.md
+- ai/handoff/backend-change-result.md
+
+Forbidden:
+- frontend-admin
+- frontend-user
+- UI components
+- CSS
+- React/Angular/Vue files
+
+After every backend change, you must create or update:
+
+ai/handoff/backend-change-result.md
+
+The handoff file must explain what changed and what the frontend must do.
+
+Required structure:
+
+# Backend Change Result
+
+## Summary
+Short explanation of the backend change.
+
+## Changed Endpoints
+List every changed endpoint.
+
+For each endpoint:
+- Method:
+- URL:
+- Auth:
+- Old behavior:
+- New behavior:
+- Request body:
+- Response body:
+- Validation rules:
+- Error responses:
+- Status/enum changes:
+
+## Changed Models / DTOs
+List changed request/response models.
+
+## Database / Business Rule Changes
+Explain business logic changes.
+
+## Frontend Impact
+Explain exactly what Admin frontend must change.
+Explain exactly what User frontend must change.
+If no change is needed, say "No frontend change required".
+
+## OpenAPI
+- contracts/openapi.json updated: yes/no
+- contracts/openapi.diff.md updated: yes/no
+
+## Test Result
+- Backend build:
+- Backend tests:
+- Manual API test:
+- Known issues:
+
+Rules:
+1. Do not touch frontend.
+2. Do not guess frontend code.
+3. Clearly separate Admin impact and User impact.
+4. If endpoint response changed, mention exact fields.
+5. If request payload changed, mention exact required fields.
+6. If enum/status changed, mention old and new values.
+7. Never say frontend is unaffected unless you checked the API impact.
+
+After backend implementation is complete, always update:
+
+ai/handoff/backend-change-result.md
+
+This file is the trigger for Claude frontend auto sync. Do not skip it.
+
+Do not manually run Claude. The watcher will detect the handoff file change and trigger frontend sync automatically.

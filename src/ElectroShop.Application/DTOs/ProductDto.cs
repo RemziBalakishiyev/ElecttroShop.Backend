@@ -23,6 +23,8 @@ public record ProductDto
     public bool IsBanner { get; init; }
     public bool IsFeatured { get; init; }
     public int? DisplayOrder { get; init; }
+    public bool IsPopular { get; init; }
+    public int? PopularDisplayOrder { get; init; }
     /// <summary>
     /// Final endirim faizi (0-100 arası)
     /// Prioritet: Məhsul > Brand > Kateqoriya
@@ -32,6 +34,9 @@ public record ProductDto
     /// Endirimli final qiymət
     /// </summary>
     public decimal FinalPrice { get; init; }
+    public decimal AverageRating { get; init; }
+    public int RatingCount { get; init; }
+    public int? CurrentUserRating { get; init; }
     public List<CategoryAttributeDto> CategoryAttributes { get; init; } = [];
     public List<ProductVariantDto> Variants { get; init; } = [];
     public DateTime CreatedAt { get; init; }
@@ -61,6 +66,8 @@ public record ProductListDto
     public bool IsBanner { get; init; }
     public bool IsFeatured { get; init; }
     public int? DisplayOrder { get; init; }
+    public bool IsPopular { get; init; }
+    public int? PopularDisplayOrder { get; init; }
     /// <summary>
     /// Final endirim faizi (0-100 arası)
     /// </summary>
@@ -69,6 +76,8 @@ public record ProductListDto
     /// Endirimli final qiymət
     /// </summary>
     public decimal FinalPrice { get; init; }
+    public decimal AverageRating { get; init; }
+    public int RatingCount { get; init; }
 }
 
 /// <summary>

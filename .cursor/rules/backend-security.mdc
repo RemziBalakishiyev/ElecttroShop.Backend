@@ -1,0 +1,58 @@
+---
+alwaysApply: true
+---
+
+---
+description: ElectroShop Backend Security Rules
+globs:
+  - "**/*Controller.cs"
+  - "**/*Service.cs"
+  - "**/*Handler.cs"
+  - "**/*Command*.cs"
+  - "**/*Query*.cs"
+  - "**/*Validator*.cs"
+alwaysApply: true
+---
+
+# ElectroShop Backend Security Rules
+
+For every backend change, check security impact.
+
+## Authentication and Authorization
+
+- Analyze whether the endpoint requires authentication.
+- Analyze whether the user can access only their own data.
+- Do not change JWT, login, register, refresh token, OTP, password, or session logic unless explicitly required.
+- Do not log tokens, passwords, OTP codes, refresh tokens, or sensitive user data.
+- Public endpoints must be treated carefully.
+- Admin-only endpoints must not become public accidentally.
+
+## Security Checklist
+
+Before finalizing a change, check:
+
+1. Is authentication required?
+2. Is authorization required?
+3. Can one user access another user's data?
+4. Is input validation present?
+5. Is there SQL injection risk?
+6. Is sensitive data returned in response?
+7. Is sensitive data logged?
+8. Is rate limiting needed?
+9. If file upload exists, are file size, extension, and content checked?
+10. Are technical errors hidden from API consumers?
+
+## Error Handling
+
+- Do not swallow exceptions silently.
+- Do not show stack trace to API users.
+- Follow existing API error response format.
+- Separate validation, not found, forbidden, conflict, and unexpected errors.
+- External service failures must be handled safely.
+
+## Logging
+
+- Log exceptions with useful context.
+- Do not log sensitive data.
+- Use CorrelationId or RequestId if the project already has it.
+- Do not leave unnecessary debug logs in production code.

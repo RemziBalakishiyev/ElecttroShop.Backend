@@ -39,6 +39,8 @@ public class ProductMappingConfig : IRegister
             .Map(dest => dest.IsBanner, src => src.IsBanner)
             .Map(dest => dest.IsFeatured, src => src.IsFeatured)
             .Map(dest => dest.DisplayOrder, src => src.DisplayOrder)
+            .Map(dest => dest.IsPopular, src => src.IsPopular)
+            .Map(dest => dest.PopularDisplayOrder, src => src.PopularDisplayOrder)
             .Map(dest => dest.CreatedAt, src => src.CreatedAtUtc)
             .Map(dest => dest.UpdatedAt, src => src.UpdatedAtUtc)
             .Map(dest => dest.RowVersion, src => src.RowVersion);
@@ -57,7 +59,9 @@ public class ProductMappingConfig : IRegister
             .Ignore(dest => dest.PrimaryImageUrl)
             .Map(dest => dest.IsBanner, src => src.IsBanner)
             .Map(dest => dest.IsFeatured, src => src.IsFeatured)
-            .Map(dest => dest.DisplayOrder, src => src.DisplayOrder);
+            .Map(dest => dest.DisplayOrder, src => src.DisplayOrder)
+            .Map(dest => dest.IsPopular, src => src.IsPopular)
+            .Map(dest => dest.PopularDisplayOrder, src => src.PopularDisplayOrder);
 
         // CreateProductDto -> Product (handled in command handler with value objects)
         // UpdateProductDto -> Product (handled in command handler with value objects)

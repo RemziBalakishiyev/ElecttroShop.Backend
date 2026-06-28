@@ -31,20 +31,23 @@ try
     // Configure the HTTP request pipeline
     app.ConfigurePipeline();
 
-    // Database Migration and Seeding
-    using (var scope = app.Services.CreateScope())
+    app.MapGet("/health", () => Results.Ok("OK"));
+
+    var migrateOnStartup = builder.Configuration.GetValue<bool>("MIGRATE_ON_STARTUP");
+    if (migrateOnStartup)
     {
+        using var scope = app.Services.CreateScope();
         var services = scope.ServiceProvider;
         try
         {
             var context = services.GetRequiredService<ElectroShopDbContext>();
             var passwordHasher = services.GetRequiredService<ElectroShop.Application.Services.IPasswordHasher>();
 
-            // Apply migrations (always apply pending migrations)
             var pendingMigrations = context.Database.GetPendingMigrations().ToList();
             if (pendingMigrations.Any())
             {
-                Log.Information($"Found {pendingMigrations.Count} pending migration(s): {string.Join(", ", pendingMigrations)}");
+                Log.Information("Found {Count} pending migration(s): {Migrations}",
+                    pendingMigrations.Count, string.Join(", ", pendingMigrations));
                 Log.Information("Applying database migrations...");
                 await context.Database.MigrateAsync();
                 Log.Information("Database migrations applied successfully");
@@ -54,7 +57,6 @@ try
                 Log.Information("No pending migrations found");
             }
 
-            // Seed data (always run)
             await DatabaseSeeder.SeedAsync(context, passwordHasher);
             Log.Information("Database seeding completed successfully");
         }

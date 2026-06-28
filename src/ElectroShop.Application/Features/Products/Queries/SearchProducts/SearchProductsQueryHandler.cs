@@ -10,15 +10,18 @@ namespace ElectroShop.Application.Features.Products.Queries.SearchProducts;
 public class SearchProductsQueryHandler : IRequestHandler<SearchProductsQuery, PagedResult<ProductListDto>>
 {
     private readonly IProductQueryRepository _productRepository;
+    private readonly IProductRatingQueryRepository _ratingRepository;
     private readonly IDiscountCalculationService _discountCalculationService;
     private readonly IImageStorage _imageStorage;
 
     public SearchProductsQueryHandler(
         IProductQueryRepository productRepository,
+        IProductRatingQueryRepository ratingRepository,
         IDiscountCalculationService discountCalculationService,
         IImageStorage imageStorage)
     {
         _productRepository = productRepository;
+        _ratingRepository = ratingRepository;
         _discountCalculationService = discountCalculationService;
         _imageStorage = imageStorage;
     }
@@ -37,6 +40,9 @@ public class SearchProductsQueryHandler : IRequestHandler<SearchProductsQuery, P
         {
             return PagedResult<ProductListDto>.Empty(request.Page, request.PageSize);
         }
+
+        var productIds = products.Select(p => p.Id).ToList();
+        var ratingSummaries = await _ratingRepository.GetSummariesByProductIdsAsync(productIds, cancellationToken);
 
         var productDtos = new List<ProductListDto>();
 
@@ -73,7 +79,9 @@ public class SearchProductsQueryHandler : IRequestHandler<SearchProductsQuery, P
             {
                 FinalDiscountPercent = discountPercent,
                 FinalPrice = finalPrice,
-                PrimaryImageUrl = primaryImageUrl
+                PrimaryImageUrl = primaryImageUrl,
+                AverageRating = ratingSummaries.TryGetValue(product.Id, out var summary) ? summary.AverageRating : 0,
+                RatingCount = ratingSummaries.TryGetValue(product.Id, out var countSummary) ? countSummary.RatingCount : 0
             };
 
             productDtos.Add(productDto);

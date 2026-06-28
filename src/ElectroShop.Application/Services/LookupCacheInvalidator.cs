@@ -15,6 +15,7 @@ public class LookupCacheInvalidator : ILookupCacheInvalidator
     public void InvalidateCategoriesLookup()
     {
         _memoryCache.Remove(LookupCacheKeys.Categories);
+        _memoryCache.Remove(LookupCacheKeys.CategoriesIncludeAll);
     }
 
     public void InvalidateBrandsLookup()

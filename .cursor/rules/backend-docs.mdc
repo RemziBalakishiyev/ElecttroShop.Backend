@@ -1,0 +1,45 @@
+---
+alwaysApply: true
+---
+
+---
+description: ElectroShop Backend Documentation Rules
+globs:
+  - "docs/**/*.md"
+  - "README.md"
+alwaysApply: false
+---
+
+# ElectroShop Backend Documentation Rules
+
+Use this rule only when the task requires backend documentation.
+
+Documentation must be based on the real project structure and real code.
+
+Do not write generic documentation.
+
+If something is unclear, write: "dəqiqləşdirilməlidir".
+
+## Possible Documentation Files
+
+- README.md
+- docs/BACKEND_OVERVIEW.md
+- docs/BACKEND_ARCHITECTURE.md
+- docs/API_DOCUMENTATION.md
+- docs/DATABASE.md
+- docs/ENTITY_RELATIONSHIPS.md
+- docs/BUSINESS_RULES.md
+- docs/AUTHENTICATION_AUTHORIZATION.md
+- docs/CONFIGURATION.md
+- docs/LOGGING_ERROR_HANDLING.md
+- docs/DEVELOPMENT_GUIDE.md
+- docs/DEPLOYMENT_GUIDE.md
+- docs/SECURITY_REVIEW.md
+- docs/PERFORMANCE_REVIEW.md
+- docs/CODE_QUALITY_REVIEW.md
+- docs/TECHNICAL_DEBT.md
+- docs/QUICK_REFERENCE.md
+
+## Rule
+
+Do not create or update documentation files unless the task explicitly asks for it.

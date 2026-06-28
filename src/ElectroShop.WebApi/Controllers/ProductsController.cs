@@ -10,10 +10,13 @@ using ElectroShop.Application.Features.Products.Queries.GetProducts;
 using ElectroShop.Application.Features.Products.Queries.SearchProducts;
 using ElectroShop.Application.Features.Products.Queries.GetBannerProduct;
 using ElectroShop.Application.Features.Products.Queries.GetFeaturedProducts;
+using ElectroShop.Application.Features.Products.Queries.GetPopularProducts;
 using ElectroShop.Application.Features.Products.Commands.SetProductAsBanner;
 using ElectroShop.Application.Features.Products.Commands.RemoveProductFromBanner;
 using ElectroShop.Application.Features.Products.Commands.SetProductAsFeatured;
 using ElectroShop.Application.Features.Products.Commands.RemoveProductFromFeatured;
+using ElectroShop.Application.Features.Products.Commands.SetProductAsPopular;
+using ElectroShop.Application.Features.Products.Commands.RemoveProductFromPopular;
 using ElectroShop.Application.Features.Products.Commands.AddProductImage;
 using ElectroShop.Application.Features.Products.Commands.RemoveProductImage;
 using ElectroShop.Application.Features.Products.Commands.SetPrimaryImage;
@@ -237,6 +240,20 @@ public class ProductsController : BaseApiController
     }
 
     /// <summary>
+    /// Popular məhsulları əldə edir (ana səhifə "Məşhur Məhsullar" bölməsi üçün 4 məhsul)
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Popular məhsul siyahısı</returns>
+    [HttpGet("popular")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetPopularProducts(CancellationToken cancellationToken)
+    {
+        var query = new GetPopularProductsQuery();
+        var result = await Mediator.Send(query, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
     /// Məhsulu Banner olaraq təyin edir
     /// </summary>
     /// <param name="productId">Məhsul ID-si</param>
@@ -298,6 +315,40 @@ public class ProductsController : BaseApiController
         CancellationToken cancellationToken)
     {
         var command = new RemoveProductFromFeaturedCommand(productId);
+        var result = await Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Məhsulu Popular olaraq təyin edir (ana səhifə "Məşhur Məhsullar" bölməsi)
+    /// </summary>
+    /// <param name="productId">Məhsul ID-si</param>
+    /// <param name="command">Display order məlumatları (1-4)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Uğur mesajı</returns>
+    [HttpPost("{productId:guid}/popular")]
+    public async Task<IActionResult> SetProductAsPopular(
+        [FromRoute] Guid productId,
+        [FromBody] SetProductAsPopularCommand command,
+        CancellationToken cancellationToken)
+    {
+        var setPopularCommand = command with { ProductId = productId };
+        var result = await Mediator.Send(setPopularCommand, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Məhsulu Popular-dan çıxarır
+    /// </summary>
+    /// <param name="productId">Məhsul ID-si</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Uğur mesajı</returns>
+    [HttpDelete("{productId:guid}/popular")]
+    public async Task<IActionResult> RemoveProductFromPopular(
+        [FromRoute] Guid productId,
+        CancellationToken cancellationToken)
+    {
+        var command = new RemoveProductFromPopularCommand(productId);
         var result = await Mediator.Send(command, cancellationToken);
         return HandleResult(result);
     }

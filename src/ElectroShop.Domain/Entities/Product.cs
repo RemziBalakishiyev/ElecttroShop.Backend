@@ -28,6 +28,8 @@ public class Product : AggregateRoot
     public bool IsBanner { get; private set; } = false;
     public bool IsFeatured { get; private set; } = false;
     public int? DisplayOrder { get; private set; }
+    public bool IsPopular { get; private set; } = false;
+    public int? PopularDisplayOrder { get; private set; }
     
     // Navigation properties
     public List<ProductImage> ProductImages { get; private set; } = [];
@@ -240,6 +242,27 @@ public class Product : AggregateRoot
             throw new ArgumentException("Display order 1-5 arasında olmalıdır", nameof(displayOrder));
         
         DisplayOrder = displayOrder;
+    }
+
+    /// <summary>
+    /// Məhsulu Popular olaraq təyin et (ana səhifə "Məşhur Məhsullar" bölməsi)
+    /// </summary>
+    public void SetAsPopular(int displayOrder)
+    {
+        if (displayOrder < 1 || displayOrder > 4)
+            throw new ArgumentException("Popular display order 1-4 arasında olmalıdır", nameof(displayOrder));
+
+        IsPopular = true;
+        PopularDisplayOrder = displayOrder;
+    }
+
+    /// <summary>
+    /// Məhsulu Popular-dan çıxar
+    /// </summary>
+    public void RemoveFromPopular()
+    {
+        IsPopular = false;
+        PopularDisplayOrder = null;
     }
 
     /// <summary>

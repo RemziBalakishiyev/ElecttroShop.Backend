@@ -9,16 +9,23 @@ public static class WebApplicationExtensions
         // Exception Handling must be first
         app.UseExceptionHandling();
 
-        // Swagger (Development və Production-da)
-        app.UseSwagger();
-        app.UseSwaggerUI(c =>
+        // Swagger (Development only)
+        if (app.Environment.IsDevelopment())
         {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "ElectroShop API V1");
-            c.RoutePrefix = "swagger";
-        });
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "ElectroShop API V1");
+                c.RoutePrefix = "swagger";
+            });
+        }
 
-        app.UseHttpsRedirection();
-        app.UseCors("AllowAll");
+        if (!app.Environment.IsProduction())
+        {
+            app.UseHttpsRedirection();
+        }
+
+        app.UseCors("Frontend");
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

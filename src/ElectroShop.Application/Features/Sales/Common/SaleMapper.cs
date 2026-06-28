@@ -1,0 +1,50 @@
+using ElectroShop.Application.DTOs;
+using ElectroShop.Domain.Entities;
+
+namespace ElectroShop.Application.Features.Sales.Common;
+
+internal static class SaleMapper
+{
+    public static SaleListItemDto ToListItemDto(Sale sale) => new()
+    {
+        Id = sale.Id,
+        ProductId = sale.ProductId,
+        ProductName = sale.ProductName,
+        ProductCode = sale.ProductCode,
+        CategoryId = sale.CategoryId,
+        CategoryName = sale.CategoryName,
+        CostPrice = sale.CostPrice,
+        SalePrice = sale.SalePrice,
+        Quantity = sale.Quantity,
+        TotalCost = sale.TotalCost,
+        TotalSaleAmount = sale.TotalSaleAmount,
+        Profit = sale.Profit,
+        SaleSource = sale.SaleSource,
+        SoldAt = sale.SoldAt,
+        Note = sale.Note,
+        CreatedAt = sale.CreatedAtUtc
+    };
+
+    public static SaleDetailDto ToDetailDto(Sale sale) => new()
+    {
+        Id = sale.Id,
+        ProductId = sale.ProductId,
+        ProductName = sale.ProductName,
+        ProductCode = sale.ProductCode,
+        CategoryId = sale.CategoryId,
+        CategoryName = sale.CategoryName,
+        CostPrice = sale.CostPrice,
+        SalePrice = sale.SalePrice,
+        Quantity = sale.Quantity,
+        TotalCost = sale.TotalCost,
+        TotalSaleAmount = sale.TotalSaleAmount,
+        Profit = sale.Profit,
+        SaleSource = sale.SaleSource,
+        SoldAt = sale.SoldAt,
+        Note = sale.Note,
+        CreatedAt = sale.CreatedAtUtc,
+        UpdatedAt = sale.UpdatedAtUtc,
+        CreatedBy = sale.CreatedBy,
+        UpdatedBy = sale.UpdatedBy
+    };
+}

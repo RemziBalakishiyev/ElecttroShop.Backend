@@ -2,7 +2,6 @@ using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common;
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
-using ElectroShop.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -10,13 +9,12 @@ namespace ElectroShop.Application.Features.Categories.Queries.GetCategoriesLooku
 
 public class GetCategoriesLookupQueryHandler : IRequestHandler<GetCategoriesLookupQuery, Result<LookupResponse>>
 {
-    private readonly IQueryRepository<Category> _categoryRepository;
+    private readonly ICategoryQueryRepository _categoryRepository;
     private readonly IMemoryCache _memoryCache;
-    private const string CacheKey = LookupCacheKeys.Categories;
     private static readonly TimeSpan CacheExpiration = TimeSpan.FromHours(1);
 
     public GetCategoriesLookupQueryHandler(
-        IQueryRepository<Category> categoryRepository,
+        ICategoryQueryRepository categoryRepository,
         IMemoryCache memoryCache)
     {
         _categoryRepository = categoryRepository;
@@ -27,19 +25,20 @@ public class GetCategoriesLookupQueryHandler : IRequestHandler<GetCategoriesLook
         GetCategoriesLookupQuery request,
         CancellationToken cancellationToken)
     {
-        // Cache-dən yoxla
-        if (_memoryCache.TryGetValue(CacheKey, out LookupResponse? cachedResponse) && cachedResponse != null)
+        var cacheKey = LookupCacheKeys.GetCategoriesLookupKey(request.IncludeAll, request.ParentId);
+        var useCache = !request.ParentId.HasValue;
+
+        if (useCache && _memoryCache.TryGetValue(cacheKey, out LookupResponse? cachedResponse) && cachedResponse != null)
         {
             return Result.Success(cachedResponse);
         }
 
-        // Database-dən yüklə
-        var categories = await _categoryRepository.FindAsync(
-            c => !c.IsDeleted,
+        var categories = await _categoryRepository.GetCategoriesForLookupAsync(
+            request.IncludeAll,
+            request.ParentId,
             cancellationToken);
 
         var items = categories
-            .OrderBy(c => c.Name)
             .Select(c => new LookupDto
             {
                 Key = c.Id.ToString(),
@@ -51,13 +50,14 @@ public class GetCategoriesLookupQueryHandler : IRequestHandler<GetCategoriesLook
         {
             Items = items,
             CachedAt = DateTime.UtcNow,
-            CacheKey = CacheKey
+            CacheKey = cacheKey
         };
 
-        // Cache-ə yaz
-        _memoryCache.Set(CacheKey, response, CacheExpiration);
+        if (useCache)
+        {
+            _memoryCache.Set(cacheKey, response, CacheExpiration);
+        }
 
         return Result.Success(response);
     }
 }
-

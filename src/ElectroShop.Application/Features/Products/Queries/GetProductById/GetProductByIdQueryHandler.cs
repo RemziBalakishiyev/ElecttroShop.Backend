@@ -11,19 +11,25 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
 {
     private readonly IProductQueryRepository _productRepository;
     private readonly ICategoryQueryRepository _categoryRepository;
+    private readonly IProductRatingQueryRepository _ratingRepository;
     private readonly IDiscountCalculationService _discountCalculationService;
     private readonly IImageStorage _imageStorage;
+    private readonly ICurrentUserService _currentUserService;
 
     public GetProductByIdQueryHandler(
         IProductQueryRepository productRepository,
         ICategoryQueryRepository categoryRepository,
+        IProductRatingQueryRepository ratingRepository,
         IDiscountCalculationService discountCalculationService,
-        IImageStorage imageStorage)
+        IImageStorage imageStorage,
+        ICurrentUserService currentUserService)
     {
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;
+        _ratingRepository = ratingRepository;
         _discountCalculationService = discountCalculationService;
         _imageStorage = imageStorage;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<ProductDto>> Handle(
@@ -99,11 +105,14 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
             cancellationToken);
 
         // Variantlar üçün endirim hesabla (hamısı eyni Product-dan gəlir)
-        var variantsWithDiscounts = productDto.Variants.Select(variant => variant with
+        var variantsWithDiscounts = variants.Select(variant => variant with
         {
             FinalDiscountPercent = discountPercent,
             FinalPrice = finalPrice
         }).ToList();
+
+        var currentUserId = _currentUserService.IsAuthenticated ? _currentUserService.UserId : null;
+        var ratingSummary = await _ratingRepository.GetSummaryAsync(product.Id, currentUserId, cancellationToken);
 
         // Endirim məlumatlarını və kateqoriya atributlarını DTO-ya əlavə et
         productDto = productDto with
@@ -111,6 +120,9 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
             PrimaryImageUrl = primaryImageUrl,
             FinalDiscountPercent = discountPercent,
             FinalPrice = finalPrice,
+            AverageRating = ratingSummary.AverageRating,
+            RatingCount = ratingSummary.RatingCount,
+            CurrentUserRating = ratingSummary.CurrentUserRating,
             CategoryAttributes = categoryAttributes.Select(ca => new CategoryAttributeDto
             {
                 Id = ca.Id,

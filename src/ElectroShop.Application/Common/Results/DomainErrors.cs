@@ -151,6 +151,28 @@ public static class DomainErrors
             "Yanlış e-poçt ünvanı.");
     }
 
+    public static class Sale
+    {
+        public static Error NotFound(Guid id) => Error.NotFound(
+            "Sale.NotFound",
+            $"ID-si {id} olan satış tapılmadı.");
+    }
+
+    public static class ProductRating
+    {
+        public static Error NotFound(Guid productId) => Error.NotFound(
+            "ProductRating.NotFound",
+            $"Bu məhsul üçün reytinq tapılmadı.");
+
+        public static Error AlreadyExists(Guid productId) => Error.Conflict(
+            "ProductRating.AlreadyExists",
+            "Bu məhsul üçün artıq reytinq vermisiniz. Yeniləmək üçün PUT /api/Products/{productId}/ratings/me istifadə edin.");
+
+        public static Error InvalidRatingValue => Error.Validation(
+            "ProductRating.InvalidRatingValue",
+            "Reytinq 1 ilə 5 arasında olmalıdır.");
+    }
+
     public static class Authentication
     {
         public static Error InvalidCredentials => Error.Unauthorized(

@@ -22,6 +22,8 @@ public class ElectroShopDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Discount> Discounts => Set<Discount>();
+    public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<ProductRating> ProductRatings => Set<ProductRating>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

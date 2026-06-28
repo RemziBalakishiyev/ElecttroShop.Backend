@@ -1,3 +1,4 @@
+using ElectroShop.Application.Common.Options;
 using ElectroShop.Application;
 using ElectroShop.Persistence;
 using ElectroShop.WebApi.Filters;
@@ -22,6 +23,9 @@ public static class WebApplicationBuilderExtensions
         // Persistence Layer
         builder.Services.AddPersistence(builder.Configuration);
 
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<Application.Services.ICurrentUserService, Services.CurrentUserService>();
+
         // Controllers
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
@@ -33,20 +37,30 @@ public static class WebApplicationBuilderExtensions
                 options.SuppressModelStateInvalidFilter = true;
             });
 
-        // CORS
+        // CORS — production: only FRONTEND_URL; development: permissive fallback
+        var frontendUrl = builder.Configuration["FRONTEND_URL"];
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("AllowAll", policy =>
+            options.AddPolicy("Frontend", policy =>
             {
-                policy.AllowAnyOrigin()
-                      .AllowAnyMethod()
-                      .AllowAnyHeader();
+                if (!string.IsNullOrWhiteSpace(frontendUrl))
+                {
+                    policy.WithOrigins(frontendUrl.TrimEnd('/'))
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                }
+                else if (builder.Environment.IsDevelopment())
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                }
             });
         });
 
         // JWT Authentication
-        var jwtOptions = builder.Configuration.GetSection("Jwt").Get<Application.Common.Options.JwtOptions>();
-        if (jwtOptions != null && !string.IsNullOrEmpty(jwtOptions.SecretKey))
+        var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>();
+        if (jwtOptions != null && !string.IsNullOrEmpty(jwtOptions.SigningKey))
         {
             builder.Services.AddAuthentication(options =>
             {
@@ -58,7 +72,7 @@ public static class WebApplicationBuilderExtensions
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey)),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
                     ValidateIssuer = true,
                     ValidIssuer = jwtOptions.Issuer,
                     ValidateAudience = true,

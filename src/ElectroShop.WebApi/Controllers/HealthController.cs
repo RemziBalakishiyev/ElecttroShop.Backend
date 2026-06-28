@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElectroShop.WebApi.Controllers;
@@ -7,6 +8,7 @@ namespace ElectroShop.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/health")]
+[AllowAnonymous]
 public class HealthController : ControllerBase
 {
     /// <summary>
