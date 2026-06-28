@@ -136,7 +136,7 @@ dotnet run --project src/ElectroShop.WebApi
 | `ASPNETCORE_URLS` | `http://0.0.0.0:10000` |
 | `ConnectionStrings__DefaultConnection` | Render PostgreSQL connection string |
 | `MIGRATE_ON_STARTUP` | `true` *(yalnız ilk deploy üçün; sonra `false` edin)* |
-| `FRONTEND_URL` | Static Site URL (məs: `https://electroshop.onrender.com`) |
+| `FRONTEND_URLS` | Vergüllə ayrılmış frontend URL-ləri (məs: `https://electroshop-admin.onrender.com,https://electroshop-user.onrender.com`) |
 | `JWT__Key` | Min 32 simvol təsadüfi secret |
 | `JWT__Issuer` | `ElectroShop` |
 | `JWT__Audience` | `ElectroShop` |
@@ -191,7 +191,7 @@ docker run -p 10000:10000 \
   -e JWT__Issuer=ElectroShop \
   -e JWT__Audience=ElectroShop \
   -e MIGRATE_ON_STARTUP=true \
-  -e FRONTEND_URL=http://localhost:5173 \
+  -e FRONTEND_URLS=http://localhost:5173,http://localhost:5174 \
   electroshop-backend
 ```
 

@@ -37,21 +37,15 @@ public static class WebApplicationBuilderExtensions
                 options.SuppressModelStateInvalidFilter = true;
             });
 
-        // CORS — production: only FRONTEND_URL; development: permissive fallback
-        var frontendUrl = builder.Configuration["FRONTEND_URL"];
+        // CORS — production: FRONTEND_URLS; development fallback: localhost ports
+        var allowedOrigins = GetAllowedFrontendOrigins(builder);
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("Frontend", policy =>
             {
-                if (!string.IsNullOrWhiteSpace(frontendUrl))
+                if (allowedOrigins.Length > 0)
                 {
-                    policy.WithOrigins(frontendUrl.TrimEnd('/'))
-                          .AllowAnyMethod()
-                          .AllowAnyHeader();
-                }
-                else if (builder.Environment.IsDevelopment())
-                {
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins(allowedOrigins)
                           .AllowAnyMethod()
                           .AllowAnyHeader();
                 }
@@ -130,6 +124,32 @@ public static class WebApplicationBuilderExtensions
         });
 
         return builder;
+    }
+
+    private static string[] GetAllowedFrontendOrigins(WebApplicationBuilder builder)
+    {
+        var configured = builder.Configuration["FRONTEND_URLS"];
+        var origins = string.IsNullOrWhiteSpace(configured)
+            ? []
+            : configured
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(origin => origin.Trim().TrimEnd('/'))
+                .Where(origin => !string.IsNullOrWhiteSpace(origin))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+        if (origins.Length == 0 && builder.Environment.IsDevelopment())
+        {
+            origins =
+            [
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:3000",
+                "http://localhost:3001"
+            ];
+        }
+
+        return origins;
     }
 }
 

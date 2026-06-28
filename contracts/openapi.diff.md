@@ -1,17 +1,15 @@
-# OpenAPI diff — Render production deploy prep
+# OpenAPI diff — CORS FRONTEND_URLS
 
 **Date:** 2026-06-28
 
 ## Summary
-Infrastructure/configuration changes only. No API contract changes.
+Configuration-only change. No API contract changes.
 
-## Endpoints
-- Added minimal `GET /health` at root (not in OpenAPI/Swagger — minimal endpoint in Program.cs)
-- Existing `GET /api/health` unchanged
-
-## Models
-- No changes
+## Configuration
+- `FRONTEND_URL` replaced by `FRONTEND_URLS` (comma-separated origins)
+- Supports multiple frontends (admin + user) in production CORS
 
 ## Breaking changes
 - None for API consumers
-- **Configuration breaking:** `appsettings.json` no longer contains `ConnectionStrings` or JWT secrets — must use environment variables locally and in production
+- **Ops breaking:** Render/backend env must use `FRONTEND_URLS` instead of `FRONTEND_URL`
+
