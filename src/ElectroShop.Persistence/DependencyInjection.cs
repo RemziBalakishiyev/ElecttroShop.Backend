@@ -17,9 +17,12 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         // DbContext
+        var connectionString = PostgreSqlConnectionStringHelper.Normalize(
+            configuration.GetConnectionString("DefaultConnection"));
+
         services.AddDbContext<ElectroShopDbContext>(options =>
             options.UseNpgsql(
-                configuration.GetConnectionString("DefaultConnection"),
+                connectionString,
                 b => b.MigrationsAssembly(typeof(ElectroShopDbContext).Assembly.FullName)));
 
         // Repositories

@@ -33,7 +33,8 @@ try
 
     app.MapGet("/health", () => Results.Ok("OK"));
 
-    var migrateOnStartup = builder.Configuration.GetValue<bool>("MIGRATE_ON_STARTUP");
+    var migrateOnStartup = builder.Configuration.GetValue<bool>("MIGRATE_ON_STARTUP")
+        || builder.Environment.IsDevelopment();
     if (migrateOnStartup)
     {
         using var scope = app.Services.CreateScope();
