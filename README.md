@@ -124,7 +124,7 @@ dotnet run --project src/ElectroShop.WebApi
 | Parametr | Dəyər |
 |----------|-------|
 | **Environment** | Docker |
-| **Dockerfile Path** | `src/ElectroShop.WebApi/Dockerfile` |
+| **Dockerfile Path** | `Dockerfile` (repo root) |
 | **Docker Build Context** | `.` (repo root) |
 | **Health Check Path** | `/health` |
 
@@ -182,7 +182,7 @@ Lokal JWT və DB üçün `dotnet user-secrets` və ya `.env` + `ConnectionString
 ### 5. Docker build (lokal yoxlama)
 
 ```bash
-docker build -f src/ElectroShop.WebApi/Dockerfile -t electroshop-api .
+docker build -t electroshop-backend .
 docker run -p 10000:10000 \
   -e ASPNETCORE_ENVIRONMENT=Production \
   -e ASPNETCORE_URLS=http://0.0.0.0:10000 \
@@ -192,7 +192,7 @@ docker run -p 10000:10000 \
   -e JWT__Audience=ElectroShop \
   -e MIGRATE_ON_STARTUP=true \
   -e FRONTEND_URL=http://localhost:5173 \
-  electroshop-api
+  electroshop-backend
 ```
 
 Ətraflı: [DEPLOYMENT.md](./DEPLOYMENT.md)

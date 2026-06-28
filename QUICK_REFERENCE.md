@@ -32,7 +32,7 @@ docker-compose down
 docker-compose logs -f postgres
 
 # Docker API build
-docker build -f src/ElectroShop.WebApi/Dockerfile -t electroshop-api .
+docker build -t electroshop-backend .
 
 # Publish
 dotnet publish src/ElectroShop.WebApi -c Release -o ./publish

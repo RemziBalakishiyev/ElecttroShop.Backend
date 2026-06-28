@@ -34,7 +34,7 @@ docker-compose logs -f  # Log-lar
 
 ### API Dockerfile
 
-**Fayl:** `src/ElectroShop.WebApi/Dockerfile`
+**Fayl:** `Dockerfile` (repo root)
 
 ```
 Stage 1: mcr.microsoft.com/dotnet/sdk:8.0 → restore + build
@@ -51,7 +51,7 @@ Stage 3: mcr.microsoft.com/dotnet/aspnet:8.0 → runtime
 
 ```bash
 # Image build
-docker build -f src/ElectroShop.WebApi/Dockerfile -t electroshop-api .
+docker build -t electroshop-backend .
 
 # Run (DB ilə birlikdə)
 docker run -d \
@@ -188,7 +188,7 @@ jobs:
   deploy:
     needs: build
     steps:
-      - run: docker build -f src/ElectroShop.WebApi/Dockerfile -t electroshop-api .
+      - run: docker build -t electroshop-backend .
       # Deploy steps...
 ```
 
