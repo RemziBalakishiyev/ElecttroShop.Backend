@@ -76,11 +76,14 @@ public class UpdateProductCommandHandler
 
             product.SyncImages(request.ImageIds);
 
-            if (request.Variants.Count > 0)
+            var hasVariants = request.Variants.Count > 0;
+            var hasInlineAttributes = request.InlineAttributes is { Count: > 0 };
+
+            if (hasVariants || hasInlineAttributes)
             {
-                var variantMaps = request.Variants
-                    .Select(v => v.Attributes)
-                    .ToList();
+                var variantMaps = hasVariants
+                    ? request.Variants.Select(v => v.Attributes).ToList()
+                    : [];
 
                 var schemaResult = await _schemaResolver.ResolveAsync(
                     request.CategoryId,
@@ -94,51 +97,54 @@ public class UpdateProductCommandHandler
                     return Result.Failure<ProductDto>(schemaResult.Error);
                 }
 
-                var existingVariantAttributes = product.ProductVariants
-                    .ToDictionary(v => v.Id, v => v.AttributesJson);
-
-                CategoryChangeContext? categoryChange = oldCategoryId != request.CategoryId
-                    ? new CategoryChangeContext(oldCategoryId, request.CategoryId, existingVariantAttributes)
-                    : null;
-
-                var normalizedResult = _variantValidator.ValidateAndNormalize(
-                    schemaResult.Value,
-                    request.Variants,
-                    categoryChange);
-
-                if (normalizedResult.IsFailure)
+                if (hasVariants)
                 {
-                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    return Result.Failure<ProductDto>(normalizedResult.Error);
-                }
+                    var existingVariantAttributes = product.ProductVariants
+                        .ToDictionary(v => v.Id, v => v.AttributesJson);
 
-                var variantData = normalizedResult.Value
-                    .Select(v => (v.Id, v.AttributesJson, v.ImageId, v.IsActive))
-                    .ToList();
+                    CategoryChangeContext? categoryChange = oldCategoryId != request.CategoryId
+                        ? new CategoryChangeContext(oldCategoryId, request.CategoryId, existingVariantAttributes)
+                        : null;
 
-                try
-                {
-                    product.SyncVariants(variantData);
-                }
-                catch (ArgumentException ex)
-                {
-                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    return Result.Failure<ProductDto>(
-                        Error.Validation("ProductVariant.InvalidData", ex.Message));
-                }
-                catch (InvalidOperationException ex)
-                {
-                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    return Result.Failure<ProductDto>(
-                        Error.NotFound("ProductVariant.NotFound", ex.Message));
-                }
+                    var normalizedResult = _variantValidator.ValidateAndNormalize(
+                        schemaResult.Value,
+                        request.Variants,
+                        categoryChange);
 
-                var activeVariantIds = request.Variants
-                    .Where(v => v.Id.HasValue)
-                    .Select(v => v.Id!.Value)
-                    .ToList();
+                    if (normalizedResult.IsFailure)
+                    {
+                        await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                        return Result.Failure<ProductDto>(normalizedResult.Error);
+                    }
 
-                product.DeactivateMissingVariants(activeVariantIds);
+                    var variantData = normalizedResult.Value
+                        .Select(v => (v.Id, v.AttributesJson, v.ImageId, v.IsActive))
+                        .ToList();
+
+                    try
+                    {
+                        product.SyncVariants(variantData);
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                        return Result.Failure<ProductDto>(
+                            Error.Validation("ProductVariant.InvalidData", ex.Message));
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                        return Result.Failure<ProductDto>(
+                            Error.NotFound("ProductVariant.NotFound", ex.Message));
+                    }
+
+                    var activeVariantIds = request.Variants
+                        .Where(v => v.Id.HasValue)
+                        .Select(v => v.Id!.Value)
+                        .ToList();
+
+                    product.DeactivateMissingVariants(activeVariantIds);
+                }
             }
             else if (oldCategoryId != request.CategoryId && product.ProductVariants.Any(v => v.IsActive))
             {

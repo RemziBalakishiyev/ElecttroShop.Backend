@@ -10,5 +10,5 @@ public record GetCategoriesQuery(
     string? SearchTerm = null,
     Guid? ParentId = null,
     bool IncludeChildren = false,
-    bool IncludeAll = false) : IRequest<PagedResult<CategoryDto>>;
+    bool IncludeAll = true) : IRequest<PagedResult<CategoryDto>>;
 

@@ -218,12 +218,12 @@ public class CategoriesController : BaseApiController
     /// Kateqoriyalar üçün lookup API - Key-Value formatında
     /// Cache management ilə - Select boxlar üçün
     /// </summary>
-    /// <param name="includeAll">true olduqda bütün kateqoriyalar (root + alt), default: yalnız root</param>
+    /// <param name="includeAll">false olduqda yalnız root kateqoriyalar, default: bütün aktiv kateqoriyalar</param>
     /// <param name="parentId">Müəyyən parent-ın alt kateqoriyaları</param>
     [HttpGet("lookup")]
     [AllowAnonymous]
     public async Task<IActionResult> GetCategoriesLookup(
-        [FromQuery] bool includeAll = false,
+        [FromQuery] bool includeAll = true,
         [FromQuery] Guid? parentId = null,
         CancellationToken cancellationToken = default)
     {

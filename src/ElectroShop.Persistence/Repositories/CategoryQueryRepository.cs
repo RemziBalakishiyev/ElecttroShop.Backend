@@ -1,5 +1,4 @@
 using ElectroShop.Application.Abstractions;
-using ElectroShop.Application.Common.Filtering;
 using ElectroShop.Domain.Entities;
 using ElectroShop.Persistence.Contexts;
 using ElectroShop.Persistence.Helpers;
@@ -19,7 +18,7 @@ public class CategoryQueryRepository : QueryRepository<Category>, ICategoryQuery
         string? searchTerm = null,
         Guid? parentId = null,
         bool includeChildren = false,
-        bool includeAll = false,
+        bool includeAll = true,
         CancellationToken cancellationToken = default)
     {
         var query = _dbSet.Include(c => c.Parent).AsNoTracking();
@@ -27,16 +26,10 @@ public class CategoryQueryRepository : QueryRepository<Category>, ICategoryQuery
         if (includeChildren)
             query = query.Include(c => c.Children);
 
-        var search = searchTerm?.ToLower();
-
-        var predicate = PredicateBuilder.True<Category>()
-            .And(c => !c.IsDeleted)
-            .AndIf(!string.IsNullOrWhiteSpace(search), c => c.Name.ToLower().Contains(search!))
-            .AndIf(parentId.HasValue, c => c.ParentId == parentId!.Value)
-            .AndIf(!parentId.HasValue && !includeAll, c => c.ParentId == null);
+        query = ApplyCategoryVisibilityFilters(query, parentId, includeAll, searchTerm);
 
         return await QueryHelper.ExecutePagedAsync(
-            query.Where(predicate),
+            query,
             page,
             pageSize,
             c => c.Name,
@@ -54,22 +47,45 @@ public class CategoryQueryRepository : QueryRepository<Category>, ICategoryQuery
     }
 
     public async Task<List<Category>> GetCategoriesForLookupAsync(
-        bool includeAll = false,
+        bool includeAll = true,
         Guid? parentId = null,
         CancellationToken cancellationToken = default)
     {
-        var query = _dbSet
-            .AsNoTracking()
-            .Where(c => !c.IsDeleted);
+        var query = ApplyCategoryVisibilityFilters(
+            _dbSet.AsNoTracking(),
+            parentId,
+            includeAll);
+
+        return await query
+            .OrderBy(c => c.Name)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Kateqoriya siyahısı və lookup üçün eyni görünürlük filter-ləri.
+    /// Default: bütün aktiv (silinməmiş) kateqoriyalar.
+    /// ParentId verildikdə: yalnız həmin parent-ın uşaqları.
+    /// IncludeAll=false və ParentId yoxdursa: yalnız root kateqoriyalar.
+    /// </summary>
+    private static IQueryable<Category> ApplyCategoryVisibilityFilters(
+        IQueryable<Category> query,
+        Guid? parentId,
+        bool includeAll,
+        string? searchTerm = null)
+    {
+        var search = searchTerm?.ToLower();
+
+        query = query.Where(c => !c.IsDeleted);
+
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(c => c.Name.ToLower().Contains(search!));
 
         if (parentId.HasValue)
             query = query.Where(c => c.ParentId == parentId.Value);
         else if (!includeAll)
             query = query.Where(c => c.ParentId == null);
 
-        return await query
-            .OrderBy(c => c.Name)
-            .ToListAsync(cancellationToken);
+        return query;
     }
 
     public async Task<List<CategoryAttribute>> GetCategoryAttributesAsync(

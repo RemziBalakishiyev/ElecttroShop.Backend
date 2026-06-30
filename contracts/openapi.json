@@ -290,8 +290,10 @@
             "name": "IncludeAll",
             "in": "query",
             "schema": {
-              "type": "boolean"
-            }
+              "type": "boolean",
+              "default": true
+            },
+            "description": "false olduqda yalnız root kateqoriyalar; default: bütün aktiv kateqoriyalar"
           }
         ],
         "responses": {
@@ -678,8 +680,9 @@
             "in": "query",
             "schema": {
               "type": "boolean",
-              "default": false
-            }
+              "default": true
+            },
+            "description": "false olduqda yalnız root kateqoriyalar; default: bütün aktiv kateqoriyalar"
           },
           {
             "name": "parentId",

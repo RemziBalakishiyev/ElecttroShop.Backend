@@ -16,7 +16,7 @@ public interface ICategoryQueryRepository : IQueryRepository<Category>
         string? searchTerm = null,
         Guid? parentId = null,
         bool includeChildren = false,
-        bool includeAll = false,
+        bool includeAll = true,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -29,7 +29,7 @@ public interface ICategoryQueryRepository : IQueryRepository<Category>
     /// GetCategories ilə eyni filter qaydalarını tətbiq edir.
     /// </summary>
     Task<List<Category>> GetCategoriesForLookupAsync(
-        bool includeAll = false,
+        bool includeAll = true,
         Guid? parentId = null,
         CancellationToken cancellationToken = default);
 

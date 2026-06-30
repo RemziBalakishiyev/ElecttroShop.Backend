@@ -56,11 +56,14 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
         {
             List<(Guid? Id, string AttributesJson, Guid? ImageId, bool IsActive)>? variantData = null;
 
-            if (request.Variants.Count > 0)
+            var hasVariants = request.Variants.Count > 0;
+            var hasInlineAttributes = request.InlineAttributes is { Count: > 0 };
+
+            if (hasVariants || hasInlineAttributes)
             {
-                var variantMaps = request.Variants
-                    .Select(v => v.Attributes)
-                    .ToList();
+                var variantMaps = hasVariants
+                    ? request.Variants.Select(v => v.Attributes).ToList()
+                    : [];
 
                 var schemaResult = await _schemaResolver.ResolveAsync(
                     request.CategoryId,
@@ -74,20 +77,23 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
                     return Result.Failure<ProductDto>(schemaResult.Error);
                 }
 
-                var normalizedResult = _variantValidator.ValidateAndNormalize(
-                    schemaResult.Value,
-                    request.Variants,
-                    categoryChange: null);
-
-                if (normalizedResult.IsFailure)
+                if (hasVariants)
                 {
-                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    return Result.Failure<ProductDto>(normalizedResult.Error);
-                }
+                    var normalizedResult = _variantValidator.ValidateAndNormalize(
+                        schemaResult.Value,
+                        request.Variants,
+                        categoryChange: null);
 
-                variantData = normalizedResult.Value
-                    .Select(v => (v.Id, v.AttributesJson, v.ImageId, v.IsActive))
-                    .ToList();
+                    if (normalizedResult.IsFailure)
+                    {
+                        await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                        return Result.Failure<ProductDto>(normalizedResult.Error);
+                    }
+
+                    variantData = normalizedResult.Value
+                        .Select(v => (v.Id, v.AttributesJson, v.ImageId, v.IsActive))
+                        .ToList();
+                }
             }
 
             Product product;
