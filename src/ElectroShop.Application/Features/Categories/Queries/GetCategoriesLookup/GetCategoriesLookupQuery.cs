@@ -9,6 +9,6 @@ namespace ElectroShop.Application.Features.Categories.Queries.GetCategoriesLooku
 /// Cache management ilə
 /// </summary>
 public record GetCategoriesLookupQuery(
-    bool IncludeAll = false,
+    bool IncludeAll = true,
     Guid? ParentId = null) : IRequest<Result<LookupResponse>>;
 
