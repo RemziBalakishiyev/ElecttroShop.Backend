@@ -1,3 +1,4 @@
+using ElectroShop.Application.Features.Sales.Common;
 using FluentValidation;
 
 namespace ElectroShop.Application.Features.Sales.Commands.CreateSale;
@@ -49,5 +50,9 @@ public class CreateSaleCommandValidator : AbstractValidator<CreateSaleCommand>
             .LessThanOrEqualTo(DateTime.UtcNow.AddDays(1))
             .When(x => x.SoldAt.HasValue)
             .WithMessage("Satış tarixi gələcək ola bilməz");
+
+        RuleForEach(x => x.Expenses)
+            .SetValidator(new SaleExpenseRequestValidator())
+            .When(x => x.Expenses is not null);
     }
 }

@@ -15,4 +15,6 @@ public record GetSalesQuery(
     DateTime? DateFrom = null,
     DateTime? DateTo = null,
     decimal? MinProfit = null,
-    decimal? MaxProfit = null) : IRequest<PagedResult<SaleListItemDto>>;
+    decimal? MaxProfit = null,
+    decimal? MinExpense = null,
+    decimal? MaxExpense = null) : IRequest<PagedResult<SaleListItemDto>>;

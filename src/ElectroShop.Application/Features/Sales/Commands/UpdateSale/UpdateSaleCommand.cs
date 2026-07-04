@@ -14,4 +14,5 @@ public record UpdateSaleCommand(
     decimal SalePrice,
     int Quantity,
     DateTime? SoldAt,
-    string? Note) : IRequest<Result<SaleDetailDto>>;
+    string? Note,
+    IReadOnlyList<SaleExpenseRequestDto>? Expenses = null) : IRequest<Result<SaleDetailDto>>;

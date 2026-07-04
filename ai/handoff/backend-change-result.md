@@ -2,99 +2,192 @@
 
 ## Summary
 
-Admin Categories səhifəsi ilə Add Product modalındakı category lookup arasında kateqoriya sayı uyğunsuzluğu aradan qaldırıldı. Hər iki endpoint indi eyni aktiv kateqoriya görünürlük məntiqindən istifadə edir; default olaraq bütün aktiv (silinməmiş) kateqoriyalar qaytarılır.
+Admin Dashboard üçün yeni satış və məhsul statistik API-ləri əlavə olundu. Tək endpoint (`GET /api/dashboard/statistics`) günlük satış, aylıq satış və sistemdəki məhsul summary statistikalarını qaytarır. Köhnə `GET /api/dashboard` endpoint-i saxlanılıb (son məhsullar, son sifarişlər, order-based statistikalar); Admin Statistika səhifəsi yeni endpoint-ə keçməlidir.
 
-## Root Cause
+**Timezone qeydi:** Bütün tarix filtrləri **UTC** əsasında hesablanır (`SoldAt` UTC saxlanılır; layihədə `DateTime.UtcNow` pattern-i istifadə olunur).
 
-Hər iki endpoint (`GET /api/categories` və `GET /api/categories/lookup`) `IncludeAll=false` default ilə işləyirdi. Bu halda repository `ParentId == null` filter-i tətbiq edirdi — yalnız **root** kateqoriyalar qaytarılırdı.
-
-- Admin Categories page: `GET /api/categories?page=1&pageSize=10` — `IncludeAll` göndərilmirdi → yalnız 2 root kateqoriya
-- Add Product dropdown: `GET /api/categories/lookup?IncludeAll=true` — bütün 7 aktiv kateqoriya
-
-`IsDeleted` filter-i hər iki yerdə eyni idi (EF global query filter + explicit `!IsDeleted`). `IsActive` sahəsi Category entity-də yoxdur. Fərq yalnız default `IncludeAll` və ona bağlı parent/root filterində idi.
+**Limitation:** `Product` entity-də ayrıca alış/original qiymət (`costPrice`) field-i yoxdur. Məhsul summary-də `totalProductCostValue` və `totalInventoryCostValue` müvəqqəti olaraq `Price.Amount` (satış qiyməti) əsasında hesablanır.
 
 ## Changed Endpoints
 
-### GET /api/categories
+### GET /api/dashboard/statistics (YENİ)
+- **Method:** GET
+- **URL:** `/api/dashboard/statistics`
+- **Auth:** `[Authorize]` — JWT tələb olunur (SalesController ilə eyni pattern)
+- **Purpose:** Admin Dashboard statistikaları — günlük/aylıq satış və məhsul summary
+- **Old behavior:** Endpoint mövcud deyildi
+- **New behavior:** Günlük, aylıq satış və məhsul statistikalarını bir response-da qaytarır
+- **Query params:** Yoxdur
+- **Request body:** Yoxdur
+- **Response body:**
+  ```json
+  {
+    "dailySales": {
+      "totalSaleAmount": 0,
+      "totalProductCost": 0,
+      "totalExpenses": 0,
+      "totalProfit": 0,
+      "soldProductQuantity": 0,
+      "salesCount": 0
+    },
+    "monthlySales": {
+      "totalSaleAmount": 0,
+      "totalProductCost": 0,
+      "totalExpenses": 0,
+      "totalProfit": 0,
+      "soldProductQuantity": 0,
+      "salesCount": 0
+    },
+    "productSummary": {
+      "totalProductCount": 0,
+      "totalProductCostValue": 0,
+      "totalProductSaleValue": 0,
+      "totalInventoryCostValue": 0,
+      "totalInventorySaleValue": 0
+    }
+  }
+  ```
+- **Validation/filtering rules:**
+  - Satış statistikaları `SoldAt` field-i üzrə filtr olunur
+  - Günlük: cari UTC günü (00:00 UTC – 24:00 UTC)
+  - Aylıq: cari ayın 1-i (UTC) – bu günün sonu (UTC)
+  - Soft deleted satış və məhsullar hesablamaya daxil edilmir
+- **Error responses:** 401 Unauthorized
 
-* **Old behavior:** Default `IncludeAll=false` → yalnız root kateqoriyalar (`ParentId == null`), `IsDeleted=false`
-* **New behavior:** Default `IncludeAll=true` → bütün aktiv kateqoriyalar (root + child), `IsDeleted=false`
-* **Query params:** `Page`, `PageSize`, `SearchTerm`, `ParentId`, `IncludeChildren`, `IncludeAll` (default indi `true`)
-* **Response:** Dəyişməyib — səhifələnmiş `CategoryDto` (`id`, `name`, `slug`, `parentId`, `parentName`, `discountPercent`, `createdAt`)
-* **Validation/filtering rules:**
-  - `IsDeleted=false` (həmişə)
-  - `ParentId` verildikdə: yalnız həmin parent-ın uşaqları
-  - `IncludeAll=false` explicit verildikdə və `ParentId` yoxdursa: yalnız root kateqoriyalar
-  - `SearchTerm` ad üzrə filter (dəyişməyib)
-  - Pagination dəyişməyib
+### GET /api/dashboard (DƏYİŞİKLİK — yalnız auth)
+- **Method:** GET
+- **URL:** `/api/dashboard`
+- **Auth:** `[Authorize]` aktiv edildi (əvvəl comment olunmuşdu)
+- **Purpose:** Köhnə dashboard (order statistikaları, son məhsullar/sifarişlər)
+- **Old behavior:** Auth comment olunmuşdu (public)
+- **New behavior:** JWT tələb olunur; response shape dəyişməyib
+- **Query params:** Yoxdur
+- **Request body:** Yoxdur
+- **Response body:** `DashboardDto` (dəyişməyib)
+- **Validation/filtering rules:** Dəyişməyib
+- **Error responses:** 401 Unauthorized
 
-### GET /api/categories/lookup
-
-* **Old behavior:** Default `includeAll=false` → yalnız root kateqoriyalar
-* **New behavior:** Default `includeAll=true` → bütün aktiv kateqoriyalar; list endpoint ilə eyni filter məntiqi
-* **Query params:** `includeAll` (default indi `true`), `parentId`
-* **Response:** Dəyişməyib — `LookupResponse` (`items[]` with `key`/`value`, `cachedAt`, `cacheKey`)
-* **Validation/filtering rules:** List endpoint ilə eyni `ApplyCategoryVisibilityFilters` helper-i
+### GET /api/dashboard/chart (DƏYİŞİKLİK — yalnız auth)
+- **Method:** GET
+- **URL:** `/api/dashboard/chart`
+- **Auth:** `[Authorize]` (controller səviyyəsində aktiv)
+- **Purpose:** Chart məlumatları
+- **Old behavior:** Auth comment olunmuşdu
+- **New behavior:** JWT tələb olunur; response dəyişməyib
+- **Query params:** `period`, `periodCount`
+- **Request body:** Yoxdur
+- **Response body:** `ChartDataDto` (dəyişməyib)
+- **Error responses:** 401 Unauthorized
 
 ## Changed Models / DTOs
 
-No DTO changes. Yalnız query param default dəyərləri və repository filter məntiqi yeniləndi.
+### Yeni DTO-lar
+- `DashboardStatisticsResponse` — `dailySales`, `monthlySales`, `productSummary`
+- `SalesStatisticsResponse` — `totalSaleAmount`, `totalProductCost`, `totalExpenses`, `totalProfit`, `soldProductQuantity`, `salesCount` (decimal/int)
+- `ProductSummaryStatisticsResponse` — `totalProductCount`, `totalProductCostValue`, `totalProductSaleValue`, `totalInventoryCostValue`, `totalInventorySaleValue`
+
+### Dəyişməyən DTO-lar
+- `DashboardDto`, `DashboardStatisticsDto` — köhnə order-based statistikalar (breaking change yoxdur)
 
 ## Database / Migration Changes
 
-No migration required. Schema dəyişməyib.
+No database migration required.
 
 ## Business Rule Changes
 
-* Categories management page və lookup eyni aktiv kateqoriya görünürlük məntiqindən istifadə edir.
-* Default: bütün aktiv (silinməmiş) kateqoriyalar.
-* Parent/child filter yalnız explicit param ilə:
-  - `ParentId` → müəyyən parent-ın uşaqları
-  - `IncludeAll=false` / `includeAll=false` → yalnız root kateqoriyalar
-* Pagination yalnız `GET /api/categories`-də tətbiq olunur.
-* Lookup sadələşdirilmiş DTO qaytarır, amma eyni valid kateqoriya setini istifadə edir.
+### Günlük satış statistikası
+- Interval: cari UTC günü (`SoldAt >= today 00:00 UTC AND SoldAt < tomorrow 00:00 UTC`)
+- `totalSaleAmount = SUM(Sale.TotalSaleAmount)` (= SUM(salePrice × quantity))
+- `totalProductCost = SUM(Sale.TotalCost)` (= SUM(costPrice × quantity))
+- `totalExpenses = SUM(Sale.TotalExpenses)` (satış xərclərinin cəmi)
+- `totalProfit = totalSaleAmount - totalProductCost - totalExpenses`
+- `soldProductQuantity = SUM(Sale.Quantity)`
+- `salesCount = COUNT(sales)`
+
+### Aylıq satış statistikası
+- Interval: cari ayın 1-i UTC – bu günün sonu UTC (eyni hesablama qaydaları)
+
+### Məhsul summary statistikası
+- Soft deleted məhsullar istisna (global query filter)
+- `totalProductCount = COUNT(products)`
+- `totalProductSaleValue = SUM(Price.Amount)`
+- `totalInventorySaleValue = SUM(Price.Amount × Stock)`
+- `totalProductCostValue = SUM(Price.Amount)` — **limitation:** costPrice yoxdur
+- `totalInventoryCostValue = SUM(Price.Amount × Stock)` — **limitation:** costPrice yoxdur
+
+### Soft delete
+- `IsDeleted = true` olan Sale və Product qeydləri hesablamaya daxil edilmir
 
 ## Admin Frontend Impact
 
-* Response shape dəyişməyib — **frontend kod dəyişikliyi tələb olunmaya bilər**.
-* Yoxlama:
-  - Categories page API inteqrasiyası (`GET /api/categories?page=1&pageSize=10`)
-  - Add Product category dropdown (`GET /api/categories/lookup`)
-* Backend restart/redeploy sonrası Categories page-də 7 kateqoriya görünməlidir (əvvəl 2 root).
-* `IncludeAll=true` artıq lookup üçün məcburi deyil (default artıq `true`), amma göndərilsə də problem yaratmır.
-* Root-only siyahı lazım olsa: `?IncludeAll=false` əlavə edin.
+Claude Admin paneldə aşağıdakıları etməlidir:
+
+1. **Dashboard / Statistika səhifəsində** köhnə dashboard stat card API integration-larını yeni endpoint ilə əvəz et:
+   - `GET /api/dashboard/statistics` çağır
+   - Response model: `DashboardStatisticsResponse`
+
+2. **Günlük satış statistikalarını göstər** (`dailySales`):
+   - Ümumi satış məbləği (`totalSaleAmount`)
+   - Ümumi qazanc (`totalProfit`)
+   - Ümumi xərc (`totalExpenses`)
+   - Ümumi məhsul alış dəyəri (`totalProductCost`)
+   - Satılan məhsul sayı (`soldProductQuantity`)
+   - Satış sayı (`salesCount`)
+
+3. **Aylıq satış statistikalarını göstər** (`monthlySales`):
+   - Eyni 6 sahə
+
+4. **Məhsul summary statistikalarını göstər** (`productSummary`):
+   - Toplam məhsul sayı (`totalProductCount`)
+   - Toplam alış/original qiymət (`totalProductCostValue`) — **qeyd:** hazırda Price ilə eyni dəyər
+   - Toplam satış qiyməti (`totalProductSaleValue`)
+   - Stokla toplam alış dəyəri (`totalInventoryCostValue`)
+   - Stokla toplam satış dəyəri (`totalInventorySaleValue`)
+
+5. Köhnə order-based stat card-ları (`DashboardDto.statistics.totalRevenue` və s.) Statistika səhifəsində yeni satış statistikaları ilə əvəz et (və ya ayrıca bölmədə saxla — dizayn qərarı).
+
+6. Loading, empty və error state-ləri saxla.
+
+7. API types/service modellərini yenilə (`DashboardStatisticsResponse`, `SalesStatisticsResponse`, `ProductSummaryStatisticsResponse`).
+
+8. `GET /api/dashboard` artıq auth tələb edir — JWT header göndərilməlidir.
+
+9. Dashboard səhifəsini Playwright MCP ilə test et.
 
 ## User Frontend Impact
 
-No User frontend change required (bu endpoint-lər əsasən Admin üçündür). Əgər User frontend root-only default-a güvənirdisə, `IncludeAll=false` explicit göndərməlidir.
+No User frontend change required.
+
+User frontend dashboard statistikalarını istifadə etmir; yalnız Admin panel təsirlənir.
 
 ## OpenAPI
 
-* contracts/openapi.json updated: **yes** (`IncludeAll` / `includeAll` default `true`, description əlavə edildi)
-* contracts/openapi.diff.md updated: **yes**
+- contracts/openapi.json updated: **yes**
+- contracts/openapi.diff.md updated: **yes**
 
 ## Test Result
 
-* **Backend build:** Application və Persistence layları uğurla compile oldu. Full solution build IIS Express file lock səbəbindən WebApi copy addımında uğursuz oldu (IIS Express/VS işləyir). Kod xətası yoxdur.
-* **Backend tests:** Test layihəsi yoxdur.
-* **Manual API test:** Backend restart lazımdır. Sonra yoxlayın:
-  - `GET /api/categories?page=1&pageSize=10` → `totalCount` lookup ilə eyni olmalıdır (məs. 7)
-  - `GET /api/categories/lookup` → eyni kateqoriya ID-ləri
-  - `GET /api/categories?IncludeAll=false` → yalnız root kateqoriyalar (köhnə default davranış)
-* **Known issues:** IIS Express işləyərkən full rebuild file lock verə bilər; dəyişikliklərin tətbiqi üçün API restart edin.
+- Backend build: **SUCCESS** (0 errors)
+- Backend tests: **Not run** (test layihəsi yoxdur)
+- Manual API test: **Not run** (DB/server bu sessiyada test edilməyib)
+- Known issues:
+  - Product cost price field yoxdur — cost summary dəyərləri Price əsasında hesablanır
+  - Tarix filtrləri UTC-dir (local timezone deyil)
 
 ## Frontend Auto Sync Instruction
 
-Claude must read this file.
-
-Claude must update frontend only if the backend response shape, endpoint usage, or query params changed.
-
-**Response shape dəyişməyib** — əsasən retest kifayətdir.
-
+Claude must read this file immediately.
+Claude must implement the required Admin Dashboard frontend changes.
 Claude must not edit backend code.
+Claude must run frontend build/typecheck if available.
+Claude must test Dashboard page with Playwright MCP if available.
+Claude must write result to:
 
-Claude must retest:
+- ai/handoff/frontend-sync-result.md
+- ai/reports/latest-ui-report.md
 
-* Admin Categories page — bütün aktiv kateqoriyalar görünməlidir
-* Add Product category dropdown — eyni kateqoriya seti
-* Product creation flow category selection
+## Run Frontend Auto Sync
+
+After updating backend-change-result.md, run this command:
+
+cmd /c "C:\Users\Lenovo LEGION\Documents\ElectronicsNumberOne.UI\sync-front.cmd"

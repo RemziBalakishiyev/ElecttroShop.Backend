@@ -99,10 +99,27 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
             product.Price.Amount,
             discountPercent);
 
-        // Kateqoriya atributlarını yüklə
-        var categoryAttributes = await _categoryRepository.GetCategoryAttributesAsync(
-            product.CategoryId, 
-            cancellationToken);
+        // Məhsulun öz atributları (spesifikasiyaları) - kateqoriyadan deyil, məhsuldan gəlir
+        var productAttributes = product.ProductAttributes
+            .OrderBy(pa => pa.DisplayOrder)
+            .Select(pa => new CategoryAttributeDto
+            {
+                Id = pa.Id,
+                Name = pa.Name,
+                DisplayName = pa.DisplayName,
+                AttributeType = pa.AttributeType,
+                IsRequired = pa.IsRequired,
+                DisplayOrder = pa.DisplayOrder,
+                Values = pa.Values.Select(pav => new CategoryAttributeValueDto
+                {
+                    Id = pav.Id,
+                    Value = pav.Value,
+                    DisplayValue = pav.DisplayValue,
+                    DisplayOrder = pav.DisplayOrder,
+                    ColorCode = pav.ColorCode
+                }).OrderBy(v => v.DisplayOrder).ToList()
+            })
+            .ToList();
 
         // Variantlar üçün endirim hesabla (hamısı eyni Product-dan gəlir)
         var variantsWithDiscounts = variants.Select(variant => variant with
@@ -123,23 +140,7 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
             AverageRating = ratingSummary.AverageRating,
             RatingCount = ratingSummary.RatingCount,
             CurrentUserRating = ratingSummary.CurrentUserRating,
-            CategoryAttributes = categoryAttributes.Select(ca => new CategoryAttributeDto
-            {
-                Id = ca.Id,
-                Name = ca.Name,
-                DisplayName = ca.DisplayName,
-                AttributeType = ca.AttributeType,
-                IsRequired = ca.IsRequired,
-                DisplayOrder = ca.DisplayOrder,
-                Values = ca.Values.Select(cav => new CategoryAttributeValueDto
-                {
-                    Id = cav.Id,
-                    Value = cav.Value,
-                    DisplayValue = cav.DisplayValue,
-                    DisplayOrder = cav.DisplayOrder,
-                    ColorCode = cav.ColorCode
-                }).OrderBy(v => v.DisplayOrder).ToList()
-            }).OrderBy(ca => ca.DisplayOrder).ToList(),
+            CategoryAttributes = productAttributes,
             Variants = variantsWithDiscounts
         };
 

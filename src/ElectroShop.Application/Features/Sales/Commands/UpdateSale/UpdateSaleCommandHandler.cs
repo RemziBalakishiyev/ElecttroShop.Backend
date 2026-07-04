@@ -11,22 +11,16 @@ namespace ElectroShop.Application.Features.Sales.Commands.UpdateSale;
 public class UpdateSaleCommandHandler : IRequestHandler<UpdateSaleCommand, Result<SaleDetailDto>>
 {
     private readonly ISaleQueryRepository _saleQueryRepository;
-    private readonly IWriteRepository<Sale> _saleWriteRepository;
     private readonly IProductQueryRepository _productQueryRepository;
-    private readonly IWriteRepository<Product> _productWriteRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public UpdateSaleCommandHandler(
         ISaleQueryRepository saleQueryRepository,
-        IWriteRepository<Sale> saleWriteRepository,
         IProductQueryRepository productQueryRepository,
-        IWriteRepository<Product> productWriteRepository,
         IUnitOfWork unitOfWork)
     {
         _saleQueryRepository = saleQueryRepository;
-        _saleWriteRepository = saleWriteRepository;
         _productQueryRepository = productQueryRepository;
-        _productWriteRepository = productWriteRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -34,7 +28,7 @@ public class UpdateSaleCommandHandler : IRequestHandler<UpdateSaleCommand, Resul
         UpdateSaleCommand request,
         CancellationToken cancellationToken)
     {
-        var sale = await _saleQueryRepository.GetByIdAsync(request.Id, cancellationToken);
+        var sale = await _saleQueryRepository.GetSaleWithExpensesForUpdateAsync(request.Id, cancellationToken);
         if (sale is null)
             return Result.Failure<SaleDetailDto>(DomainErrors.Sale.NotFound(request.Id));
 
@@ -73,8 +67,6 @@ public class UpdateSaleCommandHandler : IRequestHandler<UpdateSaleCommand, Resul
                     if (product.Stock > 0 && !product.IsActive)
                         product.Activate();
                 }
-
-                _productWriteRepository.Update(product);
             }
             else
             {
@@ -105,7 +97,22 @@ public class UpdateSaleCommandHandler : IRequestHandler<UpdateSaleCommand, Resul
             return Result.Failure<SaleDetailDto>(Error.Failure("Sale.InvalidOperation", ex.Message));
         }
 
-        _saleWriteRepository.Update(sale);
+        try
+        {
+            if (request.Expenses is not null)
+            {
+                var expenseDrafts = SaleMapper.ToExpenseDrafts(request.Expenses);
+                sale.ReplaceExpenses(expenseDrafts);
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            return Result.Failure<SaleDetailDto>(Error.Validation("Sale.InvalidExpense", ex.Message));
+        }
+
+        // Sale və Product artıq DbContext tərəfindən izlənilir (tracked).
+        // Yeni expense-lər bəzən Modified state-ə düşür; SaveChanges-dən əvvəl düzəldilir.
+        await _unitOfWork.PrepareSaleForSaveAsync(sale.Id, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(SaleMapper.ToDetailDto(sale));

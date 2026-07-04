@@ -138,6 +138,26 @@ public class UnitOfWork : IUnitOfWork
         }
     }
 
+    public async Task PrepareSaleForSaveAsync(Guid saleId, CancellationToken cancellationToken = default)
+    {
+        var expenseEntries = _context.ChangeTracker.Entries<SaleExpense>()
+            .Where(e => e.Entity.SaleId == saleId)
+            .ToList();
+
+        if (expenseEntries.Count == 0)
+            return;
+
+        var expenseIds = expenseEntries.Select(e => e.Entity.Id).ToList();
+        var existingExpenseIds = await _context.SaleExpenses
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(e => expenseIds.Contains(e.Id))
+            .Select(e => e.Id)
+            .ToListAsync(cancellationToken);
+
+        FixChildEntityStates(expenseEntries, existingExpenseIds.ToHashSet(), e => e.Entity.Id);
+    }
+
     private static void FixChildEntityStates<TEntity>(
         List<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<TEntity>> entries,
         HashSet<Guid> existingIds,

@@ -37,17 +37,27 @@ public static class WebApplicationBuilderExtensions
                 options.SuppressModelStateInvalidFilter = true;
             });
 
-        // CORS — production: FRONTEND_URLS; development fallback: localhost ports
+        // CORS — development: localhost/127.0.0.1; production: FRONTEND_URLS
         var allowedOrigins = GetAllowedFrontendOrigins(builder);
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("Frontend", policy =>
             {
+                if (builder.Environment.IsDevelopment())
+                {
+                    policy.SetIsOriginAllowed(IsLocalDevelopmentOrigin)
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials();
+                    return;
+                }
+
                 if (allowedOrigins.Length > 0)
                 {
                     policy.WithOrigins(allowedOrigins)
                           .AllowAnyMethod()
-                          .AllowAnyHeader();
+                          .AllowAnyHeader()
+                          .AllowCredentials();
                 }
             });
         });
@@ -144,12 +154,23 @@ public static class WebApplicationBuilderExtensions
             [
                 "http://localhost:5173",
                 "http://localhost:5174",
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:5174",
                 "http://localhost:3000",
                 "http://localhost:3001"
             ];
         }
 
         return origins;
+    }
+
+    private static bool IsLocalDevelopmentOrigin(string origin)
+    {
+        if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+            return false;
+
+        return uri.Host is "localhost" or "127.0.0.1"
+            && uri.Scheme is "http" or "https";
     }
 }
 

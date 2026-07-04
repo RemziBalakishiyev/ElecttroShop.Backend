@@ -18,5 +18,10 @@ public class GetSalesQueryValidator : AbstractValidator<GetSalesQuery>
             .GreaterThanOrEqualTo(x => x.MinProfit)
             .When(x => x.MinProfit.HasValue && x.MaxProfit.HasValue)
             .WithMessage("Maksimum mənfəət minimumdan kiçik ola bilməz");
+
+        RuleFor(x => x.MaxExpense)
+            .GreaterThanOrEqualTo(x => x.MinExpense)
+            .When(x => x.MinExpense.HasValue && x.MaxExpense.HasValue)
+            .WithMessage("Maksimum xərc minimumdan kiçik ola bilməz");
     }
 }

@@ -933,6 +933,56 @@
         }
       }
     },
+    "/api/dashboard/statistics": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Admin dashboard satış və məhsul statistikalarını əldə edir",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardStatisticsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardStatisticsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardStatisticsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/discounts": {
       "get": {
         "tags": [
@@ -2834,6 +2884,22 @@
               "type": "number",
               "format": "double"
             }
+          },
+          {
+            "name": "MinExpense",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "MaxExpense",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
           }
         ],
         "responses": {
@@ -3687,6 +3753,13 @@
           "note": {
             "type": "string",
             "nullable": true
+          },
+          "expenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleExpenseRequestDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -3768,6 +3841,77 @@
           "deliveredOrders": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardStatisticsResponse": {
+        "type": "object",
+        "properties": {
+          "dailySales": {
+            "$ref": "#/components/schemas/SalesStatisticsResponse"
+          },
+          "monthlySales": {
+            "$ref": "#/components/schemas/SalesStatisticsResponse"
+          },
+          "productSummary": {
+            "$ref": "#/components/schemas/ProductSummaryStatisticsResponse"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SalesStatisticsResponse": {
+        "type": "object",
+        "properties": {
+          "totalSaleAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalProductCost": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalExpenses": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "soldProductQuantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "salesCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductSummaryStatisticsResponse": {
+        "type": "object",
+        "properties": {
+          "totalProductCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalProductCostValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalProductSaleValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalInventoryCostValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalInventorySaleValue": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -4340,6 +4484,10 @@
             "type": "number",
             "format": "double"
           },
+          "totalExpenses": {
+            "type": "number",
+            "format": "double"
+          },
           "profit": {
             "type": "number",
             "format": "double"
@@ -4358,6 +4506,13 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "expenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleExpenseDto"
+            },
+            "nullable": true
           },
           "updatedAt": {
             "type": "string",
@@ -4421,6 +4576,10 @@
             "format": "double"
           },
           "totalSaleAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalExpenses": {
             "type": "number",
             "format": "double"
           },
@@ -4505,6 +4664,58 @@
           "ManualEntry"
         ],
         "type": "string"
+      },
+      "ExpenseType": {
+        "enum": [
+          "Installation",
+          "Delivery",
+          "Service",
+          "Commission",
+          "Other"
+        ],
+        "type": "string"
+      },
+      "SaleExpenseRequestDto": {
+        "type": "object",
+        "properties": {
+          "expenseType": {
+            "$ref": "#/components/schemas/ExpenseType"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SaleExpenseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expenseType": {
+            "$ref": "#/components/schemas/ExpenseType"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
       },
       "SetProductAsFeaturedCommand": {
         "type": "object",
@@ -4880,6 +5091,13 @@
           },
           "note": {
             "type": "string",
+            "nullable": true
+          },
+          "expenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleExpenseRequestDto"
+            },
             "nullable": true
           }
         },

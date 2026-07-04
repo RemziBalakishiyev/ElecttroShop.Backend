@@ -1,28 +1,63 @@
-# OpenAPI diff — Categories List/Lookup Consistency Fix
+# OpenAPI diff — Dashboard Statistics API
 
-**Date:** 2026-06-30
+**Date:** 2026-07-05
 
 ## Summary
 
-`GET /api/categories` və `GET /api/categories/lookup` endpoint-lərində `IncludeAll` query parametrinin default dəyəri `false`-dan `true`-ya dəyişdirildi. Response shape dəyişməyib.
+Admin Dashboard üçün yeni satış və məhsul statistik endpoint-i əlavə olundu. Köhnə `GET /api/dashboard` endpoint-i dəyişməyib (sifariş/məhsul count statistikaları); yeni statistikalar ayrıca endpoint-dədir.
 
-## Changed query parameters
+## New endpoints
 
-### GET /api/categories
-- **IncludeAll** — default: `false` → `true`
-- **Description:** `false` olduqda yalnız root kateqoriyalar; default: bütün aktiv kateqoriyalar
+### GET /api/dashboard/statistics
+- **Auth:** `[Authorize]` — JWT tələb olunur (Admin panel pattern)
+- **Response:** `DashboardStatisticsResponse`
+  - `dailySales`: `SalesStatisticsResponse` — bugünkü satışlar (UTC gün intervalı)
+  - `monthlySales`: `SalesStatisticsResponse` — cari ay (ayın 1-dən bu günə qədər, UTC)
+  - `productSummary`: `ProductSummaryStatisticsResponse` — sistemdəki məhsullar
 
-### GET /api/categories/lookup
-- **includeAll** — default: `false` → `true`
-- **Description:** `false` olduqda yalnız root kateqoriyalar; default: bütün aktiv kateqoriyalar
+## New schemas
+
+- `DashboardStatisticsResponse`
+- `SalesStatisticsResponse`: `totalSaleAmount`, `totalProductCost`, `totalExpenses`, `totalProfit`, `soldProductQuantity`, `salesCount`
+- `ProductSummaryStatisticsResponse`: `totalProductCount`, `totalProductCostValue`, `totalProductSaleValue`, `totalInventoryCostValue`, `totalInventorySaleValue`
+
+## Changed endpoints
+
+### GET /api/dashboard
+- **Change:** `[Authorize]` aktiv edildi (əvvəl comment olunmuşdu)
+- **Response:** Dəyişməyib (`DashboardDto` — köhnə order-based statistikalar)
+
+## Business rules
+
+**Sales statistics (daily/monthly):**
+```
+totalSaleAmount = SUM(salePrice * quantity)  → Sale.TotalSaleAmount
+totalProductCost = SUM(costPrice * quantity) → Sale.TotalCost
+totalExpenses = SUM(sale expenses)           → Sale.TotalExpenses
+totalProfit = totalSaleAmount - totalProductCost - totalExpenses
+soldProductQuantity = SUM(quantity)
+salesCount = COUNT(sales)
+```
+- Date filter: `SoldAt` (UTC)
+- Soft deleted satışlar istisna (global query filter)
+
+**Product summary:**
+```
+totalProductCount = COUNT(products)
+totalProductSaleValue = SUM(Price.Amount)
+totalInventorySaleValue = SUM(Price.Amount * Stock)
+```
+- **Limitation:** Product entity-də ayrıca `costPrice` yoxdur; `totalProductCostValue` və `totalInventoryCostValue` müvəqqəti olaraq `Price.Amount` əsasında hesablanır (alış qiyməti = satış qiyməti).
 
 ## Breaking changes
 
-- **Behavioral (low risk):** Caller-lər `IncludeAll`/`includeAll` göndərmədikdə əvvəl yalnız root kateqoriyalar gəlirdi, indi bütün aktiv kateqoriyalar gəlir.
-- Root-only siyahı lazımdırsa: `?IncludeAll=false` (management) və ya `?includeAll=false` (lookup) explicit göndərilməlidir.
-- Response/request DTO shape dəyişməyib.
+- **None** for existing dashboard consumers — yeni endpoint əlavədir.
+- Admin frontend Dashboard səhifəsi yeni `/api/dashboard/statistics` endpoint-inə keçməlidir.
 
-## Frontend note
+## Database
 
-- Admin Categories page və Add Product dropdown eyni kateqoriya setini görməlidir — əlavə frontend dəyişikliyi tələb olunmaya bilər.
-- User frontend root-only default-a güvənirdisə, `IncludeAll=false` əlavə edin.
+No migration required.
+
+## OpenAPI
+
+- `contracts/openapi.json` updated: **yes**

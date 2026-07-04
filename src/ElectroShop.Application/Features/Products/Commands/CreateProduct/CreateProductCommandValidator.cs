@@ -96,6 +96,16 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
                 inline.RuleFor(a => a.AttributeType)
                     .NotEmpty()
                     .WithMessage("AttributeType boş ola bilməz");
+
+                inline.RuleForEach(a => a.Values)
+                    .ChildRules(value =>
+                    {
+                        value.RuleFor(v => v.Value)
+                            .NotEmpty()
+                            .WithMessage("Attribute dəyəri boş ola bilməz")
+                            .MaximumLength(CategoryAttributeValue.MaxValueLength)
+                            .WithMessage($"Attribute dəyəri maksimum {CategoryAttributeValue.MaxValueLength} simvol ola bilər");
+                    });
             })
             .When(x => x.InlineAttributes is not null);
 

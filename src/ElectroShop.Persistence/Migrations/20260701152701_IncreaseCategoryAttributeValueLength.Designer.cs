@@ -3,6 +3,7 @@ using System;
 using ElectroShop.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ElectroShop.Persistence.Migrations
 {
     [DbContext(typeof(ElectroShopDbContext))]
-    partial class ElectroShopDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260701152701_IncreaseCategoryAttributeValueLength")]
+    partial class IncreaseCategoryAttributeValueLength
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -548,102 +551,6 @@ namespace ElectroShop.Persistence.Migrations
                     b.ToTable("Products", (string)null);
                 });
 
-            modelBuilder.Entity("ElectroShop.Domain.Entities.ProductAttribute", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AttributeType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("DisplayOrder")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsRequired")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("ProductId", "DisplayOrder");
-
-                    b.ToTable("ProductAttributes", (string)null);
-                });
-
-            modelBuilder.Entity("ElectroShop.Domain.Entities.ProductAttributeValue", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ColorCode")
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)");
-
-                    b.Property<int>("DisplayOrder")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<string>("DisplayValue")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<Guid>("ProductAttributeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductAttributeId", "DisplayOrder");
-
-                    b.ToTable("ProductAttributeValues", (string)null);
-                });
-
             modelBuilder.Entity("ElectroShop.Domain.Entities.ProductImage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -903,11 +810,6 @@ namespace ElectroShop.Persistence.Migrations
                     b.Property<decimal>("TotalCost")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("TotalExpenses")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("decimal(18,2)")
-                        .HasDefaultValue(0m);
-
                     b.Property<decimal>("TotalSaleAmount")
                         .HasColumnType("decimal(18,2)");
 
@@ -933,57 +835,6 @@ namespace ElectroShop.Persistence.Migrations
                     b.HasIndex("IsDeleted", "SoldAt");
 
                     b.ToTable("Sales", (string)null);
-                });
-
-            modelBuilder.Entity("ElectroShop.Domain.Entities.SaleExpense", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("ExpenseType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<Guid>("SaleId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExpenseType");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("SaleId");
-
-                    b.ToTable("SaleExpenses", (string)null);
                 });
 
             modelBuilder.Entity("ElectroShop.Domain.Entities.User", b =>
@@ -1110,7 +961,7 @@ namespace ElectroShop.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.Order.Subtotal#ElectroShop.Domain.ValueObjects.Money", "Subtotal", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Money", "Subtotal", b1 =>
                         {
                             b1.Property<Guid>("OrderId")
                                 .HasColumnType("uuid");
@@ -1127,13 +978,13 @@ namespace ElectroShop.Persistence.Migrations
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Orders", (string)null);
+                            b1.ToTable("Orders");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");
                         });
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.Order.Total#ElectroShop.Domain.ValueObjects.Money", "Total", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Money", "Total", b1 =>
                         {
                             b1.Property<Guid>("OrderId")
                                 .HasColumnType("uuid");
@@ -1150,13 +1001,13 @@ namespace ElectroShop.Persistence.Migrations
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Orders", (string)null);
+                            b1.ToTable("Orders");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");
                         });
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.Order.Vat#ElectroShop.Domain.ValueObjects.Money", "Vat", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Money", "Vat", b1 =>
                         {
                             b1.Property<Guid>("OrderId")
                                 .HasColumnType("uuid");
@@ -1173,7 +1024,7 @@ namespace ElectroShop.Persistence.Migrations
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Orders", (string)null);
+                            b1.ToTable("Orders");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");
@@ -1205,7 +1056,7 @@ namespace ElectroShop.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.OrderItem.LineTotal#ElectroShop.Domain.ValueObjects.Money", "LineTotal", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Money", "LineTotal", b1 =>
                         {
                             b1.Property<Guid>("OrderItemId")
                                 .HasColumnType("uuid");
@@ -1222,13 +1073,13 @@ namespace ElectroShop.Persistence.Migrations
 
                             b1.HasKey("OrderItemId");
 
-                            b1.ToTable("OrderItems", (string)null);
+                            b1.ToTable("OrderItems");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderItemId");
                         });
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.OrderItem.UnitPrice#ElectroShop.Domain.ValueObjects.Money", "UnitPrice", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Money", "UnitPrice", b1 =>
                         {
                             b1.Property<Guid>("OrderItemId")
                                 .HasColumnType("uuid");
@@ -1245,7 +1096,7 @@ namespace ElectroShop.Persistence.Migrations
 
                             b1.HasKey("OrderItemId");
 
-                            b1.ToTable("OrderItems", (string)null);
+                            b1.ToTable("OrderItems");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderItemId");
@@ -1274,7 +1125,7 @@ namespace ElectroShop.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.Product.Price#ElectroShop.Domain.ValueObjects.Money", "Price", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Money", "Price", b1 =>
                         {
                             b1.Property<Guid>("ProductId")
                                 .HasColumnType("uuid");
@@ -1291,13 +1142,13 @@ namespace ElectroShop.Persistence.Migrations
 
                             b1.HasKey("ProductId");
 
-                            b1.ToTable("Products", (string)null);
+                            b1.ToTable("Products");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductId");
                         });
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.Product.Sku#ElectroShop.Domain.ValueObjects.Sku", "Sku", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Sku", "Sku", b1 =>
                         {
                             b1.Property<Guid>("ProductId")
                                 .HasColumnType("uuid");
@@ -1313,7 +1164,7 @@ namespace ElectroShop.Persistence.Migrations
                             b1.HasIndex("Value")
                                 .IsUnique();
 
-                            b1.ToTable("Products", (string)null);
+                            b1.ToTable("Products");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductId");
@@ -1328,28 +1179,6 @@ namespace ElectroShop.Persistence.Migrations
 
                     b.Navigation("Sku")
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("ElectroShop.Domain.Entities.ProductAttribute", b =>
-                {
-                    b.HasOne("ElectroShop.Domain.Entities.Product", "Product")
-                        .WithMany("ProductAttributes")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("ElectroShop.Domain.Entities.ProductAttributeValue", b =>
-                {
-                    b.HasOne("ElectroShop.Domain.Entities.ProductAttribute", "ProductAttribute")
-                        .WithMany("Values")
-                        .HasForeignKey("ProductAttributeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ProductAttribute");
                 });
 
             modelBuilder.Entity("ElectroShop.Domain.Entities.ProductImage", b =>
@@ -1414,17 +1243,6 @@ namespace ElectroShop.Persistence.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("ElectroShop.Domain.Entities.SaleExpense", b =>
-                {
-                    b.HasOne("ElectroShop.Domain.Entities.Sale", "Sale")
-                        .WithMany("Expenses")
-                        .HasForeignKey("SaleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Sale");
-                });
-
             modelBuilder.Entity("ElectroShop.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Children");
@@ -1442,21 +1260,9 @@ namespace ElectroShop.Persistence.Migrations
 
             modelBuilder.Entity("ElectroShop.Domain.Entities.Product", b =>
                 {
-                    b.Navigation("ProductAttributes");
-
                     b.Navigation("ProductImages");
 
                     b.Navigation("ProductVariants");
-                });
-
-            modelBuilder.Entity("ElectroShop.Domain.Entities.ProductAttribute", b =>
-                {
-                    b.Navigation("Values");
-                });
-
-            modelBuilder.Entity("ElectroShop.Domain.Entities.Sale", b =>
-                {
-                    b.Navigation("Expenses");
                 });
 #pragma warning restore 612, 618
         }

@@ -20,12 +20,13 @@ public static class WebApplicationExtensions
             });
         }
 
-        if (!app.Environment.IsProduction())
+        app.UseCors("Frontend");
+
+        if (app.Environment.IsProduction())
         {
             app.UseHttpsRedirection();
         }
 
-        app.UseCors("Frontend");
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

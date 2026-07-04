@@ -2,6 +2,7 @@ using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
 using ElectroShop.Application.Models;
+using ElectroShop.Application.Services;
 using ElectroShop.Domain.Entities;
 using ElectroShop.Domain.Exceptions;
 using MediatR;
@@ -76,14 +77,14 @@ public class UpdateProductCommandHandler
 
             product.SyncImages(request.ImageIds);
 
-            var hasVariants = request.Variants.Count > 0;
-            var hasInlineAttributes = request.InlineAttributes is { Count: > 0 };
+            // Məhsul spesifikasiyaları məhsulun özünə yazılır (kateqoriyaya deyil)
+            product.SyncAttributes(ProductAttributeDraftMapper.ToDrafts(request.InlineAttributes));
 
-            if (hasVariants || hasInlineAttributes)
+            var hasVariants = request.Variants.Count > 0;
+
+            if (hasVariants)
             {
-                var variantMaps = hasVariants
-                    ? request.Variants.Select(v => v.Attributes).ToList()
-                    : [];
+                var variantMaps = request.Variants.Select(v => v.Attributes).ToList();
 
                 var schemaResult = await _schemaResolver.ResolveAsync(
                     request.CategoryId,
@@ -97,7 +98,6 @@ public class UpdateProductCommandHandler
                     return Result.Failure<ProductDto>(schemaResult.Error);
                 }
 
-                if (hasVariants)
                 {
                     var existingVariantAttributes = product.ProductVariants
                         .ToDictionary(v => v.Id, v => v.AttributesJson);

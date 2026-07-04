@@ -7,79 +7,60 @@ using ElectroShop.Domain.Entities;
 
 namespace ElectroShop.Application.Services;
 
+/// <summary>
+/// Variant validasiyası üçün atribut sxemini qurur.
+/// ÖNƏMLİ: Bu resolver artıq CategoryAttribute/CategoryAttributeValue-a HEÇ NƏ YAZMIR.
+/// Sxem yalnız yaddaşda (in-memory), request-dəki inline atributlar və variant map-lərindən qurulur.
+/// Beləliklə məhsul saxlanması kateqoriyadakı digər məhsullara təsir etmir.
+/// </summary>
 public partial class ProductAttributeSchemaResolver : IProductAttributeSchemaResolver
 {
-    private readonly ICategoryQueryRepository _categoryQueryRepository;
-    private readonly IWriteRepository<CategoryAttribute> _attributeWriteRepository;
-    private readonly IQueryRepository<Category> _categoryRepository;
-
-    public ProductAttributeSchemaResolver(
-        ICategoryQueryRepository categoryQueryRepository,
-        IWriteRepository<CategoryAttribute> attributeWriteRepository,
-        IQueryRepository<Category> categoryRepository)
-    {
-        _categoryQueryRepository = categoryQueryRepository;
-        _attributeWriteRepository = attributeWriteRepository;
-        _categoryRepository = categoryRepository;
-    }
-
-    public async Task<Result<ResolvedCategoryAttributeSchema>> ResolveAsync(
+    public Task<Result<ResolvedCategoryAttributeSchema>> ResolveAsync(
         Guid categoryId,
         IReadOnlyList<InlineProductAttributeDto>? inlineAttributes,
         IReadOnlyList<Dictionary<string, string>> variantAttributeMaps,
         CancellationToken cancellationToken)
     {
-        var category = await _categoryRepository.GetByIdAsync(categoryId, cancellationToken);
-        if (category is null)
-            return DomainErrors.Category.NotFound(categoryId);
-
         var inlineList = inlineAttributes ?? [];
+
         var inlineDuplicate = FindDuplicateAttributeTypes(inlineList);
         if (inlineDuplicate is not null)
-            return DomainErrors.ProductVariant.AttributeAlreadyExists(inlineDuplicate);
+            return Task.FromResult(Result.Failure<ResolvedCategoryAttributeSchema>(
+                DomainErrors.ProductVariant.AttributeAlreadyExists(inlineDuplicate)));
 
         foreach (var inline in inlineList)
         {
             var valueDuplicate = FindDuplicateValues(inline.Values.Select(v => v.Value));
             if (valueDuplicate is not null)
-                return DomainErrors.ProductVariant.ValueAlreadyExists(valueDuplicate, inline.AttributeType);
+                return Task.FromResult(Result.Failure<ResolvedCategoryAttributeSchema>(
+                    DomainErrors.ProductVariant.ValueAlreadyExists(valueDuplicate, inline.AttributeType)));
         }
-
-        var trackedAttributes = await _categoryQueryRepository
-            .GetCategoryAttributesForUpdateAsync(categoryId, cancellationToken);
 
         var inlineByType = BuildInlineLookup(inlineList);
         var requiredTypes = CollectRequiredAttributeTypes(inlineList, variantAttributeMaps);
         var attributesByType = new Dictionary<string, CategoryAttribute>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var existingAttribute in trackedAttributes)
-            attributesByType[existingAttribute.AttributeType] = existingAttribute;
-
+        var displayOrderCursor = -1;
         foreach (var incomingType in requiredTypes)
         {
-            if (attributesByType.Keys.Any(k => AttributeTypeNormalizer.Equals(k, incomingType)))
-                continue;
-
             inlineByType.TryGetValue(NormalizeTypeKey(incomingType), out var inlineDef);
-            var maxDisplayOrder = trackedAttributes.Count > 0 ? trackedAttributes.Max(a => a.DisplayOrder) : -1;
             var attributeTypeToStore = GetPreferredAttributeType(incomingType, inlineDef, variantAttributeMaps);
             var name = inlineDef?.Name ?? attributeTypeToStore;
             var displayName = inlineDef?.DisplayName ?? attributeTypeToStore;
             var isRequired = inlineDef?.IsRequired ?? false;
-            var displayOrder = inlineDef?.DisplayOrder ?? maxDisplayOrder + 1;
+            var displayOrder = inlineDef?.DisplayOrder ?? ++displayOrderCursor;
 
             try
             {
-                var created = CategoryAttribute.Create(
+                // Yalnız yaddaşda transient obyekt - DB-yə yazılmır
+                var attribute = CategoryAttribute.Create(
                     categoryId, name, displayName, attributeTypeToStore, isRequired, displayOrder);
-                await _attributeWriteRepository.AddAsync(created, cancellationToken);
-                trackedAttributes.Add(created);
-                attributesByType[created.AttributeType] = created;
+                attributesByType[attribute.AttributeType] = attribute;
             }
             catch (ArgumentException ex)
             {
-                return Result.Failure<ResolvedCategoryAttributeSchema>(
-                    Error.Validation("ProductVariant.InvalidAttribute", ex.Message));
+                return Task.FromResult(Result.Failure<ResolvedCategoryAttributeSchema>(
+                    Error.Validation("ProductVariant.InvalidAttribute", ex.Message)));
             }
         }
 
@@ -101,17 +82,17 @@ public partial class ProductAttributeSchemaResolver : IProductAttributeSchemaRes
                         ?? (attribute.Values.Count > 0 ? attribute.Values.Max(v => v.DisplayOrder) + 1 : 0);
                     var createdValue = CategoryAttributeValue.Create(
                         attribute.Id, normalizedValue, inlineValueDef?.DisplayValue, displayOrder, inlineValueDef?.ColorCode);
-                    await _categoryQueryRepository.AddCategoryAttributeValueAsync(createdValue, cancellationToken);
                     attribute.Values.Add(createdValue);
                 }
                 catch (ArgumentException ex)
                 {
-                    return Result.Failure<ResolvedCategoryAttributeSchema>(
-                        Error.Validation("ProductVariant.InvalidAttributeValue", ex.Message));
+                    return Task.FromResult(Result.Failure<ResolvedCategoryAttributeSchema>(
+                        Error.Validation("ProductVariant.InvalidAttributeValue", ex.Message)));
                 }
             }
         }
 
-        return Result.Success(new ResolvedCategoryAttributeSchema { AttributesByType = attributesByType });
+        return Task.FromResult(Result.Success(
+            new ResolvedCategoryAttributeSchema { AttributesByType = attributesByType }));
     }
 }

@@ -34,6 +34,7 @@ public class Product : AggregateRoot
     // Navigation properties
     public List<ProductImage> ProductImages { get; private set; } = [];
     public List<ProductVariant> ProductVariants { get; private set; } = [];
+    public List<ProductAttribute> ProductAttributes { get; private set; } = [];
 
     private Product() { }
 
@@ -315,6 +316,43 @@ public class Product : AggregateRoot
                 if (i == 0)
                     SetPrimaryImage(imageId);
             }
+        }
+    }
+
+    /// <summary>
+    /// Məhsulun atributlarını (spesifikasiyalarını) tam əvəz et (DDD Aggregate pattern).
+    /// Bu atributlar yalnız bu məhsula aiddir, kateqoriyaya təsir etmir.
+    /// </summary>
+    public void SyncAttributes(IReadOnlyList<ProductAttributeDraft> drafts)
+    {
+        ArgumentNullException.ThrowIfNull(drafts);
+
+        // Tam əvəzləmə: köhnə atributları sil, yenilərini əlavə et
+        ProductAttributes.Clear();
+
+        foreach (var draft in drafts)
+        {
+            var attribute = ProductAttribute.Create(
+                Id,
+                draft.Name,
+                draft.DisplayName,
+                draft.AttributeType,
+                draft.IsRequired,
+                draft.DisplayOrder);
+
+            foreach (var valueDraft in draft.Values)
+            {
+                var value = ProductAttributeValue.Create(
+                    attribute.Id,
+                    valueDraft.Value,
+                    valueDraft.DisplayValue,
+                    valueDraft.DisplayOrder,
+                    valueDraft.ColorCode);
+
+                attribute.AddValue(value);
+            }
+
+            ProductAttributes.Add(attribute);
         }
     }
 
