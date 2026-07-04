@@ -50,7 +50,12 @@ public class ImagesController : ControllerBase
         
         if (imageResult == null)
         {
-            _logger.LogWarning("Image not found: {ImageId}", imageId);
+            var searchedPath = _imageStorage.ResolvePhysicalPath(imageId);
+            _logger.LogWarning(
+                "Image not found: {ImageId}. Searched path: {SearchedPath}. Base path: {BasePath}",
+                imageId,
+                searchedPath,
+                _imageStorage.BasePath);
             return NotFound();
         }
 
@@ -74,7 +79,12 @@ public class ImagesController : ControllerBase
         
         if (imageResult == null)
         {
-            _logger.LogWarning("Image not found: {ImageId}", imageId);
+            var searchedPath = _imageStorage.ResolvePhysicalPath(imageId);
+            _logger.LogWarning(
+                "Image not found: {ImageId}. Searched path: {SearchedPath}. Base path: {BasePath}",
+                imageId,
+                searchedPath,
+                _imageStorage.BasePath);
             return NotFound();
         }
 

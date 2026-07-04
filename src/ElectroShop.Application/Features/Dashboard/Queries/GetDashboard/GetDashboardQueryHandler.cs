@@ -17,7 +17,7 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Resul
     private readonly ICustomerQueryRepository _customerRepository;
     private readonly ICategoryQueryRepository _categoryRepository;
     private readonly IBrandQueryRepository _brandRepository;
-    private readonly IImageStorage _imageStorage;
+    private readonly IImageUrlResolver _imageUrlResolver;
 
     public GetDashboardQueryHandler(
         IProductQueryRepository productRepository,
@@ -25,14 +25,14 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Resul
         ICustomerQueryRepository customerRepository,
         ICategoryQueryRepository categoryRepository,
         IBrandQueryRepository brandRepository,
-        IImageStorage imageStorage)
+        IImageUrlResolver imageUrlResolver)
     {
         _productRepository = productRepository;
         _orderRepository = orderRepository;
         _customerRepository = customerRepository;
         _categoryRepository = categoryRepository;
         _brandRepository = brandRepository;
-        _imageStorage = imageStorage;
+        _imageUrlResolver = imageUrlResolver;
     }
 
     public async Task<Result<DashboardDto>> Handle(
@@ -101,10 +101,7 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Resul
             string? primaryImageUrl = null;
             if (primaryImage != null)
             {
-                var extension = await _imageStorage.GetImageExtensionAsync(primaryImage.ImageId, cancellationToken);
-                primaryImageUrl = extension != null 
-                    ? $"/api/images/{primaryImage.ImageId}{extension}" 
-                    : $"/api/images/{primaryImage.ImageId}";
+                primaryImageUrl = await _imageUrlResolver.BuildImageUrlAsync(primaryImage.ImageId, cancellationToken);
             }
 
             var productDto = product.Adapt<ProductListDto>();

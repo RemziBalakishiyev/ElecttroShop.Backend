@@ -1,18 +1,23 @@
 namespace ElectroShop.Application.Services;
 
+public record StoredImageFileInfo(
+    string FileName,
+    string RelativePath,
+    string PublicUrl,
+    long Size);
+
 /// <summary>
 /// Şəkil saxlama servisi interfeysi (SOLID: Interface Segregation)
 /// </summary>
 public interface IImageStorage
 {
+    string BasePath { get; }
+
+    string? WebRootPath { get; }
+
     /// <summary>
     /// Şəkil yükləyir və unikal ID qaytarır
     /// </summary>
-    /// <param name="imageStream">Şəkil stream-i</param>
-    /// <param name="fileName">Fayl adı</param>
-    /// <param name="contentType">Content type (MIME type)</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Yüklənmiş şəkilin unikal ID-si</returns>
     Task<Guid> UploadImageAsync(
         Stream imageStream,
         string fileName,
@@ -22,16 +27,11 @@ public interface IImageStorage
     /// <summary>
     /// Şəkili silir
     /// </summary>
-    /// <param name="imageId">Şəkil ID-si</param>
-    /// <param name="cancellationToken">Cancellation token</param>
     Task DeleteImageAsync(Guid imageId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Şəkili oxuyur
     /// </summary>
-    /// <param name="imageId">Şəkil ID-si</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Şəkil stream-i və content type</returns>
     Task<(Stream Stream, string ContentType)?> GetImageAsync(
         Guid imageId,
         CancellationToken cancellationToken = default);
@@ -39,19 +39,20 @@ public interface IImageStorage
     /// <summary>
     /// Şəklin mövcud olub-olmadığını yoxlayır
     /// </summary>
-    /// <param name="imageId">Şəkil ID-si</param>
-    /// <param name="cancellationToken">Cancellation token</param>
     Task<bool> ImageExistsAsync(Guid imageId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Şəklin extension-ını qaytarır
     /// </summary>
-    /// <param name="imageId">Şəkil ID-si</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Extension (məsələn: ".jpg", ".png") və ya null</returns>
     Task<string?> GetImageExtensionAsync(Guid imageId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Diskdə axtarılan fiziki path-i qaytarır (fayl tapılmasa da son yoxlanan path).
+    /// </summary>
+    string ResolvePhysicalPath(Guid imageId);
+
+    /// <summary>
+    /// Storage qovluğundakı faylları siyahıya alır (debug üçün).
+    /// </summary>
+    IReadOnlyList<StoredImageFileInfo> ListStoredImages(int maxCount = 50);
 }
-
-
-
-

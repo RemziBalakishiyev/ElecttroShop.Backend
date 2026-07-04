@@ -12,18 +12,18 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, PagedRe
     private readonly IProductQueryRepository _productRepository;
     private readonly IProductRatingQueryRepository _ratingRepository;
     private readonly IDiscountCalculationService _discountCalculationService;
-    private readonly IImageStorage _imageStorage;
+    private readonly IImageUrlResolver _imageUrlResolver;
 
     public GetProductsQueryHandler(
         IProductQueryRepository productRepository,
         IProductRatingQueryRepository ratingRepository,
         IDiscountCalculationService discountCalculationService,
-        IImageStorage imageStorage)
+        IImageUrlResolver imageUrlResolver)
     {
         _productRepository = productRepository;
         _ratingRepository = ratingRepository;
         _discountCalculationService = discountCalculationService;
-        _imageStorage = imageStorage;
+        _imageUrlResolver = imageUrlResolver;
     }
 
     public async Task<PagedResult<ProductListDto>> Handle(
@@ -75,10 +75,7 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, PagedRe
             string? primaryImageUrl = null;
             if (primaryImage != null)
             {
-                var extension = await _imageStorage.GetImageExtensionAsync(primaryImage.ImageId, cancellationToken);
-                primaryImageUrl = extension != null 
-                    ? $"/api/images/{primaryImage.ImageId}{extension}" 
-                    : $"/api/images/{primaryImage.ImageId}";
+                primaryImageUrl = await _imageUrlResolver.BuildImageUrlAsync(primaryImage.ImageId, cancellationToken);
             }
 
             productDto = productDto with

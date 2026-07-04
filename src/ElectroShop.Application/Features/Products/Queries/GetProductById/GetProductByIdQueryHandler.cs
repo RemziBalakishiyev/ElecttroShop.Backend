@@ -13,7 +13,7 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
     private readonly ICategoryQueryRepository _categoryRepository;
     private readonly IProductRatingQueryRepository _ratingRepository;
     private readonly IDiscountCalculationService _discountCalculationService;
-    private readonly IImageStorage _imageStorage;
+    private readonly IImageUrlResolver _imageUrlResolver;
     private readonly ICurrentUserService _currentUserService;
 
     public GetProductByIdQueryHandler(
@@ -21,14 +21,14 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
         ICategoryQueryRepository categoryRepository,
         IProductRatingQueryRepository ratingRepository,
         IDiscountCalculationService discountCalculationService,
-        IImageStorage imageStorage,
+        IImageUrlResolver imageUrlResolver,
         ICurrentUserService currentUserService)
     {
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;
         _ratingRepository = ratingRepository;
         _discountCalculationService = discountCalculationService;
-        _imageStorage = imageStorage;
+        _imageUrlResolver = imageUrlResolver;
         _currentUserService = currentUserService;
     }
 
@@ -54,10 +54,20 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
         string? primaryImageUrl = null;
         if (primaryImage != null)
         {
-            var extension = await _imageStorage.GetImageExtensionAsync(primaryImage.ImageId, cancellationToken);
-            primaryImageUrl = extension != null 
-                ? $"/api/images/{primaryImage.ImageId}{extension}" 
-                : $"/api/images/{primaryImage.ImageId}";
+            primaryImageUrl = await _imageUrlResolver.BuildImageUrlAsync(primaryImage.ImageId, cancellationToken);
+        }
+
+        var images = new List<ProductImageDto>();
+        foreach (var image in product.ProductImages.OrderBy(pi => pi.DisplayOrder))
+        {
+            images.Add(new ProductImageDto
+            {
+                Id = image.Id,
+                ImageId = image.ImageId,
+                ImageUrl = await _imageUrlResolver.BuildImageUrlAsync(image.ImageId, cancellationToken),
+                DisplayOrder = image.DisplayOrder,
+                IsPrimary = image.IsPrimary
+            });
         }
 
         // Variants-ı manual set et (Product məlumatları ilə)
@@ -68,10 +78,7 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
             string? imageUrl = null;
             if (pv.ImageId.HasValue)
             {
-                var variantExtension = await _imageStorage.GetImageExtensionAsync(pv.ImageId.Value, cancellationToken);
-                imageUrl = variantExtension != null 
-                    ? $"/api/images/{pv.ImageId.Value}{variantExtension}" 
-                    : $"/api/images/{pv.ImageId.Value}";
+                imageUrl = await _imageUrlResolver.BuildImageUrlAsync(pv.ImageId.Value, cancellationToken);
             }
             
             variants.Add(new ProductVariantDto
@@ -135,6 +142,7 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
         productDto = productDto with
         {
             PrimaryImageUrl = primaryImageUrl,
+            Images = images,
             FinalDiscountPercent = discountPercent,
             FinalPrice = finalPrice,
             AverageRating = ratingSummary.AverageRating,

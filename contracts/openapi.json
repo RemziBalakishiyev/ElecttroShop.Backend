@@ -1,4 +1,4 @@
-{
+﻿{
   "openapi": "3.0.1",
   "info": {
     "title": "ElectroShop API",
@@ -6,6 +6,115 @@
     "version": "v1"
   },
   "paths": {
+    "/api/admin/debug/uploads": {
+      "get": {
+        "tags": [
+          "AdminDebug"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadsDebugResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadsDebugResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadsDebugResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/debug/image/{id}": {
+      "get": {
+        "tags": [
+          "AdminDebug"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageDebugResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageDebugResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageDebugResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Auth/login": {
       "post": {
         "tags": [
@@ -1411,6 +1520,18 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "ElectroShop.WebApi"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -4106,6 +4227,56 @@
         ],
         "type": "string"
       },
+      "ImageDebugResponse": {
+        "type": "object",
+        "properties": {
+          "imageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "imageRecordFound": {
+            "type": "boolean"
+          },
+          "productImageId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "storedPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "storedFileName": {
+            "type": "string",
+            "nullable": true
+          },
+          "physicalPathSearched": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileExists": {
+            "type": "boolean"
+          },
+          "detectedExtension": {
+            "type": "string",
+            "nullable": true
+          },
+          "publicUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "staticPublicUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "InlineProductAttributeDto": {
         "type": "object",
         "properties": {
@@ -5097,6 +5268,60 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SaleExpenseRequestDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UploadDebugFileDto": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "nullable": true
+          },
+          "relativePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "publicUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UploadsDebugResponse": {
+        "type": "object",
+        "properties": {
+          "webRootPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "contentRootPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "imageStorageBasePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "uploadsFolderExists": {
+            "type": "boolean"
+          },
+          "fileCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UploadDebugFileDto"
             },
             "nullable": true
           }

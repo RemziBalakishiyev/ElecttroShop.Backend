@@ -140,8 +140,24 @@ dotnet run --project src/ElectroShop.WebApi
 | `JWT__Key` | Min 32 simvol təsadüfi secret |
 | `JWT__Issuer` | `ElectroShop` |
 | `JWT__Audience` | `ElectroShop` |
+| `PUBLIC_BASE_URL` | Backend public URL (məs: `https://api.smartal.net`) — API cavablarında absolute image URL üçün |
+| `ImageStorage__BasePath` | *(optional)* Default: `wwwroot/images/products` |
 
 4. Deploy tamamlandıqdan sonra `https://<api-service>.onrender.com/health` → `OK` qaytarmalıdır
+
+### Şəkil storage (Render xəbərdarlığı)
+
+Backend məhsul şəkillərini **lokal disk**də saxlayır: `wwwroot/images/products/{imageId}.{ext}`.
+
+- Render Docker konteynerində **local upload storage persistent deyil**
+- Redeploy və ya restart zamanı yüklənmiş fayllar **itə bilər**
+- DB-də `ProductImages.ImageId` qalsa belə, fayl diskdə yoxdursa `GET /api/images/{id}` **404** qaytarır
+- Production üçün **Cloudinary / S3 / R2** kimi xarici object storage tövsiyə olunur
+
+Debug (auth tələb olunur):
+
+- `GET /api/admin/debug/uploads` — storage path, fayl sayı, ilk 50 fayl
+- `GET /api/admin/debug/image/{id}` — DB record, physical path, file exists
 
 ### 3. Frontend Static Site (React / Vite)
 
@@ -154,7 +170,8 @@ Frontend ayrı repo və ya monorepo qovluğundadırsa:
 
 | Variable | Dəyər |
 |----------|-------|
-| `VITE_API_BASE_URL` | Backend Web Service URL (məs: `https://electroshop-api.onrender.com`) |
+| `VITE_API_BASE_URL` | Backend API base (məs: `https://api.smartal.net/api`) |
+| `VITE_ASSET_BASE_URL` | Static asset base (məs: `https://api.smartal.net`) |
 
 5. **Redirects/Rewrites** (React Router üçün):
 

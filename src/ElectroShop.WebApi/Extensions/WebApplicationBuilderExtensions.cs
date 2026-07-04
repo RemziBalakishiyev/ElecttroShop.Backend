@@ -1,6 +1,7 @@
 using ElectroShop.Application.Common.Options;
 using ElectroShop.Application;
 using ElectroShop.Persistence;
+using ElectroShop.WebApi.Configuration;
 using ElectroShop.WebApi.Filters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -14,11 +15,12 @@ public static class WebApplicationBuilderExtensions
 {
     public static WebApplicationBuilder AddWebApiServices(this WebApplicationBuilder builder)
     {
+        builder.ConfigureImageStorage();
+
         // Application Layer
         builder.Services.AddApplication();
         builder.Services.AddAuthenticationServices(builder.Configuration);
-        builder.Services.AddImageStorage(builder.Configuration);
-        builder.Services.AddDiscountServices();
+        builder.Services.AddImageStorage(builder.Configuration);        builder.Services.AddDiscountServices();
 
         // Persistence Layer
         builder.Services.AddPersistence(builder.Configuration);

@@ -69,10 +69,16 @@ public static class DependencyInjection
         this IServiceCollection services,
         Microsoft.Extensions.Configuration.IConfiguration configuration)
     {
-        // Register Image Storage Service
+        services.Configure<Common.Options.ImageStorageOptions>(
+            configuration.GetSection(Common.Options.ImageStorageOptions.SectionName));
+
+        services.PostConfigure<Common.Options.ImageStorageOptions>(options =>
+        {
+            options.PublicBaseUrl ??= configuration["PUBLIC_BASE_URL"];
+        });
+
         services.AddScoped<Services.IImageStorage, Services.LocalImageStorage>();
-        
-        // Register Image Upload Context (for passing stream to handler)
+        services.AddScoped<Services.IImageUrlResolver, Services.ImageUrlResolver>();
         services.AddScoped<Services.IImageUploadContext, Services.ImageUploadContext>();
 
         return services;

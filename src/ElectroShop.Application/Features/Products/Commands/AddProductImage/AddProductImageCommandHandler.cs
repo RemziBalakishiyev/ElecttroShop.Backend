@@ -1,6 +1,7 @@
 using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
+using ElectroShop.Application.Services;
 using MediatR;
 
 namespace ElectroShop.Application.Features.Products.Commands.AddProductImage;
@@ -10,13 +11,16 @@ public class AddProductImageCommandHandler
 {
     private readonly IProductQueryRepository _productQueryRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IImageUrlResolver _imageUrlResolver;
 
     public AddProductImageCommandHandler(
         IProductQueryRepository productQueryRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IImageUrlResolver imageUrlResolver)
     {
         _productQueryRepository = productQueryRepository;
         _unitOfWork = unitOfWork;
+        _imageUrlResolver = imageUrlResolver;
     }
 
     public async Task<Result<ProductImageDto>> Handle(
@@ -54,7 +58,7 @@ public class AddProductImageCommandHandler
         {
             Id = productImage.Id,
             ImageId = productImage.ImageId,
-            ImageUrl = $"/api/images/{productImage.ImageId}",
+            ImageUrl = await _imageUrlResolver.BuildImageUrlAsync(productImage.ImageId, cancellationToken),
             DisplayOrder = productImage.DisplayOrder,
             IsPrimary = productImage.IsPrimary
         });

@@ -1,63 +1,65 @@
-# OpenAPI diff — Dashboard Statistics API
+# OpenAPI diff — Dashboard Statistics + Product image handling
 
 **Date:** 2026-07-05
 
 ## Summary
 
-Admin Dashboard üçün yeni satış və məhsul statistik endpoint-i əlavə olundu. Köhnə `GET /api/dashboard` endpoint-i dəyişməyib (sifariş/məhsul count statistikaları); yeni statistikalar ayrıca endpoint-dədir.
+Two backend changes in this release:
 
-## New endpoints
+1. **Dashboard Statistics API** — new admin sales/product statistics endpoint
+2. **Product image handling** — static files, debug endpoints, `PUBLIC_BASE_URL` support
 
-### GET /api/dashboard/statistics
-- **Auth:** `[Authorize]` — JWT tələb olunur (Admin panel pattern)
-- **Response:** `DashboardStatisticsResponse`
-  - `dailySales`: `SalesStatisticsResponse` — bugünkü satışlar (UTC gün intervalı)
-  - `monthlySales`: `SalesStatisticsResponse` — cari ay (ayın 1-dən bu günə qədər, UTC)
-  - `productSummary`: `ProductSummaryStatisticsResponse` — sistemdəki məhsullar
+---
 
-## New schemas
+## Dashboard Statistics (previous change)
 
-- `DashboardStatisticsResponse`
-- `SalesStatisticsResponse`: `totalSaleAmount`, `totalProductCost`, `totalExpenses`, `totalProfit`, `soldProductQuantity`, `salesCount`
-- `ProductSummaryStatisticsResponse`: `totalProductCount`, `totalProductCostValue`, `totalProductSaleValue`, `totalInventoryCostValue`, `totalInventorySaleValue`
+### GET /api/dashboard/statistics (NEW)
+- **Auth:** `[Authorize]` — JWT required
+- **Response:** `DashboardStatisticsResponse` (`dailySales`, `monthlySales`, `productSummary`)
 
-## Changed endpoints
+### GET /api/dashboard / GET /api/dashboard/chart
+- **Change:** `[Authorize]` enabled (was commented out)
+- **Response:** unchanged
 
-### GET /api/dashboard
-- **Change:** `[Authorize]` aktiv edildi (əvvəl comment olunmuşdu)
-- **Response:** Dəyişməyib (`DashboardDto` — köhnə order-based statistikalar)
+### Business rules
+- Date filters use UTC (`SoldAt`)
+- Soft deleted sales/products excluded
+- **Limitation:** no separate `costPrice` on Product — cost values use `Price.Amount`
 
-## Business rules
+---
 
-**Sales statistics (daily/monthly):**
-```
-totalSaleAmount = SUM(salePrice * quantity)  → Sale.TotalSaleAmount
-totalProductCost = SUM(costPrice * quantity) → Sale.TotalCost
-totalExpenses = SUM(sale expenses)           → Sale.TotalExpenses
-totalProfit = totalSaleAmount - totalProductCost - totalExpenses
-soldProductQuantity = SUM(quantity)
-salesCount = COUNT(sales)
-```
-- Date filter: `SoldAt` (UTC)
-- Soft deleted satışlar istisna (global query filter)
+## Product image handling (this change)
 
-**Product summary:**
-```
-totalProductCount = COUNT(products)
-totalProductSaleValue = SUM(Price.Amount)
-totalInventorySaleValue = SUM(Price.Amount * Stock)
-```
-- **Limitation:** Product entity-də ayrıca `costPrice` yoxdur; `totalProductCostValue` və `totalInventoryCostValue` müvəqqəti olaraq `Price.Amount` əsasında hesablanır (alış qiyməti = satış qiyməti).
+### GET /api/admin/debug/uploads (NEW)
+- **Auth:** Bearer (staff)
+- **Response:** `UploadsDebugResponse` — web root, storage path, file count, first 50 files
+
+### GET /api/admin/debug/image/{id} (NEW)
+- **Auth:** Bearer (staff)
+- **Response:** `ImageDebugResponse` — DB record, physical path searched, file exists, public URLs
+
+### GET /api/images/{imageId} / GET /api/images/{imageId}.{extension}
+- **Auth:** Anonymous
+- **Change:** Improved 404 logging includes searched physical path and base path
+- **Note:** Returns file from `wwwroot/images/products/{imageId}.{ext}` when present
+
+### Response model changes (when `PUBLIC_BASE_URL` is set)
+Product-related DTO fields may return **absolute** URLs:
+- `primaryImageUrl`, `imageUrl` (products, variants, popular, chart data)
+
+Example: `https://api.smartal.net/api/images/{guid}.jpg`
+
+### Configuration
+- `PUBLIC_BASE_URL` — e.g. `https://api.smartal.net`
+- `ImageStorage__BasePath` — optional, default `wwwroot/images/products`
+
+### Render storage note
+Local disk uploads are ephemeral on Render. Missing files cause 404 even when DB has `ImageId`.
 
 ## Breaking changes
-
-- **None** for existing dashboard consumers — yeni endpoint əlavədir.
-- Admin frontend Dashboard səhifəsi yeni `/api/dashboard/statistics` endpoint-inə keçməlidir.
-
-## Database
-
-No migration required.
+- None for API route structure
+- **Ops:** Set `PUBLIC_BASE_URL` on Render for absolute image URLs
+- **Frontend:** Use `resolveImageUrl()` helper for image URLs
 
 ## OpenAPI
-
 - `contracts/openapi.json` updated: **yes**

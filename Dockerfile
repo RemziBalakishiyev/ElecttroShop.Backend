@@ -26,4 +26,8 @@ ENV ASPNETCORE_URLS=http://0.0.0.0:10000
 EXPOSE 10000
 
 COPY --from=publish /app/publish .
+
+# Ensure image storage directory exists (Render local disk is ephemeral)
+RUN mkdir -p /app/wwwroot/images/products
+
 ENTRYPOINT ["dotnet", "ElectroShop.WebApi.dll"]

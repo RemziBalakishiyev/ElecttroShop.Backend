@@ -9,14 +9,14 @@ namespace ElectroShop.Application.Features.Products.Queries.GetPopularProducts;
 public class GetPopularProductsQueryHandler : IRequestHandler<GetPopularProductsQuery, Result<List<PopularProductDto>>>
 {
     private readonly IProductQueryRepository _productRepository;
-    private readonly IImageStorage _imageStorage;
+    private readonly IImageUrlResolver _imageUrlResolver;
 
     public GetPopularProductsQueryHandler(
         IProductQueryRepository productRepository,
-        IImageStorage imageStorage)
+        IImageUrlResolver imageUrlResolver)
     {
         _productRepository = productRepository;
-        _imageStorage = imageStorage;
+        _imageUrlResolver = imageUrlResolver;
     }
 
     public async Task<Result<List<PopularProductDto>>> Handle(
@@ -42,10 +42,7 @@ public class GetPopularProductsQueryHandler : IRequestHandler<GetPopularProducts
             string? imageUrl = null;
             if (primaryImage != null)
             {
-                var extension = await _imageStorage.GetImageExtensionAsync(primaryImage.ImageId, cancellationToken);
-                imageUrl = extension != null
-                    ? $"/api/images/{primaryImage.ImageId}{extension}"
-                    : $"/api/images/{primaryImage.ImageId}";
+                imageUrl = await _imageUrlResolver.BuildImageUrlAsync(primaryImage.ImageId, cancellationToken);
             }
 
             productDtos.Add(new PopularProductDto

@@ -19,15 +19,18 @@ public class CreateProductVariantCommandHandler
     private readonly IProductQueryRepository _productQueryRepository;
     private readonly IDiscountCalculationService _discountCalculationService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IImageUrlResolver _imageUrlResolver;
 
     public CreateProductVariantCommandHandler(
         IProductQueryRepository productQueryRepository,
         IDiscountCalculationService discountCalculationService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IImageUrlResolver imageUrlResolver)
     {
         _productQueryRepository = productQueryRepository;
         _discountCalculationService = discountCalculationService;
         _unitOfWork = unitOfWork;
+        _imageUrlResolver = imageUrlResolver;
     }
 
     public async Task<Result<ProductVariantDto>> Handle(
@@ -82,7 +85,9 @@ public class CreateProductVariantCommandHandler
             Stock = product.Stock, // Product-dan
             IsActive = variant.IsActive,
             ImageId = variant.ImageId,
-            ImageUrl = variant.ImageId.HasValue ? $"/api/images/{variant.ImageId}" : null,
+            ImageUrl = variant.ImageId.HasValue
+                ? await _imageUrlResolver.BuildImageUrlAsync(variant.ImageId.Value, cancellationToken)
+                : null,
             Attributes = request.Attributes,
             FinalDiscountPercent = discountPercent,
             FinalPrice = finalPrice

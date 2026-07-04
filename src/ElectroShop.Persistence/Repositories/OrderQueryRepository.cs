@@ -1,6 +1,7 @@
 using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common.Filtering;
 using ElectroShop.Application.DTOs;
+using ElectroShop.Application.Services;
 using ElectroShop.Domain.Entities;
 using ElectroShop.Domain.Enums;
 using ElectroShop.Persistence.Contexts;
@@ -11,8 +12,11 @@ namespace ElectroShop.Persistence.Repositories;
 
 public class OrderQueryRepository : QueryRepository<Order>, IOrderQueryRepository
 {
-    public OrderQueryRepository(ElectroShopDbContext context) : base(context)
+    private readonly IImageUrlResolver _imageUrlResolver;
+
+    public OrderQueryRepository(ElectroShopDbContext context, IImageUrlResolver imageUrlResolver) : base(context)
     {
+        _imageUrlResolver = imageUrlResolver;
     }
 
     public async Task<Order?> GetOrderWithDetailsAsync(Guid orderId, CancellationToken cancellationToken = default)
@@ -273,11 +277,11 @@ public class OrderQueryRepository : QueryRepository<Order>, IOrderQueryRepositor
             {
                 var product = g.First().Product;
                 var primaryImage = product.ProductImages.FirstOrDefault(pi => pi.IsPrimary);
-                var imageUrl = primaryImage != null
-                    ? $"/api/images/{primaryImage.ImageId}"
-                    : (product.ProductImages.Any()
-                        ? $"/api/images/{product.ProductImages.OrderBy(pi => pi.DisplayOrder).First().ImageId}"
-                        : null);
+                var imageId = primaryImage?.ImageId
+                    ?? product.ProductImages.OrderBy(pi => pi.DisplayOrder).FirstOrDefault()?.ImageId;
+                var imageUrl = imageId.HasValue
+                    ? _imageUrlResolver.BuildImageUrl(imageId.Value)
+                    : null;
 
                 return new TopProductChartDataDto
                 {
