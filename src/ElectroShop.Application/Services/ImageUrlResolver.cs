@@ -17,6 +17,13 @@ public class ImageUrlResolver : IImageUrlResolver
     public string BuildImageUrl(Guid imageId, string? extension = null)
     {
         var normalizedExtension = NormalizeExtension(extension);
+        if (normalizedExtension != null)
+        {
+            var staticUrl = BuildStaticImageUrl(imageId, normalizedExtension);
+            if (staticUrl != null)
+                return staticUrl;
+        }
+
         var relativePath = normalizedExtension != null
             ? $"/api/images/{imageId}{normalizedExtension}"
             : $"/api/images/{imageId}";

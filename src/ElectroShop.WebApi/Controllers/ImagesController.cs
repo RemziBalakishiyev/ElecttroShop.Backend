@@ -5,31 +5,30 @@ using ElectroShop.WebApi.Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.RegularExpressions;
 
 namespace ElectroShop.WebApi.Controllers;
 
 /// <summary>
-/// Şəkil yükləmə və oxuma üçün controller
+/// Şəkil yükləmə və oxuma üçün controller.
+/// [ApiController] istifadə edilmir — img src üçün 404-də JSON/problem+json yaranmasın (ORB).
 /// </summary>
-[ApiController]
 [Route("api/[controller]")]
 public class ImagesController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IImageUploadContext _imageUploadContext;
-    private readonly IImageStorage _imageStorage;
+    private readonly IImageServeService _imageServeService;
     private readonly ILogger<ImagesController> _logger;
 
     public ImagesController(
         IMediator mediator,
         IImageUploadContext imageUploadContext,
-        IImageStorage imageStorage,
+        IImageServeService imageServeService,
         ILogger<ImagesController> logger)
     {
         _mediator = mediator;
         _imageUploadContext = imageUploadContext;
-        _imageStorage = imageStorage;
+        _imageServeService = imageServeService;
         _logger = logger;
     }
 
@@ -39,62 +38,27 @@ public class ImagesController : ControllerBase
     /// </summary>
     [HttpGet("{imageId:guid}.{extension}")]
     [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetImage(
+    [Produces("image/jpeg", "image/png", "image/webp", "image/gif")]
+    public Task<IActionResult> GetImage(
         [FromRoute] Guid imageId,
         [FromRoute] string extension,
         CancellationToken cancellationToken)
-    {
-        var imageResult = await _imageStorage.GetImageAsync(imageId, cancellationToken);
-        
-        if (imageResult == null)
-        {
-            var searchedPath = _imageStorage.ResolvePhysicalPath(imageId);
-            _logger.LogWarning(
-                "Image not found: {ImageId}. Searched path: {SearchedPath}. Base path: {BasePath}",
-                imageId,
-                searchedPath,
-                _imageStorage.BasePath);
-            return NotFound();
-        }
-
-        // Stream-i FileStream kimi qaytar (ASP.NET Core avtomatik dispose edəcək)
-        return File(imageResult.Value.Stream, imageResult.Value.ContentType, enableRangeProcessing: true);
-    }
+        => ServeImageAsync(imageId, cancellationToken);
 
     /// <summary>
-    /// Şəkili oxuyur və qaytarır (extension olmadan - backward compatibility)
+    /// Şəkili oxuyur və qaytarır (extension olmadan)
     /// Format: GET /api/images/{imageId}
     /// </summary>
     [HttpGet("{imageId:guid}")]
     [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetImageWithoutExtension(
+    [Produces("image/jpeg", "image/png", "image/webp", "image/gif")]
+    public Task<IActionResult> GetImageWithoutExtension(
         [FromRoute] Guid imageId,
         CancellationToken cancellationToken)
-    {
-        var imageResult = await _imageStorage.GetImageAsync(imageId, cancellationToken);
-        
-        if (imageResult == null)
-        {
-            var searchedPath = _imageStorage.ResolvePhysicalPath(imageId);
-            _logger.LogWarning(
-                "Image not found: {ImageId}. Searched path: {SearchedPath}. Base path: {BasePath}",
-                imageId,
-                searchedPath,
-                _imageStorage.BasePath);
-            return NotFound();
-        }
-
-        // Stream-i FileStream kimi qaytar (ASP.NET Core avtomatik dispose edəcək)
-        return File(imageResult.Value.Stream, imageResult.Value.ContentType, enableRangeProcessing: true);
-    }
+        => ServeImageAsync(imageId, cancellationToken);
 
     /// <summary>
     /// Şəkil yükləyir (product olmadan) və imageId qaytarır
-    /// Front-end bu imageId-ləri toplayıb CreateProduct-də istifadə edə bilər
     /// </summary>
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
@@ -121,12 +85,25 @@ public class ImagesController : ControllerBase
         }
 
         var result = await _mediator.Send(commandResult.Value, cancellationToken);
-        
+
         if (result.IsFailure)
-        {
             return BadRequest(result);
-        }
 
         return Ok(new { imageId = result.Value });
+    }
+
+    private async Task<IActionResult> ServeImageAsync(Guid imageId, CancellationToken cancellationToken)
+    {
+        var image = await _imageServeService.TryGetImageAsync(imageId, cancellationToken);
+
+        if (image == null)
+        {
+            Response.StatusCode = StatusCodes.Status404NotFound;
+            Response.ContentType = "image/jpeg";
+            return new EmptyResult();
+        }
+
+        Response.Headers.CacheControl = "public,max-age=86400";
+        return File(image.Stream, image.ContentType, enableRangeProcessing: true);
     }
 }

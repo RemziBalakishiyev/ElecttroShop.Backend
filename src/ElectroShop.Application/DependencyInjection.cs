@@ -79,6 +79,7 @@ public static class DependencyInjection
 
         services.AddScoped<Services.IImageStorage, Services.LocalImageStorage>();
         services.AddScoped<Services.IImageUrlResolver, Services.ImageUrlResolver>();
+        services.AddScoped<Services.IImageServeService, Services.ImageServeService>();
         services.AddScoped<Services.IImageUploadContext, Services.ImageUploadContext>();
 
         return services;

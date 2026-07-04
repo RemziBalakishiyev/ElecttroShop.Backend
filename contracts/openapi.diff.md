@@ -40,8 +40,9 @@ Two backend changes in this release:
 
 ### GET /api/images/{imageId} / GET /api/images/{imageId}.{extension}
 - **Auth:** Anonymous
-- **Change:** Improved 404 logging includes searched physical path and base path
-- **Note:** Returns file from `wwwroot/images/products/{imageId}.{ext}` when present
+- **Change:** Never returns JSON on success; 404 returns empty body with `image/jpeg` (fixes ORB)
+- **Change:** DB lookup via `ProductImage.ImageId` + disk file serve via `ImageServeService`
+- **Note:** Prefer static URL in DTOs when file exists: `/images/products/{id}.ext`
 
 ### Response model changes (when `PUBLIC_BASE_URL` is set)
 Product-related DTO fields may return **absolute** URLs:

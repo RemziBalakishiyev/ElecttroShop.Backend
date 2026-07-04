@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IDiscountQueryRepository, DiscountQueryRepository>();
         services.AddScoped<ISaleQueryRepository, SaleQueryRepository>();
         services.AddScoped<IProductRatingQueryRepository, ProductRatingQueryRepository>();
+        services.AddScoped<IProductImageQueryRepository, ProductImageQueryRepository>();
 
         // Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
