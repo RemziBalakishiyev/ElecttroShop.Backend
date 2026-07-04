@@ -59,10 +59,13 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
         CancellationToken cancellationToken = default)
     {
         return await _dbSet
+            .AsSplitQuery()
             .Include(p => p.Category)
             .Include(p => p.Brand)
             .Include(p => p.ProductImages.OrderBy(pi => pi.DisplayOrder))
             .Include(p => p.ProductVariants.Where(pv => pv.IsActive && !pv.IsDeleted))
+            .Include(p => p.ProductAttributes.OrderBy(pa => pa.DisplayOrder))
+                .ThenInclude(pa => pa.Values.OrderBy(pav => pav.DisplayOrder))
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, cancellationToken);
     }
@@ -121,6 +124,8 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
             .AsSplitQuery()
             .Include(p => p.ProductImages.OrderBy(pi => pi.DisplayOrder))
             .Include(p => p.ProductVariants)
+            .Include(p => p.ProductAttributes)
+                .ThenInclude(pa => pa.Values)
             .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, cancellationToken);
     }
 
@@ -155,6 +160,25 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
         {
             productImageDbSet.RemoveRange(imagesToDelete);
         }
+    }
+
+    public async Task<ProductSummaryStatisticsDto> GetProductSummaryStatisticsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var stats = await _dbSet
+            .AsNoTracking()
+            .GroupBy(_ => 1)
+            .Select(g => new ProductSummaryStatisticsDto
+            {
+                TotalProductCount = g.Count(),
+                TotalProductCostValue = g.Sum(p => p.Price.Amount),
+                TotalProductSaleValue = g.Sum(p => p.Price.Amount),
+                TotalInventoryCostValue = g.Sum(p => p.Price.Amount * p.Stock),
+                TotalInventorySaleValue = g.Sum(p => p.Price.Amount * p.Stock)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return stats ?? new ProductSummaryStatisticsDto();
     }
 }
 

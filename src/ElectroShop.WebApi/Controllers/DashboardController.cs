@@ -1,6 +1,7 @@
 using ElectroShop.Application.DTOs;
 using ElectroShop.Application.Features.Dashboard.Queries.GetChartData;
 using ElectroShop.Application.Features.Dashboard.Queries.GetDashboard;
+using ElectroShop.Application.Features.Dashboard.Queries.GetDashboardStatistics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,7 +10,7 @@ namespace ElectroShop.WebApi.Controllers;
 /// <summary>
 /// Dashboard üçün Controller
 /// </summary>
-//[Authorize]
+[Authorize]
 [ApiController]
 [Route("api/dashboard")]
 public class DashboardController : BaseApiController
@@ -47,6 +48,20 @@ public class DashboardController : BaseApiController
             Period = period,
             PeriodCount = periodCount
         };
+        var result = await Mediator.Send(query, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// Admin dashboard satış və məhsul statistikalarını əldə edir (günlük, aylıq, məhsul summary)
+    /// </summary>
+    /// <returns>Günlük/aylıq satış statistikaları və sistemdəki məhsul summary</returns>
+    [HttpGet("statistics")]
+    [ProducesResponseType(typeof(DashboardStatisticsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetStatistics(CancellationToken cancellationToken)
+    {
+        var query = new GetDashboardStatisticsQuery();
         var result = await Mediator.Send(query, cancellationToken);
         return HandleResult(result);
     }

@@ -30,6 +30,8 @@ public class GetSalesQueryHandler : IRequestHandler<GetSalesQuery, PagedResult<S
             request.DateTo,
             request.MinProfit,
             request.MaxProfit,
+            request.MinExpense,
+            request.MaxExpense,
             cancellationToken);
 
         if (totalCount == 0)

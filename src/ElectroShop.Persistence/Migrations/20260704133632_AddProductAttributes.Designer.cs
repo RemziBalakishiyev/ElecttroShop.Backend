@@ -3,6 +3,7 @@ using System;
 using ElectroShop.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ElectroShop.Persistence.Migrations
 {
     [DbContext(typeof(ElectroShopDbContext))]
-    partial class ElectroShopDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260704133632_AddProductAttributes")]
+    partial class AddProductAttributes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1110,7 +1113,7 @@ namespace ElectroShop.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.Order.Subtotal#ElectroShop.Domain.ValueObjects.Money", "Subtotal", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Money", "Subtotal", b1 =>
                         {
                             b1.Property<Guid>("OrderId")
                                 .HasColumnType("uuid");
@@ -1127,13 +1130,13 @@ namespace ElectroShop.Persistence.Migrations
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Orders", (string)null);
+                            b1.ToTable("Orders");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");
                         });
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.Order.Total#ElectroShop.Domain.ValueObjects.Money", "Total", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Money", "Total", b1 =>
                         {
                             b1.Property<Guid>("OrderId")
                                 .HasColumnType("uuid");
@@ -1150,13 +1153,13 @@ namespace ElectroShop.Persistence.Migrations
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Orders", (string)null);
+                            b1.ToTable("Orders");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");
                         });
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.Order.Vat#ElectroShop.Domain.ValueObjects.Money", "Vat", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Money", "Vat", b1 =>
                         {
                             b1.Property<Guid>("OrderId")
                                 .HasColumnType("uuid");
@@ -1173,7 +1176,7 @@ namespace ElectroShop.Persistence.Migrations
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Orders", (string)null);
+                            b1.ToTable("Orders");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");
@@ -1205,7 +1208,7 @@ namespace ElectroShop.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.OrderItem.LineTotal#ElectroShop.Domain.ValueObjects.Money", "LineTotal", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Money", "LineTotal", b1 =>
                         {
                             b1.Property<Guid>("OrderItemId")
                                 .HasColumnType("uuid");
@@ -1222,13 +1225,13 @@ namespace ElectroShop.Persistence.Migrations
 
                             b1.HasKey("OrderItemId");
 
-                            b1.ToTable("OrderItems", (string)null);
+                            b1.ToTable("OrderItems");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderItemId");
                         });
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.OrderItem.UnitPrice#ElectroShop.Domain.ValueObjects.Money", "UnitPrice", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Money", "UnitPrice", b1 =>
                         {
                             b1.Property<Guid>("OrderItemId")
                                 .HasColumnType("uuid");
@@ -1245,7 +1248,7 @@ namespace ElectroShop.Persistence.Migrations
 
                             b1.HasKey("OrderItemId");
 
-                            b1.ToTable("OrderItems", (string)null);
+                            b1.ToTable("OrderItems");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderItemId");
@@ -1274,7 +1277,7 @@ namespace ElectroShop.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.Product.Price#ElectroShop.Domain.ValueObjects.Money", "Price", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Money", "Price", b1 =>
                         {
                             b1.Property<Guid>("ProductId")
                                 .HasColumnType("uuid");
@@ -1291,13 +1294,13 @@ namespace ElectroShop.Persistence.Migrations
 
                             b1.HasKey("ProductId");
 
-                            b1.ToTable("Products", (string)null);
+                            b1.ToTable("Products");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductId");
                         });
 
-                    b.OwnsOne("ElectroShop.Domain.Entities.Product.Sku#ElectroShop.Domain.ValueObjects.Sku", "Sku", b1 =>
+                    b.OwnsOne("ElectroShop.Domain.ValueObjects.Sku", "Sku", b1 =>
                         {
                             b1.Property<Guid>("ProductId")
                                 .HasColumnType("uuid");
@@ -1313,7 +1316,7 @@ namespace ElectroShop.Persistence.Migrations
                             b1.HasIndex("Value")
                                 .IsUnique();
 
-                            b1.ToTable("Products", (string)null);
+                            b1.ToTable("Products");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductId");

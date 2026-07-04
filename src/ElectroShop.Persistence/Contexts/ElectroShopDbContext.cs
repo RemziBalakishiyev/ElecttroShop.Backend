@@ -12,6 +12,8 @@ public class ElectroShopDbContext : DbContext
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
+    public DbSet<ProductAttribute> ProductAttributes => Set<ProductAttribute>();
+    public DbSet<ProductAttributeValue> ProductAttributeValues => Set<ProductAttributeValue>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<CategoryAttribute> CategoryAttributes => Set<CategoryAttribute>();
     public DbSet<CategoryAttributeValue> CategoryAttributeValues => Set<CategoryAttributeValue>();
@@ -23,6 +25,7 @@ public class ElectroShopDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Discount> Discounts => Set<Discount>();
     public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<SaleExpense> SaleExpenses => Set<SaleExpense>();
     public DbSet<ProductRating> ProductRatings => Set<ProductRating>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

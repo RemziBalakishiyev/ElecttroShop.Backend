@@ -16,10 +16,13 @@ public class Sale : BaseCommonEntity
     public int Quantity { get; private set; }
     public decimal TotalCost { get; private set; }
     public decimal TotalSaleAmount { get; private set; }
+    public decimal TotalExpenses { get; private set; }
     public decimal Profit { get; private set; }
     public SaleSource SaleSource { get; private set; }
     public DateTime SoldAt { get; private set; }
     public string? Note { get; private set; }
+
+    public List<SaleExpense> Expenses { get; private set; } = [];
 
     private Sale() { }
 
@@ -157,22 +160,56 @@ public class Sale : BaseCommonEntity
         RecalculateTotals();
     }
 
+    public void SetExpenses(IReadOnlyList<SaleExpenseDraft> expenseDrafts)
+    {
+        ArgumentNullException.ThrowIfNull(expenseDrafts);
+
+        foreach (var draft in expenseDrafts)
+        {
+            var expense = SaleExpense.Create(draft.ExpenseType, draft.Amount, draft.Description);
+            expense.AttachToSale(Id);
+            Expenses.Add(expense);
+        }
+
+        RecalculateTotals();
+    }
+
+    public void ReplaceExpenses(IReadOnlyList<SaleExpenseDraft> expenseDrafts)
+    {
+        ArgumentNullException.ThrowIfNull(expenseDrafts);
+
+        foreach (var expense in Expenses)
+            expense.MarkDeleted();
+
+        foreach (var draft in expenseDrafts)
+        {
+            var expense = SaleExpense.Create(draft.ExpenseType, draft.Amount, draft.Description);
+            expense.AttachToSale(Id);
+            Expenses.Add(expense);
+        }
+
+        RecalculateTotals();
+    }
+
     private void RecalculateTotals()
     {
-        var (totalCost, totalSaleAmount, profit) = CalculateTotals(CostPrice, SalePrice, Quantity);
+        var totalExpenses = Expenses.Where(e => !e.IsDeleted).Sum(e => e.Amount);
+        var (totalCost, totalSaleAmount, profit) = CalculateTotals(CostPrice, SalePrice, Quantity, totalExpenses);
         TotalCost = totalCost;
         TotalSaleAmount = totalSaleAmount;
+        TotalExpenses = totalExpenses;
         Profit = profit;
     }
 
     private static (decimal TotalCost, decimal TotalSaleAmount, decimal Profit) CalculateTotals(
         decimal costPrice,
         decimal salePrice,
-        int quantity)
+        int quantity,
+        decimal totalExpenses = 0)
     {
         var totalCost = costPrice * quantity;
         var totalSaleAmount = salePrice * quantity;
-        var profit = (salePrice - costPrice) * quantity;
+        var profit = totalSaleAmount - totalCost - totalExpenses;
         return (totalCost, totalSaleAmount, profit);
     }
 

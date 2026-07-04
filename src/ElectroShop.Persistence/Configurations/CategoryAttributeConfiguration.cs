@@ -69,7 +69,7 @@ public class CategoryAttributeValueConfiguration : BaseEntityConfiguration<Categ
 
         builder.Property(cav => cav.Value)
             .IsRequired()
-            .HasMaxLength(100);
+            .HasMaxLength(CategoryAttributeValue.MaxValueLength);
 
         builder.Property(cav => cav.DisplayValue)
             .HasMaxLength(200);
@@ -89,7 +89,7 @@ public class CategoryAttributeValueConfiguration : BaseEntityConfiguration<Categ
 
         // Case-sensitive trimmed value uniqueness (16GB != 16gb — matches application ValueEquals)
         builder.Property<string>("NormalizedValue")
-            .HasMaxLength(100)
+            .HasMaxLength(CategoryAttributeValue.MaxValueLength)
             .HasComputedColumnSql("TRIM(\"Value\")", stored: true);
 
         builder.HasIndex("CategoryAttributeId", "NormalizedValue")

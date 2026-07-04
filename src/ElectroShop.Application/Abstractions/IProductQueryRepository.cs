@@ -65,5 +65,23 @@ public interface IProductQueryRepository : IQueryRepository<Product>
     /// ProductImages-i silir (Update üçün - EF Core tracking)
     /// </summary>
     Task DeleteProductImagesByIdsAsync(List<Guid> imageIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Dashboard üçün məhsul summary statistikaları (soft deleted məhsullar istisna)
+    /// </summary>
+    Task<ProductSummaryStatisticsDto> GetProductSummaryStatisticsAsync(
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Məhsul summary statistikaları (repository aggregation)
+/// </summary>
+public record ProductSummaryStatisticsDto
+{
+    public int TotalProductCount { get; init; }
+    public decimal TotalProductCostValue { get; init; }
+    public decimal TotalProductSaleValue { get; init; }
+    public decimal TotalInventoryCostValue { get; init; }
+    public decimal TotalInventorySaleValue { get; init; }
 }
 

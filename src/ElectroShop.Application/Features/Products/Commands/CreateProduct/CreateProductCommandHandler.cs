@@ -1,6 +1,7 @@
 using ElectroShop.Application.Abstractions;
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.DTOs;
+using ElectroShop.Application.Services;
 using ElectroShop.Domain.Entities;
 using ElectroShop.Domain.Exceptions;
 using MediatR;
@@ -57,13 +58,10 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
             List<(Guid? Id, string AttributesJson, Guid? ImageId, bool IsActive)>? variantData = null;
 
             var hasVariants = request.Variants.Count > 0;
-            var hasInlineAttributes = request.InlineAttributes is { Count: > 0 };
 
-            if (hasVariants || hasInlineAttributes)
+            if (hasVariants)
             {
-                var variantMaps = hasVariants
-                    ? request.Variants.Select(v => v.Attributes).ToList()
-                    : [];
+                var variantMaps = request.Variants.Select(v => v.Attributes).ToList();
 
                 var schemaResult = await _schemaResolver.ResolveAsync(
                     request.CategoryId,
@@ -77,23 +75,20 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
                     return Result.Failure<ProductDto>(schemaResult.Error);
                 }
 
-                if (hasVariants)
+                var normalizedResult = _variantValidator.ValidateAndNormalize(
+                    schemaResult.Value,
+                    request.Variants,
+                    categoryChange: null);
+
+                if (normalizedResult.IsFailure)
                 {
-                    var normalizedResult = _variantValidator.ValidateAndNormalize(
-                        schemaResult.Value,
-                        request.Variants,
-                        categoryChange: null);
-
-                    if (normalizedResult.IsFailure)
-                    {
-                        await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                        return Result.Failure<ProductDto>(normalizedResult.Error);
-                    }
-
-                    variantData = normalizedResult.Value
-                        .Select(v => (v.Id, v.AttributesJson, v.ImageId, v.IsActive))
-                        .ToList();
+                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                    return Result.Failure<ProductDto>(normalizedResult.Error);
                 }
+
+                variantData = normalizedResult.Value
+                    .Select(v => (v.Id, v.AttributesJson, v.ImageId, v.IsActive))
+                    .ToList();
             }
 
             Product product;
@@ -124,6 +119,9 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
                     product.AddImage(request.ImageIds[i], i, isPrimary: i == 0);
                 }
             }
+
+            // Məhsul spesifikasiyaları məhsulun özünə yazılır (kateqoriyaya deyil)
+            product.SyncAttributes(ProductAttributeDraftMapper.ToDrafts(request.InlineAttributes));
 
             if (variantData is not null)
             {

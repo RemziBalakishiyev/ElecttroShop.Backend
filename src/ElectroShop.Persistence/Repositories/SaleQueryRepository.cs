@@ -25,6 +25,8 @@ public class SaleQueryRepository : QueryRepository<Sale>, ISaleQueryRepository
         DateTime? dateTo = null,
         decimal? minProfit = null,
         decimal? maxProfit = null,
+        decimal? minExpense = null,
+        decimal? maxExpense = null,
         CancellationToken cancellationToken = default)
     {
         var query = _dbSet.AsNoTracking();
@@ -42,7 +44,9 @@ public class SaleQueryRepository : QueryRepository<Sale>, ISaleQueryRepository
             .AndIf(dateFrom.HasValue, s => s.SoldAt >= dateFrom!.Value)
             .AndIf(dateTo.HasValue, s => s.SoldAt <= dateTo!.Value)
             .AndIf(minProfit.HasValue, s => s.Profit >= minProfit!.Value)
-            .AndIf(maxProfit.HasValue, s => s.Profit <= maxProfit!.Value);
+            .AndIf(maxProfit.HasValue, s => s.Profit <= maxProfit!.Value)
+            .AndIf(minExpense.HasValue, s => s.TotalExpenses >= minExpense!.Value)
+            .AndIf(maxExpense.HasValue, s => s.TotalExpenses <= maxExpense!.Value);
 
         return await QueryHelper.ExecutePagedAsync(
             query.Where(predicate),
@@ -57,6 +61,46 @@ public class SaleQueryRepository : QueryRepository<Sale>, ISaleQueryRepository
     {
         return await _dbSet
             .AsNoTracking()
+            .Include(s => s.Expenses)
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+    }
+
+    public async Task<Sale?> GetSaleWithExpensesForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var sale = await _dbSet
+            .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+
+        if (sale is null)
+            return null;
+
+        await _context.Entry(sale)
+            .Collection(s => s.Expenses)
+            .Query()
+            .IgnoreQueryFilters()
+            .LoadAsync(cancellationToken);
+
+        return sale;
+    }
+
+    public async Task<SalesStatisticsDto> GetSalesStatisticsAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        CancellationToken cancellationToken = default)
+    {
+        var stats = await _dbSet
+            .AsNoTracking()
+            .Where(s => s.SoldAt >= dateFromUtc && s.SoldAt < dateToUtcExclusive)
+            .GroupBy(_ => 1)
+            .Select(g => new SalesStatisticsDto
+            {
+                TotalSaleAmount = g.Sum(s => s.TotalSaleAmount),
+                TotalProductCost = g.Sum(s => s.TotalCost),
+                TotalExpenses = g.Sum(s => s.TotalExpenses),
+                SoldProductQuantity = g.Sum(s => s.Quantity),
+                SalesCount = g.Count()
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return stats ?? new SalesStatisticsDto();
     }
 }

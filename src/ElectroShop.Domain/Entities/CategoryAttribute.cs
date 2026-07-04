@@ -104,6 +104,8 @@ public class CategoryAttribute : BaseCommonEntity
 /// </summary>
 public class CategoryAttributeValue : BaseEntity
 {
+    public const int MaxValueLength = 500;
+
     public Guid CategoryAttributeId { get; private set; }
     public CategoryAttribute CategoryAttribute { get; private set; } = default!;
     public string Value { get; private set; } = default!; // Məs: "128GB", "Black", "6GB"
@@ -137,6 +139,9 @@ public class CategoryAttributeValue : BaseEntity
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Dəyər boş ola bilməz", nameof(value));
 
+        if (value.Length > MaxValueLength)
+            throw new ArgumentException($"Dəyər maksimum {MaxValueLength} simvol ola bilər", nameof(value));
+
         return new CategoryAttributeValue(categoryAttributeId, value, displayValue ?? value, displayOrder, colorCode);
     }
 
@@ -148,6 +153,9 @@ public class CategoryAttributeValue : BaseEntity
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Dəyər boş ola bilməz", nameof(value));
+
+        if (value.Length > MaxValueLength)
+            throw new ArgumentException($"Dəyər maksimum {MaxValueLength} simvol ola bilər", nameof(value));
 
         Value = value;
         DisplayValue = displayValue ?? value;

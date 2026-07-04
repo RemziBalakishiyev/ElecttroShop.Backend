@@ -94,6 +94,17 @@ public class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand, Resul
             return Result.Failure<SaleDetailDto>(Error.Failure("Sale.InvalidOperation", ex.Message));
         }
 
+        try
+        {
+            var expenseDrafts = SaleMapper.ToExpenseDrafts(request.Expenses);
+            if (expenseDrafts.Count > 0)
+                sale.SetExpenses(expenseDrafts);
+        }
+        catch (ArgumentException ex)
+        {
+            return Result.Failure<SaleDetailDto>(Error.Validation("Sale.InvalidExpense", ex.Message));
+        }
+
         await _saleWriteRepository.AddAsync(sale, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

@@ -18,6 +18,7 @@ internal static class SaleMapper
         Quantity = sale.Quantity,
         TotalCost = sale.TotalCost,
         TotalSaleAmount = sale.TotalSaleAmount,
+        TotalExpenses = sale.TotalExpenses,
         Profit = sale.Profit,
         SaleSource = sale.SaleSource,
         SoldAt = sale.SoldAt,
@@ -38,13 +39,33 @@ internal static class SaleMapper
         Quantity = sale.Quantity,
         TotalCost = sale.TotalCost,
         TotalSaleAmount = sale.TotalSaleAmount,
+        TotalExpenses = sale.TotalExpenses,
         Profit = sale.Profit,
         SaleSource = sale.SaleSource,
         SoldAt = sale.SoldAt,
         Note = sale.Note,
         CreatedAt = sale.CreatedAtUtc,
+        Expenses = sale.Expenses
+            .Where(e => !e.IsDeleted)
+            .OrderBy(e => e.CreatedAtUtc)
+            .Select(ToExpenseDto)
+            .ToList(),
         UpdatedAt = sale.UpdatedAtUtc,
         CreatedBy = sale.CreatedBy,
         UpdatedBy = sale.UpdatedBy
     };
+
+    public static SaleExpenseDto ToExpenseDto(SaleExpense expense) => new()
+    {
+        Id = expense.Id,
+        ExpenseType = expense.ExpenseType,
+        Description = expense.Description,
+        Amount = expense.Amount,
+        CreatedAt = expense.CreatedAtUtc
+    };
+
+    public static IReadOnlyList<SaleExpenseDraft> ToExpenseDrafts(
+        IReadOnlyList<SaleExpenseRequestDto>? expenses) =>
+        expenses?.Select(e => new SaleExpenseDraft(e.ExpenseType, e.Amount, e.Description)).ToList()
+        ?? [];
 }

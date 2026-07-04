@@ -38,6 +38,11 @@ public class SaleConfiguration : BaseCommonEntityConfiguration<Sale>
             .HasColumnType("decimal(18,2)")
             .IsRequired();
 
+        builder.Property(s => s.TotalExpenses)
+            .HasColumnType("decimal(18,2)")
+            .IsRequired()
+            .HasDefaultValue(0m);
+
         builder.Property(s => s.Profit)
             .HasColumnType("decimal(18,2)")
             .IsRequired();
