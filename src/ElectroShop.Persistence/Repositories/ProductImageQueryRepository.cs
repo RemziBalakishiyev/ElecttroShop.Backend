@@ -28,6 +28,12 @@ public class ProductImageQueryRepository : IProductImageQueryRepository
         return new ProductImageReferenceDto(
             productImage.Id,
             productImage.ProductId,
-            productImage.ImageId);
+            productImage.ImageId,
+            productImage.ImageUrl,
+            productImage.PublicId,
+            productImage.ImagePath,
+            productImage.FileName,
+            productImage.ContentType,
+            productImage.StorageProvider);
     }
 }

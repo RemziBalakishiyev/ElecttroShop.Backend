@@ -1,23 +1,24 @@
 using ElectroShop.Application.Common.Results;
 using ElectroShop.Application.Services;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 
 namespace ElectroShop.Application.Features.Images.Commands.UploadImage;
 
 /// <summary>
 /// Handler for UploadImageCommand
-/// Uploads image and returns imageId
+/// Uploads image to Cloudinary and returns imageId
 /// </summary>
 public class UploadImageCommandHandler : IRequestHandler<UploadImageCommand, Result<Guid>>
 {
-    private readonly IImageStorage _imageStorage;
+    private readonly IImageStorageService _imageStorageService;
     private readonly IImageUploadContext _imageUploadContext;
 
     public UploadImageCommandHandler(
-        IImageStorage imageStorage,
+        IImageStorageService imageStorageService,
         IImageUploadContext imageUploadContext)
     {
-        _imageStorage = imageStorage;
+        _imageStorageService = imageStorageService;
         _imageUploadContext = imageUploadContext;
     }
 
@@ -31,12 +32,44 @@ public class UploadImageCommandHandler : IRequestHandler<UploadImageCommand, Res
                 Error.Validation("ImageStream.Required", "Şəkil stream-i tələb olunur"));
         }
 
-        var imageId = await _imageStorage.UploadImageAsync(
+        var formFile = CreateFormFile(
             _imageUploadContext.ImageStream,
             request.FileName,
-            request.ContentType,
-            cancellationToken);
+            request.ContentType);
 
-        return Result.Success(imageId);
+        try
+        {
+            var uploadResult = await _imageStorageService.UploadAsync(formFile, cancellationToken: cancellationToken);
+            var imageId = ExtractImageId(uploadResult.PublicId);
+            return Result.Success(imageId);
+        }
+        catch (ArgumentException ex)
+        {
+            return Result.Failure<Guid>(Error.Validation("Image.Invalid", ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Failure<Guid>(Error.Failure("Image.UploadFailed", ex.Message));
+        }
+    }
+
+    private static IFormFile CreateFormFile(Stream stream, string fileName, string contentType)
+    {
+        if (stream.CanSeek)
+            stream.Position = 0;
+
+        return new FormFile(stream, 0, stream.Length, "file", fileName)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = contentType
+        };
+    }
+
+    private static Guid ExtractImageId(string publicId)
+    {
+        var lastSegment = publicId.Split('/').LastOrDefault();
+        return Guid.TryParse(lastSegment, out var imageId)
+            ? imageId
+            : Guid.NewGuid();
     }
 }

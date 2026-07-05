@@ -158,9 +158,31 @@ public class Product : AggregateRoot
     /// <summary>
     /// Məhsula şəkil əlavə et
     /// </summary>
-    public void AddImage(Guid imageId, int displayOrder, bool isPrimary = false)
+    public void AddImage(
+        Guid imageId,
+        int displayOrder,
+        bool isPrimary = false,
+        string? imageUrl = null,
+        string? publicId = null,
+        string? imagePath = null,
+        string? fileName = null,
+        string? contentType = null,
+        long? size = null,
+        string? storageProvider = null)
     {
-        var productImage = ProductImage.Create(Id, imageId, displayOrder, isPrimary);
+        var productImage = ProductImage.Create(
+            Id,
+            imageId,
+            displayOrder,
+            isPrimary,
+            imageUrl,
+            publicId,
+            imagePath,
+            fileName,
+            contentType,
+            size,
+            storageProvider);
+
         ProductImages.Add(productImage);
     }
 

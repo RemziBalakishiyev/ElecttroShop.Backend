@@ -98,12 +98,26 @@ public class ImagesController : ControllerBase
 
         if (image == null)
         {
+            _logger.LogWarning("Image not found for request. ImageId: {ImageId}", imageId);
+            Response.StatusCode = StatusCodes.Status404NotFound;
+            Response.ContentType = "image/jpeg";
+            return new EmptyResult();
+        }
+
+        if (!string.IsNullOrWhiteSpace(image.RedirectUrl))
+        {
+            return Redirect(image.RedirectUrl);
+        }
+
+        if (image.Stream == null)
+        {
+            _logger.LogWarning("Image stream missing for request. ImageId: {ImageId}", imageId);
             Response.StatusCode = StatusCodes.Status404NotFound;
             Response.ContentType = "image/jpeg";
             return new EmptyResult();
         }
 
         Response.Headers.CacheControl = "public,max-age=86400";
-        return File(image.Stream, image.ContentType, enableRangeProcessing: true);
+        return File(image.Stream, image.ContentType ?? "image/jpeg", enableRangeProcessing: true);
     }
 }

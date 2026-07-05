@@ -78,12 +78,18 @@ public class AdminDebugController : ControllerBase
             ImageRecordFound = productImage != null,
             ProductImageId = productImage?.Id,
             ProductId = productImage?.ProductId,
+            ImageUrl = productImage?.ImageUrl,
+            PublicId = productImage?.PublicId,
+            ImagePath = productImage?.ImagePath,
+            StorageProvider = productImage?.StorageProvider,
             StoredPath = _imageStorage.BasePath,
             StoredFileName = extension != null ? $"{id}{extension}" : $"{id}.jpg",
             PhysicalPathSearched = physicalPath,
             FileExists = fileExists,
             DetectedExtension = extension,
-            PublicUrl = await _imageUrlResolver.BuildImageUrlAsync(id, cancellationToken),
+            PublicUrl = productImage != null
+                ? await _imageUrlResolver.ResolveProductImageUrlAsync(productImage, cancellationToken)
+                : await _imageUrlResolver.BuildImageUrlAsync(id, cancellationToken),
             StaticPublicUrl = extension != null
                 ? _imageUrlResolver.BuildStaticImageUrl(id, extension)
                 : null

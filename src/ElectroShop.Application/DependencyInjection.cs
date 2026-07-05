@@ -72,11 +72,15 @@ public static class DependencyInjection
         services.Configure<Common.Options.ImageStorageOptions>(
             configuration.GetSection(Common.Options.ImageStorageOptions.SectionName));
 
+        services.Configure<Common.Options.CloudinarySettings>(
+            configuration.GetSection(Common.Options.CloudinarySettings.SectionName));
+
         services.PostConfigure<Common.Options.ImageStorageOptions>(options =>
         {
             options.PublicBaseUrl ??= configuration["PUBLIC_BASE_URL"];
         });
 
+        services.AddScoped<Services.IImageStorageService, Services.CloudinaryImageStorageService>();
         services.AddScoped<Services.IImageStorage, Services.LocalImageStorage>();
         services.AddScoped<Services.IImageUrlResolver, Services.ImageUrlResolver>();
         services.AddScoped<Services.IImageServeService, Services.ImageServeService>();

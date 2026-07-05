@@ -58,7 +58,7 @@ public class AddProductImageCommandHandler
         {
             Id = productImage.Id,
             ImageId = productImage.ImageId,
-            ImageUrl = await _imageUrlResolver.BuildImageUrlAsync(productImage.ImageId, cancellationToken),
+            ImageUrl = await _imageUrlResolver.ResolveProductImageUrlAsync(productImage, cancellationToken),
             DisplayOrder = productImage.DisplayOrder,
             IsPrimary = productImage.IsPrimary
         });

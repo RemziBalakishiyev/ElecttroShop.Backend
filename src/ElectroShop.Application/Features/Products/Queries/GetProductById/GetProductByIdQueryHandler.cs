@@ -54,7 +54,7 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
         string? primaryImageUrl = null;
         if (primaryImage != null)
         {
-            primaryImageUrl = await _imageUrlResolver.BuildImageUrlAsync(primaryImage.ImageId, cancellationToken);
+            primaryImageUrl = await _imageUrlResolver.ResolveProductImageUrlAsync(primaryImage, cancellationToken);
         }
 
         var images = new List<ProductImageDto>();
@@ -64,7 +64,7 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, R
             {
                 Id = image.Id,
                 ImageId = image.ImageId,
-                ImageUrl = await _imageUrlResolver.BuildImageUrlAsync(image.ImageId, cancellationToken),
+                ImageUrl = await _imageUrlResolver.ResolveProductImageUrlAsync(image, cancellationToken),
                 DisplayOrder = image.DisplayOrder,
                 IsPrimary = image.IsPrimary
             });

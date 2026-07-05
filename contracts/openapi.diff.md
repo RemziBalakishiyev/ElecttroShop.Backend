@@ -1,37 +1,44 @@
-# OpenAPI Diff — Application Database Logging
+# OpenAPI Diff — Cloudinary Image Storage Migration
 
 ## Date
-2026-07-05
+2026-07-06
 
-## New Endpoints
+## Summary
+Product image uploads moved from local filesystem to Cloudinary. Response DTOs now return direct Cloudinary HTTPS URLs in `imageUrl` / `primaryImageUrl` fields when available.
 
-### GET /api/admin/logs
-Admin-only paginated application logs from database.
+## Changed Endpoints
 
-**Auth:** Bearer JWT, role `Admin`
+### POST /api/products/{productId}/image
+- Response `ProductDto.primaryImageUrl` and `ProductDto.images[].imageUrl` may now be absolute Cloudinary URLs (`https://res.cloudinary.com/...`) instead of `/api/images/{guid}` paths.
 
-**Query parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| page | int | Page number (default 1) |
-| pageSize | int | Page size (default 20, max 100) |
-| level | string | Log level filter |
-| eventType | string | HttpRequest, MediatR, Validation, Exception, Application |
-| correlationId | string | Request correlation id |
-| userId | uuid | Filter by user |
-| search | string | Search in message/exception/path |
-| dateFrom | datetime | UTC start |
-| dateTo | datetime | UTC end |
+### GET /api/images/{imageId}
+- May return **302 Redirect** to Cloudinary URL when `ProductImages.ImageUrl` is populated in DB.
+- Legacy local files still served as binary stream when present on disk.
 
-**Response:** `PagedResult<AppLogDto>`
+### GET /api/admin/debug/image/{id}
+**Response extended with:**
+| Field | Type | Description |
+|-------|------|-------------|
+| imageUrl | string? | Cloudinary secure URL from DB |
+| publicId | string? | Cloudinary public_id |
+| imagePath | string? | Legacy local path |
+| storageProvider | string? | e.g. `Cloudinary` |
 
-## New Models
+## Changed Models
 
-### AppLogDto
-Application log entry with HTTP context, user info, timing, and optional JSON properties.
+### ProductImage (database entity — reflected in API responses via ProductImageDto)
+New nullable fields stored server-side; exposed indirectly via resolved `imageUrl` in responses.
+
+## New Configuration (not in OpenAPI)
+Environment variables required in production:
+- `Cloudinary__CloudName`
+- `Cloudinary__ApiKey`
+- `Cloudinary__ApiSecret`
+- `Cloudinary__Folder` (default: `smartal/products`)
 
 ## Breaking Changes
-None.
+None — backward compatible. Old images without `ImageUrl` continue using `/api/images/{id}` resolution.
 
 ## Notes
-Logging infrastructure change only; existing endpoints unchanged.
+- Upload validation: max 5MB; content types `image/jpeg`, `image/png`, `image/webp`, `image/gif`
+- `contracts/openapi.json` full regeneration pending next clean WebApi build

@@ -140,24 +140,34 @@ dotnet run --project src/ElectroShop.WebApi
 | `JWT__Key` | Min 32 simvol təsadüfi secret |
 | `JWT__Issuer` | `ElectroShop` |
 | `JWT__Audience` | `ElectroShop` |
-| `PUBLIC_BASE_URL` | Backend public URL (məs: `https://api.smartal.net`) — API cavablarında absolute image URL üçün |
-| `ImageStorage__BasePath` | *(optional)* Default: `wwwroot/images/products` |
+| `PUBLIC_BASE_URL` | Backend public URL (məs: `https://api.smartal.net`) — köhnə lokal şəkillər üçün absolute URL |
+| `Cloudinary__CloudName` | `<cloud_name>` |
+| `Cloudinary__ApiKey` | `<api_key>` |
+| `Cloudinary__ApiSecret` | `<secret>` *(Render Environment Variables-da saxlayın, repo-ya yazmayın)* |
+| `Cloudinary__Folder` | `smartal/products` |
+| `ImageStorage__BasePath` | *(optional, legacy)* Köhnə lokal şəkillər üçün: `wwwroot/images/products` |
 
 4. Deploy tamamlandıqdan sonra `https://<api-service>.onrender.com/health` → `OK` qaytarmalıdır
 
-### Şəkil storage (Render xəbərdarlığı)
+### Şəkil storage (Cloudinary)
 
-Backend məhsul şəkillərini **lokal disk**də saxlayır: `wwwroot/images/products/{imageId}.{ext}`.
+Yeni yüklənən məhsul şəkilləri **Cloudinary**-də saxlanır. Render redeploy zamanı fayllar itmir.
 
-- Render Docker konteynerində **local upload storage persistent deyil**
-- Redeploy və ya restart zamanı yüklənmiş fayllar **itə bilər**
-- DB-də `ProductImages.ImageId` qalsa belə, fayl diskdə yoxdursa `GET /api/images/{id}` **404** qaytarır
-- Production üçün **Cloudinary / S3 / R2** kimi xarici object storage tövsiyə olunur
+| Variable | Dəyər |
+|----------|-------|
+| `Cloudinary__CloudName` | `<cloud_name>` |
+| `Cloudinary__ApiKey` | `<api_key>` |
+| `Cloudinary__ApiSecret` | `<secret>` |
+| `Cloudinary__Folder` | `smartal/products` |
+
+- Köhnə lokal şəkillər (`wwwroot/images/products`) geriyə uyğunluq üçün `GET /api/images/{id}` vasitəsilə oxuna bilər
+- DB-də `ProductImages.ImageUrl` dolu olduqda frontend birbaşa Cloudinary URL istifadə edir
+- `ImageUrl` boş, köhnə `ImagePath` varsa — fallback olaraq köhnə path qaytarılır
 
 Debug (auth tələb olunur):
 
-- `GET /api/admin/debug/uploads` — storage path, fayl sayı, ilk 50 fayl
-- `GET /api/admin/debug/image/{id}` — DB record, physical path, file exists
+- `GET /api/admin/debug/uploads` — legacy lokal storage path və fayllar
+- `GET /api/admin/debug/image/{id}` — DB record, ImageUrl, PublicId, ImagePath, StorageProvider
 
 ### 3. Frontend Static Site (React / Vite)
 

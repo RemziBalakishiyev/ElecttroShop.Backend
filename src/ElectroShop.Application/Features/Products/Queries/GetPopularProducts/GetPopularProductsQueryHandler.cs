@@ -42,7 +42,7 @@ public class GetPopularProductsQueryHandler : IRequestHandler<GetPopularProducts
             string? imageUrl = null;
             if (primaryImage != null)
             {
-                imageUrl = await _imageUrlResolver.BuildImageUrlAsync(primaryImage.ImageId, cancellationToken);
+                imageUrl = await _imageUrlResolver.ResolveProductImageUrlAsync(primaryImage, cancellationToken);
             }
 
             productDtos.Add(new PopularProductDto

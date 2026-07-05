@@ -101,7 +101,7 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Resul
             string? primaryImageUrl = null;
             if (primaryImage != null)
             {
-                primaryImageUrl = await _imageUrlResolver.BuildImageUrlAsync(primaryImage.ImageId, cancellationToken);
+                primaryImageUrl = await _imageUrlResolver.ResolveProductImageUrlAsync(primaryImage, cancellationToken);
             }
 
             var productDto = product.Adapt<ProductListDto>();

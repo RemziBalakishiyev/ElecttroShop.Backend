@@ -1,8 +1,9 @@
 namespace ElectroShop.Application.Services;
 
 public record ImageServeResult(
-    Stream Stream,
-    string ContentType,
+    Stream? Stream,
+    string? ContentType,
+    string? RedirectUrl,
     string PhysicalPath,
     ProductImageReference? DbRecord);
 

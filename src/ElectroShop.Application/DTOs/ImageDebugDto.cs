@@ -24,6 +24,10 @@ public record ImageDebugResponse
     public bool ImageRecordFound { get; init; }
     public Guid? ProductImageId { get; init; }
     public Guid? ProductId { get; init; }
+    public string? ImageUrl { get; init; }
+    public string? PublicId { get; init; }
+    public string? ImagePath { get; init; }
+    public string? StorageProvider { get; init; }
     public string? StoredPath { get; init; }
     public string? StoredFileName { get; init; }
     public string PhysicalPathSearched { get; init; } = string.Empty;

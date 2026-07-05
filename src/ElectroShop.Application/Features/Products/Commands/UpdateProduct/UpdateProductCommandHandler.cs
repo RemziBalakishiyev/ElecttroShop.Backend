@@ -6,6 +6,7 @@ using ElectroShop.Application.Services;
 using ElectroShop.Domain.Entities;
 using ElectroShop.Domain.Exceptions;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace ElectroShop.Application.Features.Products.Commands.UpdateProduct;
 
@@ -21,6 +22,9 @@ public class UpdateProductCommandHandler
     private readonly IProductAttributeSchemaResolver _schemaResolver;
     private readonly IProductVariantAttributeValidator _variantValidator;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IImageStorageService _imageStorageService;
+    private readonly IImageStorage _imageStorage;
+    private readonly ILogger<UpdateProductCommandHandler> _logger;
 
     public UpdateProductCommandHandler(
         IProductQueryRepository productQueryRepository,
@@ -28,7 +32,10 @@ public class UpdateProductCommandHandler
         IQueryRepository<Brand> brandRepository,
         IProductAttributeSchemaResolver schemaResolver,
         IProductVariantAttributeValidator variantValidator,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IImageStorageService imageStorageService,
+        IImageStorage imageStorage,
+        ILogger<UpdateProductCommandHandler> logger)
     {
         _productQueryRepository = productQueryRepository;
         _categoryRepository = categoryRepository;
@@ -36,6 +43,9 @@ public class UpdateProductCommandHandler
         _schemaResolver = schemaResolver;
         _variantValidator = variantValidator;
         _unitOfWork = unitOfWork;
+        _imageStorageService = imageStorageService;
+        _imageStorage = imageStorage;
+        _logger = logger;
     }
 
     public async Task<Result<ProductDto>> Handle(
@@ -74,6 +84,15 @@ public class UpdateProductCommandHandler
                 brandId: request.BrandId,
                 vatRate: request.VatRate,
                 stock: request.Stock);
+
+            var imagesToRemove = product.ProductImages
+                .Where(x => !request.ImageIds.Contains(x.ImageId))
+                .ToList();
+
+            foreach (var image in imagesToRemove)
+            {
+                await DeleteStoredImageAsync(image, cancellationToken);
+            }
 
             product.SyncImages(request.ImageIds);
 
@@ -191,5 +210,38 @@ public class UpdateProductCommandHandler
         };
 
         return Result.Success(dto);
+    }
+
+    private async Task DeleteStoredImageAsync(ProductImage image, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(image.PublicId))
+        {
+            try
+            {
+                await _imageStorageService.DeleteAsync(image.PublicId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Cloudinary delete failed during product update. PublicId: {PublicId}, ImageId: {ImageId}",
+                    image.PublicId,
+                    image.ImageId);
+            }
+
+            return;
+        }
+
+        try
+        {
+            await _imageStorage.DeleteImageAsync(image.ImageId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Local image delete failed during product update. ImageId: {ImageId}",
+                image.ImageId);
+        }
     }
 }

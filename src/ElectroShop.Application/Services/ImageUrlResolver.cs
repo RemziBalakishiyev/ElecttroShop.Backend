@@ -1,4 +1,5 @@
 using ElectroShop.Application.Common.Options;
+using ElectroShop.Domain.Entities;
 using Microsoft.Extensions.Options;
 
 namespace ElectroShop.Application.Services;
@@ -12,6 +13,23 @@ public class ImageUrlResolver : IImageUrlResolver
     {
         _imageStorage = imageStorage;
         _options = options.Value;
+    }
+
+    public async Task<string> ResolveProductImageUrlAsync(
+        ProductImage productImage,
+        CancellationToken cancellationToken = default)
+    {
+        if (!string.IsNullOrWhiteSpace(productImage.ImageUrl))
+            return productImage.ImageUrl;
+
+        if (!string.IsNullOrWhiteSpace(productImage.ImagePath))
+        {
+            var resolvedPath = ResolvePublicUrl(productImage.ImagePath);
+            if (!string.IsNullOrWhiteSpace(resolvedPath))
+                return resolvedPath;
+        }
+
+        return await BuildImageUrlAsync(productImage.ImageId, cancellationToken);
     }
 
     public string BuildImageUrl(Guid imageId, string? extension = null)
