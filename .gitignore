@@ -382,6 +382,7 @@ appsettings.Local.json
 appsettings.*.local.json
 secrets.json
 *.user.secrets.json
+docs/CONNECTION_STRINGS.local.md
 
 # Database
 *.db

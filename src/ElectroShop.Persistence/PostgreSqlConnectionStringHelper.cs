@@ -1,8 +1,11 @@
+using Npgsql;
+
 namespace ElectroShop.Persistence;
 
 /// <summary>
 /// PostgreSQL connection string-i Npgsql üçün uyğunlaşdırır.
-/// SQL Server parametrleri (məs. Encrypt) silinir.
+/// URI formatını (postgresql://) key=value formatına çevirir.
+/// SQL Server parametrləri (məs. Encrypt) silinir.
 /// </summary>
 public static class PostgreSqlConnectionStringHelper
 {
@@ -27,7 +30,7 @@ public static class PostgreSqlConnectionStringHelper
         if (trimmed.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase) ||
             trimmed.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
         {
-            return trimmed;
+            return new NpgsqlConnectionStringBuilder(trimmed).ConnectionString;
         }
 
         var parts = trimmed.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

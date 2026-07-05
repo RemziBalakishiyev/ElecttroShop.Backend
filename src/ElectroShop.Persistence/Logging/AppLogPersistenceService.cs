@@ -39,15 +39,23 @@ public sealed class AppLogPersistenceService : BackgroundService
 
                 while (batch.Count < BatchSize)
                 {
-                    if (await _writer.Reader.WaitToReadAsync(timeoutCts.Token).ConfigureAwait(false))
+                    try
                     {
-                        while (batch.Count < BatchSize && _writer.Reader.TryRead(out var entry))
+                        if (await _writer.Reader.WaitToReadAsync(timeoutCts.Token).ConfigureAwait(false))
                         {
-                            batch.Add(entry);
+                            while (batch.Count < BatchSize && _writer.Reader.TryRead(out var entry))
+                            {
+                                batch.Add(entry);
+                            }
+                        }
+                        else
+                        {
+                            break;
                         }
                     }
-                    else
+                    catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
                     {
+                        // Flush interval expired — no new logs within 2s; persist batch if any.
                         break;
                     }
                 }
