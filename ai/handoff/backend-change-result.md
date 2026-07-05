@@ -1,75 +1,54 @@
 # Backend Change Result
 
 ## Summary
-Detallı application loglama sistemi əlavə edildi. Loglar artıq yalnız konsolda deyil, PostgreSQL-də `AppLogs` cədvəlində də saxlanılır. HTTP request, MediatR command/query, validasiya xətaları və unhandled exception-lar geniş kontekstlə loglanır. Admin istifadəçilər logları API vasitəsilə oxuya bilər.
+Deploy/start zamanı migration avtomatik tətbiq olunur, seed data isə production deploy-da işləmir. Migration default olaraq aktivdir; seed yalnız Development mühitində (və ya `SEED_ON_STARTUP=true` olduqda) icra olunur.
 
 ## Changed Endpoints
-
-### GET /api/admin/logs
-- **Method:** GET
-- **URL:** `/api/admin/logs`
-- **Auth:** JWT Bearer, **Admin role tələb olunur**
-- **Old behavior:** Endpoint yox idi
-- **New behavior:** Paginated application log siyahısı qaytarır
-- **Query params:**
-  - `page` (default: 1)
-  - `pageSize` (default: 20, max: 100)
-  - `level` (Information, Warning, Error, ...)
-  - `eventType` (HttpRequest, MediatR, Validation, Exception, Application, ...)
-  - `correlationId`
-  - `userId` (Guid)
-  - `search` (message, exception, path, sourceContext üzrə)
-  - `dateFrom`, `dateTo` (UTC)
-- **Response body:** `PagedResult<AppLogDto>`
-- **Validation rules:** page/pageSize standart pagination
-- **Error responses:** 401 Unauthorized, 403 Forbidden (non-admin)
-- **Status/enum changes:** yoxdur
+Heç bir API endpoint dəyişməyib.
 
 ## Changed Models / DTOs
-
-### AppLogDto (yeni)
-- `id`, `timestampUtc`, `level`, `message`, `exception`
-- `sourceContext`, `eventType`, `correlationId`
-- `userId`, `userEmail`
-- `requestPath`, `requestMethod`, `queryString`, `requestBody`
-- `responseStatusCode`, `elapsedMilliseconds`
-- `clientIp`, `userAgent`, `machineName`, `propertiesJson`
+Yoxdur.
 
 ## Database / Business Rule Changes
 
-- Yeni cədvəl: **`AppLogs`**
-- Migration: `20260705184000_AddAppLogs`
-- Log yazma background queue ilə batch (50 entry / 2 saniyə) edilir
-- Sensitive field-lər (password, token, otp, refreshToken və s.) avtomatik `***REDACTED***` olaraq maskalanır
-- `/health`, `/swagger` request-ləri loglanmır
+### Startup davranışı (Program.cs)
+
+| Mühit | Migration | Seed |
+|-------|-----------|------|
+| Production (deploy) | ✅ Avtomatik (`MIGRATE_ON_STARTUP` default: `true`) | ❌ Deaktiv |
+| Development (local) | ✅ Avtomatik | ✅ Aktiv (`SEED_ON_STARTUP` default: `true`) |
+
+### Konfiqurasiya
+
+- `MIGRATE_ON_STARTUP` — default `true`. `false` olarsa migration skip edilir.
+- `SEED_ON_STARTUP` — default `false` (production). Development-da default `true`.
+
+### appsettings.Production.json
+```json
+"MIGRATE_ON_STARTUP": true,
+"SEED_ON_STARTUP": false
+```
 
 ## Frontend Impact
 
 ### Admin frontend
-- **Yeni səhifə tövsiyəsi:** Logs / Audit ekranı
-- `GET /api/admin/logs` endpoint-inə inteqrasiya
-- Filter: level, eventType, tarix aralığı, search, correlationId
-- Cədvəldə: timestamp, level, eventType, message, user, path, statusCode, elapsedMs
-- Detail modal: exception, requestBody, propertiesJson
+No frontend change required.
 
 ### User frontend
-- **No frontend change required**
+No frontend change required.
 
 ## OpenAPI
-- contracts/openapi.json updated: yes
-- contracts/openapi.diff.md updated: yes
+- contracts/openapi.json updated: no
+- contracts/openapi.diff.md updated: no
 
 ## Test Result
-- Backend build: uğurlu (`dotnet build -o obj/webapi-build-temp`)
+- Backend build: pending
 - Backend tests: test layihəsi yoxdur
 - Manual API test:
-  1. Migration tətbiq et
-  2. API-ni işə sal
-  3. Bir neçə endpoint çağır
-  4. `AppLogs` cədvəlində və ya `GET /api/admin/logs` ilə yoxla
-- Known issues: IIS Express işləyirsə default build output lock ola bilər
+  1. Production mühitində API start et
+  2. Pending migration varsa avtomatik tətbiq olunmalıdır
+  3. Seed data əlavə olunmamalıdır (mövcud Users/Categories/Products sayı dəyişməməlidir)
+- Known issues: yoxdur
 
 ## Security Notes
-- Log endpoint yalnız Admin roluna açıqdır
-- Parol, token, OTP və oxşar field-lər log payload-larından maskalanır
-- Request body yalnız JSON/text content type-lar üçün loglanır; multipart fayl upload body-si loglanmır
+Production-da test admin/agent istifadəçiləri avtomatik yaradılmır.

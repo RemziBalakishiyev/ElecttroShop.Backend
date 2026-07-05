@@ -32,33 +32,41 @@ try
 
     app.MapGet("/health", () => Results.Ok("OK"));
 
-    var migrateOnStartup = builder.Configuration.GetValue<bool>("MIGRATE_ON_STARTUP")
-        || builder.Environment.IsDevelopment();
-    if (migrateOnStartup)
+    var migrateOnStartup = builder.Configuration.GetValue("MIGRATE_ON_STARTUP", defaultValue: true);
+    var seedOnStartup = builder.Environment.IsDevelopment()
+        && builder.Configuration.GetValue("SEED_ON_STARTUP", defaultValue: true);
+
+    if (migrateOnStartup || seedOnStartup)
     {
         using var scope = app.Services.CreateScope();
         var services = scope.ServiceProvider;
         try
         {
             var context = services.GetRequiredService<ElectroShopDbContext>();
-            var passwordHasher = services.GetRequiredService<ElectroShop.Application.Services.IPasswordHasher>();
 
-            var pendingMigrations = context.Database.GetPendingMigrations().ToList();
-            if (pendingMigrations.Any())
+            if (migrateOnStartup)
             {
-                Log.Information("Found {Count} pending migration(s): {Migrations}",
-                    pendingMigrations.Count, string.Join(", ", pendingMigrations));
-                Log.Information("Applying database migrations...");
-                await context.Database.MigrateAsync();
-                Log.Information("Database migrations applied successfully");
-            }
-            else
-            {
-                Log.Information("No pending migrations found");
+                var pendingMigrations = context.Database.GetPendingMigrations().ToList();
+                if (pendingMigrations.Any())
+                {
+                    Log.Information("Found {Count} pending migration(s): {Migrations}",
+                        pendingMigrations.Count, string.Join(", ", pendingMigrations));
+                    Log.Information("Applying database migrations...");
+                    await context.Database.MigrateAsync();
+                    Log.Information("Database migrations applied successfully");
+                }
+                else
+                {
+                    Log.Information("No pending migrations found");
+                }
             }
 
-            await DatabaseSeeder.SeedAsync(context, passwordHasher);
-            Log.Information("Database seeding completed successfully");
+            if (seedOnStartup)
+            {
+                var passwordHasher = services.GetRequiredService<ElectroShop.Application.Services.IPasswordHasher>();
+                await DatabaseSeeder.SeedAsync(context, passwordHasher);
+                Log.Information("Database seeding completed successfully");
+            }
         }
         catch (Exception ex)
         {
