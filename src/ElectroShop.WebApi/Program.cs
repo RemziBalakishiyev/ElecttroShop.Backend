@@ -1,34 +1,33 @@
-using ElectroShop.Application;
-using ElectroShop.Persistence;
 using ElectroShop.Persistence.Contexts;
+using ElectroShop.Persistence.Logging;
 using ElectroShop.Persistence.Seeders;
 using ElectroShop.WebApi.Extensions;
-using ElectroShop.WebApi.Middleware;
+using ElectroShop.WebApi.Logging;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog Configuration
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .CreateLogger();
+builder.AddWebApiServices();
 
-builder.Host.UseSerilog();
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    var logWriter = services.GetRequiredService<IAppLogWriter>();
+
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("MachineName", Environment.MachineName)
+        .WriteTo.Console()
+        .WriteTo.Sink(new EfCoreLogSink(logWriter), restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information);
+});
 
 try
 {
     Log.Information("Starting ElectroShop Web API");
 
-    // Add Web API Services
-    builder.AddWebApiServices();
-
     var app = builder.Build();
 
-    // Configure the HTTP request pipeline
     app.ConfigurePipeline();
 
     app.MapGet("/health", () => Results.Ok("OK"));

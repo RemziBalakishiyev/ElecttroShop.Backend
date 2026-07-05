@@ -1,8 +1,11 @@
 using ElectroShop.Application.Common.Results;
+using ElectroShop.Application.Logging;
 using ElectroShop.Domain.Exceptions;
 using ElectroShop.Persistence.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using Serilog.Context;
 using System.Net;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace ElectroShop.WebApi.Middleware;
@@ -28,7 +31,25 @@ public class ExceptionHandlingMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unhandled exception occurred");
+            var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var correlationId = context.Items["CorrelationId"]?.ToString();
+
+            using (LogContext.PushProperty(LogContextPropertyNames.EventType, LogEventTypes.Exception))
+            using (LogContext.PushProperty(LogContextPropertyNames.CorrelationId, correlationId))
+            using (LogContext.PushProperty(LogContextPropertyNames.UserId, userId))
+            using (LogContext.PushProperty(LogContextPropertyNames.RequestPath, context.Request.Path.Value))
+            using (LogContext.PushProperty(LogContextPropertyNames.RequestMethod, context.Request.Method))
+            {
+                _logger.LogError(
+                    ex,
+                    "Unhandled exception | Path={RequestPath} | Method={RequestMethod} | CorrelationId={CorrelationId} | UserId={UserId} | ExceptionType={ExceptionType}",
+                    context.Request.Path.Value,
+                    context.Request.Method,
+                    correlationId ?? "unknown",
+                    userId ?? "anonymous",
+                    ex.GetType().Name);
+            }
+
             await HandleExceptionAsync(context, ex);
         }
     }

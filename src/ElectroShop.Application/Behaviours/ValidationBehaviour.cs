@@ -1,6 +1,8 @@
 using ElectroShop.Application.Common.Results;
+using ElectroShop.Application.Logging;
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 
 namespace ElectroShop.Application.Behaviours;
@@ -15,10 +17,14 @@ public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TReque
     where TRequest : IRequest<TResponse>
 {
     private readonly IEnumerable<IValidator<TRequest>> _validators;
+    private readonly ILogger<ValidationBehaviour<TRequest, TResponse>> _logger;
 
-    public ValidationBehaviour(IEnumerable<IValidator<TRequest>> validators)
+    public ValidationBehaviour(
+        IEnumerable<IValidator<TRequest>> validators,
+        ILogger<ValidationBehaviour<TRequest, TResponse>> logger)
     {
         _validators = validators;
+        _logger = logger;
     }
 
     public async Task<TResponse> Handle(
@@ -43,6 +49,25 @@ public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TReque
 
         if (failures.Any())
         {
+            var requestName = typeof(TRequest).Name;
+            var validationSummary = string.Join("; ", failures.Select(f => $"{f.PropertyName}: {f.ErrorMessage}"));
+            var sanitizedPayload = LogSensitiveDataSanitizer.SanitizeObject(request);
+
+            using (_logger.BeginScope(new Dictionary<string, object?>
+            {
+                [LogContextPropertyNames.EventType] = LogEventTypes.Validation,
+                [LogContextPropertyNames.RequestName] = requestName,
+                [LogContextPropertyNames.ValidationErrors] = validationSummary,
+                [LogContextPropertyNames.RequestPayload] = sanitizedPayload
+            }))
+            {
+                _logger.LogWarning(
+                    "Validation failed for {RequestName} | Errors={ValidationErrors} | Payload={RequestPayload}",
+                    requestName,
+                    validationSummary,
+                    sanitizedPayload);
+            }
+
             // Convert FluentValidation errors to Result pattern errors
             var errors = failures
                 .Select(f => Error.Validation(

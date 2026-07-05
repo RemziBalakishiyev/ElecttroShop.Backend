@@ -27,6 +27,7 @@ public class ElectroShopDbContext : DbContext
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleExpense> SaleExpenses => Set<SaleExpense>();
     public DbSet<ProductRating> ProductRatings => Set<ProductRating>();
+    public DbSet<AppLogEntry> AppLogs => Set<AppLogEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

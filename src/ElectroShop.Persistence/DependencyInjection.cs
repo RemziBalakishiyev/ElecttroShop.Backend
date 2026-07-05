@@ -1,5 +1,6 @@
 using ElectroShop.Application.Abstractions;
 using ElectroShop.Persistence.Contexts;
+using ElectroShop.Persistence.Logging;
 using ElectroShop.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -43,6 +44,12 @@ public static class DependencyInjection
 
         // Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // Application logging (database persistence)
+        services.AddSingleton<AppLogWriter>();
+        services.AddSingleton<IAppLogWriter>(sp => sp.GetRequiredService<AppLogWriter>());
+        services.AddHostedService<AppLogPersistenceService>();
+        services.AddScoped<IAppLogQueryRepository, AppLogQueryRepository>();
 
         return services;
     }

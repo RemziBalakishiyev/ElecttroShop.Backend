@@ -1,66 +1,37 @@
-# OpenAPI diff — Dashboard Statistics + Product image handling
+# OpenAPI Diff — Application Database Logging
 
-**Date:** 2026-07-05
+## Date
+2026-07-05
 
-## Summary
+## New Endpoints
 
-Two backend changes in this release:
+### GET /api/admin/logs
+Admin-only paginated application logs from database.
 
-1. **Dashboard Statistics API** — new admin sales/product statistics endpoint
-2. **Product image handling** — static files, debug endpoints, `PUBLIC_BASE_URL` support
+**Auth:** Bearer JWT, role `Admin`
 
----
+**Query parameters:**
+| Name | Type | Description |
+|------|------|-------------|
+| page | int | Page number (default 1) |
+| pageSize | int | Page size (default 20, max 100) |
+| level | string | Log level filter |
+| eventType | string | HttpRequest, MediatR, Validation, Exception, Application |
+| correlationId | string | Request correlation id |
+| userId | uuid | Filter by user |
+| search | string | Search in message/exception/path |
+| dateFrom | datetime | UTC start |
+| dateTo | datetime | UTC end |
 
-## Dashboard Statistics (previous change)
+**Response:** `PagedResult<AppLogDto>`
 
-### GET /api/dashboard/statistics (NEW)
-- **Auth:** `[Authorize]` — JWT required
-- **Response:** `DashboardStatisticsResponse` (`dailySales`, `monthlySales`, `productSummary`)
+## New Models
 
-### GET /api/dashboard / GET /api/dashboard/chart
-- **Change:** `[Authorize]` enabled (was commented out)
-- **Response:** unchanged
+### AppLogDto
+Application log entry with HTTP context, user info, timing, and optional JSON properties.
 
-### Business rules
-- Date filters use UTC (`SoldAt`)
-- Soft deleted sales/products excluded
-- **Limitation:** no separate `costPrice` on Product — cost values use `Price.Amount`
+## Breaking Changes
+None.
 
----
-
-## Product image handling (this change)
-
-### GET /api/admin/debug/uploads (NEW)
-- **Auth:** Bearer (staff)
-- **Response:** `UploadsDebugResponse` — web root, storage path, file count, first 50 files
-
-### GET /api/admin/debug/image/{id} (NEW)
-- **Auth:** Bearer (staff)
-- **Response:** `ImageDebugResponse` — DB record, physical path searched, file exists, public URLs
-
-### GET /api/images/{imageId} / GET /api/images/{imageId}.{extension}
-- **Auth:** Anonymous
-- **Change:** Never returns JSON on success; 404 returns empty body with `image/jpeg` (fixes ORB)
-- **Change:** DB lookup via `ProductImage.ImageId` + disk file serve via `ImageServeService`
-- **Note:** Prefer static URL in DTOs when file exists: `/images/products/{id}.ext`
-
-### Response model changes (when `PUBLIC_BASE_URL` is set)
-Product-related DTO fields may return **absolute** URLs:
-- `primaryImageUrl`, `imageUrl` (products, variants, popular, chart data)
-
-Example: `https://api.smartal.net/api/images/{guid}.jpg`
-
-### Configuration
-- `PUBLIC_BASE_URL` — e.g. `https://api.smartal.net`
-- `ImageStorage__BasePath` — optional, default `wwwroot/images/products`
-
-### Render storage note
-Local disk uploads are ephemeral on Render. Missing files cause 404 even when DB has `ImageId`.
-
-## Breaking changes
-- None for API route structure
-- **Ops:** Set `PUBLIC_BASE_URL` on Render for absolute image URLs
-- **Frontend:** Use `resolveImageUrl()` helper for image URLs
-
-## OpenAPI
-- `contracts/openapi.json` updated: **yes**
+## Notes
+Logging infrastructure change only; existing endpoints unchanged.

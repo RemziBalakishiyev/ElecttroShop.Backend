@@ -9,6 +9,9 @@ public static class WebApplicationExtensions
         // Exception Handling must be first
         app.UseExceptionHandling();
 
+        // Detailed HTTP request logging
+        app.UseRequestLogging();
+
         // Swagger (Development only)
         if (app.Environment.IsDevelopment())
         {
