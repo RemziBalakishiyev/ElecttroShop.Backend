@@ -4,45 +4,21 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace ElectroShop.Persistence.Migrations;
 
+/// <summary>
+/// bytea RowVersion sütunlarını silir. PostgreSQL xmin sistem sütunudur — fiziki xmin əlavə edilmir.
+/// </summary>
 public partial class FixRowVersionUsePostgresXmin : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropColumn(
-            name: "RowVersion",
-            table: "Products");
-
-        migrationBuilder.DropColumn(
-            name: "RowVersion",
-            table: "Orders");
-
-        migrationBuilder.AddColumn<uint>(
-            name: "xmin",
-            table: "Products",
-            type: "xid",
-            rowVersion: true,
-            nullable: false,
-            defaultValue: 0u);
-
-        migrationBuilder.AddColumn<uint>(
-            name: "xmin",
-            table: "Orders",
-            type: "xid",
-            rowVersion: true,
-            nullable: false,
-            defaultValue: 0u);
+        migrationBuilder.Sql("""
+            ALTER TABLE "Products" DROP COLUMN IF EXISTS "RowVersion";
+            ALTER TABLE "Orders" DROP COLUMN IF EXISTS "RowVersion";
+            """);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropColumn(
-            name: "xmin",
-            table: "Products");
-
-        migrationBuilder.DropColumn(
-            name: "xmin",
-            table: "Orders");
-
         migrationBuilder.AddColumn<byte[]>(
             name: "RowVersion",
             table: "Products",

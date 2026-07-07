@@ -491,9 +491,7 @@ namespace ElectroShop.Persistence.Migrations
 
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
+                        .ValueGeneratedOnAddOrUpdate();
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -604,9 +602,7 @@ namespace ElectroShop.Persistence.Migrations
 
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
+                        .ValueGeneratedOnAddOrUpdate();
 
                     b.Property<int>("Stock")
                         .HasColumnType("integer");

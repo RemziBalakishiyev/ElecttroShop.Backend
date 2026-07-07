@@ -58,6 +58,14 @@ public class UpdateProductCommandHandler
         if (product is null)
             return DomainErrors.Product.NotFound(request.Id);
 
+        if (request.RowVersion > 0 && request.RowVersion != product.RowVersion)
+        {
+            return Result.Failure<ProductDto>(
+                Error.Conflict(
+                    "Product.ConcurrencyConflict",
+                    "The data has been modified by another user. Please reload and try again."));
+        }
+
         await _productQueryRepository.EnsureProductImagesAttachedAsync(product, cancellationToken);
 
         var oldCategoryId = product.CategoryId;

@@ -140,8 +140,11 @@ public class ProductQueryRepository : QueryRepository<Product>, IProductQueryRep
 
         foreach (var image in missingImages)
         {
-            productImageDbSet.Attach(image);
-            product.ProductImages.Add(image);
+            if (_context.Entry(image).State == EntityState.Detached)
+                productImageDbSet.Attach(image);
+
+            if (!product.ProductImages.Any(pi => pi.Id == image.Id))
+                product.ProductImages.Add(image);
         }
     }
 

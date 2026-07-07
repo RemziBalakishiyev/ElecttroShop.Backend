@@ -15,10 +15,9 @@ public abstract class AggregateRootConfiguration<TAggregateRoot> : BaseCommonEnt
     {
         base.Configure(builder);
 
-        // PostgreSQL xmin system column — avtomatik yenilənən concurrency token
+        // PostgreSQL sistem xmin sütununa map (Npgsql IsRowVersion).
+        // Fiziki "xmin" sütunu yaratmayın — sistem sütunu ilə konflikt yaradır.
         builder.Property(a => a.RowVersion)
-            .HasColumnName("xmin")
-            .HasColumnType("xid")
             .IsRowVersion();
     }
 }

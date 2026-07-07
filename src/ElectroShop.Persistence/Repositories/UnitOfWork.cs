@@ -136,6 +136,39 @@ public class UnitOfWork : IUnitOfWork
 
             FixChildEntityStates(variantEntries, existingVariantIds.ToHashSet(), e => e.Entity.Id);
         }
+
+        var attributeEntries = _context.ChangeTracker.Entries<ProductAttribute>()
+            .Where(e => e.Entity.ProductId == productId)
+            .ToList();
+
+        if (attributeEntries.Count > 0)
+        {
+            var attributeIds = attributeEntries.Select(e => e.Entity.Id).ToList();
+            var existingAttributeIds = await _context.ProductAttributes
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(pa => attributeIds.Contains(pa.Id))
+                .Select(pa => pa.Id)
+                .ToListAsync(cancellationToken);
+
+            FixChildEntityStates(attributeEntries, existingAttributeIds.ToHashSet(), e => e.Entity.Id);
+        }
+
+        var attributeValueEntries = _context.ChangeTracker.Entries<ProductAttributeValue>()
+            .Where(e => attributeEntries.Select(a => a.Entity.Id).Contains(e.Entity.ProductAttributeId))
+            .ToList();
+
+        if (attributeValueEntries.Count > 0)
+        {
+            var valueIds = attributeValueEntries.Select(e => e.Entity.Id).ToList();
+            var existingValueIds = await _context.ProductAttributeValues
+                .AsNoTracking()
+                .Where(pav => valueIds.Contains(pav.Id))
+                .Select(pav => pav.Id)
+                .ToListAsync(cancellationToken);
+
+            FixChildEntityStates(attributeValueEntries, existingValueIds.ToHashSet(), e => e.Entity.Id);
+        }
     }
 
     public async Task PrepareSaleForSaveAsync(Guid saleId, CancellationToken cancellationToken = default)
