@@ -34,33 +34,27 @@ public sealed class AppLogPersistenceService : BackgroundService
         {
             try
             {
-                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-                timeoutCts.CancelAfter(FlushInterval);
+                DrainAvailableEntries(batch);
 
-                while (batch.Count < BatchSize)
+                if (batch.Count >= BatchSize)
                 {
-                    try
-                    {
-                        if (await _writer.Reader.WaitToReadAsync(timeoutCts.Token).ConfigureAwait(false))
-                        {
-                            while (batch.Count < BatchSize && _writer.Reader.TryRead(out var entry))
-                            {
-                                batch.Add(entry);
-                            }
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                    catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
-                    {
-                        // Flush interval expired — no new logs within 2s; persist batch if any.
-                        break;
-                    }
+                    await PersistBatchAsync(batch, stoppingToken).ConfigureAwait(false);
+                    batch.Clear();
+                    continue;
                 }
 
-                if (batch.Count > 0)
+                var readTask = _writer.Reader.WaitToReadAsync(stoppingToken).AsTask();
+                var delayTask = Task.Delay(FlushInterval, stoppingToken);
+
+                var completed = await Task.WhenAny(readTask, delayTask).ConfigureAwait(false);
+
+                if (completed == readTask)
+                {
+                    _ = await readTask.ConfigureAwait(false);
+                    DrainAvailableEntries(batch);
+                }
+
+                if (batch.Count > 0 && (batch.Count >= BatchSize || completed == delayTask))
                 {
                     await PersistBatchAsync(batch, stoppingToken).ConfigureAwait(false);
                     batch.Clear();
@@ -74,18 +68,30 @@ public sealed class AppLogPersistenceService : BackgroundService
             {
                 _logger.LogError(ex, "Failed to persist application log batch");
                 batch.Clear();
-                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken).ConfigureAwait(false);
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
             }
         }
 
-        while (_writer.Reader.TryRead(out var remaining))
-        {
-            batch.Add(remaining);
-        }
+        DrainAvailableEntries(batch);
 
         if (batch.Count > 0)
         {
             await PersistBatchAsync(batch, CancellationToken.None).ConfigureAwait(false);
+        }
+    }
+
+    private void DrainAvailableEntries(List<AppLogEntry> batch)
+    {
+        while (batch.Count < BatchSize && _writer.Reader.TryRead(out var entry))
+        {
+            batch.Add(entry);
         }
     }
 
