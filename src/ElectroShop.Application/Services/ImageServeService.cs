@@ -6,16 +6,16 @@ namespace ElectroShop.Application.Services;
 public class ImageServeService : IImageServeService
 {
     private readonly IProductImageQueryRepository _productImageQueryRepository;
-    private readonly IImageStorage _imageStorage;
+    private readonly ICloudinaryUrlBuilder _cloudinaryUrlBuilder;
     private readonly ILogger<ImageServeService> _logger;
 
     public ImageServeService(
         IProductImageQueryRepository productImageQueryRepository,
-        IImageStorage imageStorage,
+        ICloudinaryUrlBuilder cloudinaryUrlBuilder,
         ILogger<ImageServeService> logger)
     {
         _productImageQueryRepository = productImageQueryRepository;
-        _imageStorage = imageStorage;
+        _cloudinaryUrlBuilder = cloudinaryUrlBuilder;
         _logger = logger;
     }
 
@@ -25,66 +25,32 @@ public class ImageServeService : IImageServeService
     {
         var dbRecord = await _productImageQueryRepository.GetByImageIdAsync(imageId, cancellationToken);
 
+        string? redirectUrl = null;
+
         if (!string.IsNullOrWhiteSpace(dbRecord?.ImageUrl))
         {
-            return new ImageServeResult(
-                Stream: null,
-                ContentType: dbRecord.ContentType,
-                RedirectUrl: dbRecord.ImageUrl,
-                PhysicalPath: string.Empty,
-                DbRecord: dbRecord.ToReference());
+            redirectUrl = dbRecord.ImageUrl;
         }
-
-        var extension = await _imageStorage.GetImageExtensionAsync(imageId, cancellationToken);
-        var physicalPath = _imageStorage.ResolvePhysicalPath(imageId);
-        var imageResult = await _imageStorage.GetImageAsync(imageId, cancellationToken);
-
-        if (imageResult != null)
+        else if (!string.IsNullOrWhiteSpace(dbRecord?.PublicId))
         {
-            ProductImageReference? reference = null;
-            if (dbRecord != null)
-            {
-                var fileName = extension != null ? $"{imageId}{extension}" : $"{imageId}.jpg";
-                reference = dbRecord.ToReference(fileName);
-            }
-
-            return new ImageServeResult(
-                imageResult.Value.Stream,
-                imageResult.Value.ContentType,
-                RedirectUrl: null,
-                physicalPath,
-                reference);
+            redirectUrl = _cloudinaryUrlBuilder.BuildSecureUrl(dbRecord.PublicId);
         }
-
-        if (!string.IsNullOrWhiteSpace(dbRecord?.ImagePath))
+        else
         {
-            var resolvedPath = dbRecord.ImagePath.StartsWith('/')
-                ? dbRecord.ImagePath
-                : $"/{dbRecord.ImagePath.TrimStart('/')}";
-
-            return new ImageServeResult(
-                Stream: null,
-                ContentType: dbRecord.ContentType,
-                RedirectUrl: resolvedPath,
-                PhysicalPath: physicalPath,
-                DbRecord: dbRecord.ToReference());
+            redirectUrl = _cloudinaryUrlBuilder.BuildSecureUrlFromImageId(imageId);
         }
 
-        var expectedFileName = extension != null ? $"{imageId}{extension}" : $"{imageId}.jpg";
-        var dbPath = dbRecord != null
-            ? $"ProductImages(ImageId={imageId}, ProductId={dbRecord.ProductId}, ExpectedFile={expectedFileName})"
-            : "ProductImage record not found";
-
-        _logger.LogWarning(
-            "Image file missing. ImageId: {ImageId}, DbPath: {DbPath}, StorageBasePath: {StorageBasePath}, PhysicalPath: {PhysicalPath}, ImageUrl: {ImageUrl}, PublicId: {PublicId}",
+        _logger.LogInformation(
+            "Redirecting legacy image request to Cloudinary. ImageId: {ImageId}, RedirectUrl: {RedirectUrl}",
             imageId,
-            dbPath,
-            _imageStorage.BasePath,
-            physicalPath,
-            dbRecord?.ImageUrl,
-            dbRecord?.PublicId);
+            redirectUrl);
 
-        return null;
+        return new ImageServeResult(
+            Stream: null,
+            ContentType: dbRecord?.ContentType,
+            RedirectUrl: redirectUrl,
+            PhysicalPath: string.Empty,
+            DbRecord: dbRecord?.ToReference());
     }
 }
 

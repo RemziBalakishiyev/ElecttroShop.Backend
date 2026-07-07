@@ -1,9 +1,14 @@
+using ElectroShop.Domain.Entities;
+
 namespace ElectroShop.Application.Abstractions;
 
 public interface IProductImageQueryRepository
 {
     Task<ProductImageReferenceDto?> GetByImageIdAsync(
         Guid imageId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ProductImage>> GetImagesNeedingCloudinaryBackfillAsync(
         CancellationToken cancellationToken = default);
 }
 

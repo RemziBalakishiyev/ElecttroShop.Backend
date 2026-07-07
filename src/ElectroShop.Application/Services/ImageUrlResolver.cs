@@ -6,63 +6,50 @@ namespace ElectroShop.Application.Services;
 
 public class ImageUrlResolver : IImageUrlResolver
 {
-    private readonly IImageStorage _imageStorage;
+    private readonly ICloudinaryUrlBuilder _cloudinaryUrlBuilder;
     private readonly ImageStorageOptions _options;
 
-    public ImageUrlResolver(IImageStorage imageStorage, IOptions<ImageStorageOptions> options)
+    public ImageUrlResolver(
+        ICloudinaryUrlBuilder cloudinaryUrlBuilder,
+        IOptions<ImageStorageOptions> options)
     {
-        _imageStorage = imageStorage;
+        _cloudinaryUrlBuilder = cloudinaryUrlBuilder;
         _options = options.Value;
     }
 
-    public async Task<string> ResolveProductImageUrlAsync(
+    public Task<string> ResolveProductImageUrlAsync(
         ProductImage productImage,
         CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrWhiteSpace(productImage.ImageUrl))
-            return productImage.ImageUrl;
+            return Task.FromResult(productImage.ImageUrl);
+
+        if (!string.IsNullOrWhiteSpace(productImage.PublicId))
+            return Task.FromResult(_cloudinaryUrlBuilder.BuildSecureUrl(productImage.PublicId));
 
         if (!string.IsNullOrWhiteSpace(productImage.ImagePath))
         {
             var resolvedPath = ResolvePublicUrl(productImage.ImagePath);
             if (!string.IsNullOrWhiteSpace(resolvedPath))
-                return resolvedPath;
+                return Task.FromResult(resolvedPath);
         }
 
-        return await BuildImageUrlAsync(productImage.ImageId, cancellationToken);
+        return Task.FromResult(_cloudinaryUrlBuilder.BuildSecureUrlFromImageId(productImage.ImageId));
     }
 
     public string BuildImageUrl(Guid imageId, string? extension = null)
     {
-        var normalizedExtension = NormalizeExtension(extension);
-        if (normalizedExtension != null)
-        {
-            var staticUrl = BuildStaticImageUrl(imageId, normalizedExtension);
-            if (staticUrl != null)
-                return staticUrl;
-        }
-
-        var relativePath = normalizedExtension != null
-            ? $"/api/images/{imageId}{normalizedExtension}"
-            : $"/api/images/{imageId}";
-
-        return ToPublicUrl(relativePath);
+        return _cloudinaryUrlBuilder.BuildSecureUrlFromImageId(imageId);
     }
 
-    public async Task<string> BuildImageUrlAsync(Guid imageId, CancellationToken cancellationToken = default)
+    public Task<string> BuildImageUrlAsync(Guid imageId, CancellationToken cancellationToken = default)
     {
-        var extension = await _imageStorage.GetImageExtensionAsync(imageId, cancellationToken);
-        return BuildImageUrl(imageId, extension);
+        return Task.FromResult(BuildImageUrl(imageId));
     }
 
     public string? BuildStaticImageUrl(Guid imageId, string extension)
     {
-        var normalizedExtension = NormalizeExtension(extension);
-        if (normalizedExtension == null)
-            return null;
-
-        var relativePath = $"/images/products/{imageId}{normalizedExtension}";
-        return ToPublicUrl(relativePath);
+        return _cloudinaryUrlBuilder.BuildSecureUrlFromImageId(imageId);
     }
 
     public string? ResolvePublicUrl(string? value)
@@ -79,7 +66,7 @@ public class ImageUrlResolver : IImageUrlResolver
         }
 
         if (Guid.TryParse(trimmed, out var imageId))
-            return BuildImageUrl(imageId);
+            return _cloudinaryUrlBuilder.BuildSecureUrlFromImageId(imageId);
 
         if (trimmed.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase) ||
             trimmed.StartsWith("wwwroot\\", StringComparison.OrdinalIgnoreCase))
@@ -105,13 +92,5 @@ public class ImageUrlResolver : IImageUrlResolver
             return relativePath;
 
         return $"{_options.PublicBaseUrl.TrimEnd('/')}{relativePath}";
-    }
-
-    private static string? NormalizeExtension(string? extension)
-    {
-        if (string.IsNullOrWhiteSpace(extension))
-            return null;
-
-        return extension.StartsWith('.') ? extension.ToLowerInvariant() : $".{extension.ToLowerInvariant()}";
     }
 }

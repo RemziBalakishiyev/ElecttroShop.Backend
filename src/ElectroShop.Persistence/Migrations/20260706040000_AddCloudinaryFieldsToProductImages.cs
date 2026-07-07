@@ -1,9 +1,13 @@
+using ElectroShop.Persistence.Contexts;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace ElectroShop.Persistence.Migrations;
 
+[DbContext(typeof(ElectroShopDbContext))]
+[Migration("20260706040000_AddCloudinaryFieldsToProductImages")]
 /// <inheritdoc />
 public partial class AddCloudinaryFieldsToProductImages : Migration
 {

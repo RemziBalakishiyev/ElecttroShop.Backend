@@ -36,14 +36,15 @@ public class CloudinaryImageStorageService : IImageStorageService
     public async Task<ImageUploadResultDto> UploadAsync(
         IFormFile file,
         string? folder = null,
+        Guid? imageId = null,
         CancellationToken cancellationToken = default)
     {
         ValidateFile(file);
         EnsureConfigured();
 
-        var imageId = Guid.NewGuid();
+        var resolvedImageId = imageId ?? Guid.NewGuid();
         var uploadFolder = string.IsNullOrWhiteSpace(folder) ? _settings.Folder : folder.Trim().Trim('/');
-        var publicId = $"{uploadFolder}/{imageId}";
+        var publicId = $"{uploadFolder}/{resolvedImageId}";
 
         await using var stream = file.OpenReadStream();
 

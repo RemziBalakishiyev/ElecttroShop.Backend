@@ -8,6 +8,7 @@ public interface IImageStorageService
     Task<ImageUploadResultDto> UploadAsync(
         IFormFile file,
         string? folder = null,
+        Guid? imageId = null,
         CancellationToken cancellationToken = default);
 
     Task<bool> DeleteAsync(

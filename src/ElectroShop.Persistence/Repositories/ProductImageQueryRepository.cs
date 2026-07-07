@@ -36,4 +36,15 @@ public class ProductImageQueryRepository : IProductImageQueryRepository
             productImage.ContentType,
             productImage.StorageProvider);
     }
+
+    public async Task<IReadOnlyList<ProductImage>> GetImagesNeedingCloudinaryBackfillAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<ProductImage>()
+            .Where(pi =>
+                string.IsNullOrEmpty(pi.ImageUrl) ||
+                pi.StorageProvider != "Cloudinary")
+            .OrderBy(pi => pi.Id)
+            .ToListAsync(cancellationToken);
+    }
 }

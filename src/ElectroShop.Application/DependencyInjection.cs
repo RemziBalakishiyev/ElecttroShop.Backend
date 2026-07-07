@@ -81,6 +81,7 @@ public static class DependencyInjection
         });
 
         services.AddScoped<Services.IImageStorageService, Services.CloudinaryImageStorageService>();
+        services.AddScoped<Services.ICloudinaryUrlBuilder, Services.CloudinaryUrlBuilder>();
         services.AddScoped<Services.IImageStorage, Services.LocalImageStorage>();
         services.AddScoped<Services.IImageUrlResolver, Services.ImageUrlResolver>();
         services.AddScoped<Services.IImageServeService, Services.ImageServeService>();
