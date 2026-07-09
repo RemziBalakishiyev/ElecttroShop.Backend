@@ -1,39 +1,44 @@
-# OpenAPI Diff — Sales Monthly Export
+# OpenAPI Diff — Monthly Sales Report API
 
 ## Date
 2026-07-09
 
 ## Summary
-Satışlar moduluna ay/il üzrə Excel və PDF export endpointləri əlavə edildi.
+Hesabatlar moduluna ay/il üzrə JSON satış hesabatı endpoint-i əlavə edildi. Admin panel dashboard-u üçün summary, günlük qrafik, top məhsullar, kateqoriya/satış növü breakdown, mənfəət/zərər analizi və son satışlar qaytarılır.
 
 ## New Endpoints
 
-### GET /api/sales/export/excel
-- **Summary:** Seçilmiş ay üzrə satış hesabatını Excel formatında export edir
-- **Auth:** JWT Bearer token (mövcud `/api/sales` ilə eyni — `[Authorize]`)
+### GET /api/reports/sales/monthly
+- **Summary:** Seçilmiş ay üzrə satış hesabatını JSON formatında qaytarır (dashboard üçün)
+- **Auth:** JWT Bearer token (mövcud `/api/sales` və `/api/dashboard` ilə eyni — `[Authorize]`)
 - **Query params:**
   - `year` (int, required) — 2000..2100
   - `month` (int, required) — 1..12
-- **Success:** `200 OK`
-  - Content-Type: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
-  - Content-Disposition: `attachment; filename="MAY_AYI_SATIS_2026.xlsx"` (ay adı ASCII safe)
+- **Success:** `200 OK` — `MonthlySalesReportDto`
 - **Errors:**
   - `400` — etibarsız `year` və ya `month`
   - `401` — autentifikasiya tələb olunur
 
-### GET /api/sales/export/pdf
-- **Summary:** Seçilmiş ay üzrə satış hesabatını PDF formatında export edir
-- **Auth:** JWT Bearer token
-- **Query params:** eyni (`year`, `month`)
-- **Success:** `200 OK`
-  - Content-Type: `application/pdf`
-  - Content-Disposition: `attachment; filename="MAY_AYI_SATIS_2026.pdf"`
-- **Errors:** eyni (`400`, `401`)
+## New Schemas
+- `MonthlySalesReportDto`
+- `MonthlySalesReportSummaryDto`
+- `DailySalesReportDto`
+- `TopProductReportDto`
+- `CategorySalesReportDto`
+- `SaleTypeReportDto`
+- `ProfitLossProductReportDto`
+- `MonthlySalesReportItemDto`
 
 ## Data Filter
 - Satış tarixi: `SoldAt` (UTC)
 - Interval: ayın 1-ci günü 00:00:00 UTC ≤ `SoldAt` < növbəti ayın 1-ci günü 00:00:00 UTC
-- Data yoxdursa boş hesabat faylı qaytarılır (xəta yox)
+- Data yoxdursa `404` yox — sıfırlı summary, ayın bütün günləri üçün `dailySales` (0 dəyərlərlə), boş listlər
+
+## Summary Formulas
+- `GrossProfit = TotalSalesAmount - TotalCostAmount`
+- `NetProfit = TotalSalesAmount - TotalCostAmount - TotalExpenses`
+- `AverageSaleAmount = TotalSalesAmount / SalesCount` (SalesCount > 0)
+- `ProfitMarginPercent = NetProfit / TotalSalesAmount * 100` (TotalSalesAmount > 0)
 
 ## Breaking Changes
-None — yalnız yeni endpointlər əlavə edilib.
+None — yalnız yeni endpoint və schema-lar əlavə edilib. Mövcud export endpointləri dəyişməyib.

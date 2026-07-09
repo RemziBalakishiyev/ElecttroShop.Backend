@@ -1,118 +1,79 @@
 # Backend Change Result
 
 ## Summary
-Satışlar moduluna ay və il üzrə Excel və PDF hesabat export funksionallığı əlavə edildi. Bütün hesablamalar və fayl generasiyası backend-də həyata keçirilir; frontend yalnız API çağırıb faylı download edə bilər.
+Hesabatlar moduluna ay və il üzrə JSON satış hesabatı API əlavə edildi. Admin paneldə ayrıca "Hesabatlar" səhifəsi bu endpoint-dən summary, günlük qrafik datası, top məhsullar, kateqoriya/satış növü breakdown, mənfəət/zərər analizi və son satışları göstərə bilər. Export endpointləri dəyişməyib.
 
 ## Changed Endpoints
 
-### GET /api/sales/export/excel
+### GET /api/reports/sales/monthly
 - **Method:** GET
-- **URL:** `/api/sales/export/excel?year={year}&month={month}`
-- **Auth:** JWT Bearer token (`[Authorize]` — mövcud satışlar səhifəsi ilə eyni)
+- **URL:** `/api/reports/sales/monthly?year={year}&month={month}`
+- **Auth:** JWT Bearer token (`[Authorize]` — mövcud satışlar və dashboard ilə eyni)
 - **Old behavior:** Endpoint mövcud deyildi
-- **New behavior:** Seçilmiş təqvim ayı üzrə satış hesabatını Excel faylı kimi qaytarır
+- **New behavior:** Seçilmiş təqvim ayı üzrə tam satış hesabatını JSON qaytarır
 - **Request body:** yoxdur
 - **Query params:**
   - `year` (required, int) — 2000..2100
   - `month` (required, int) — 1..12
-- **Response body:** binary Excel faylı
-- **Response headers:**
-  - `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
-  - `Content-Disposition: attachment; filename="MAY_AYI_SATIS_2026.xlsx"`
+- **Response body:** `MonthlySalesReportDto`
+  - `year`, `month`, `monthName` (məs. "İYUL")
+  - `startDate`, `endDate`, `generatedAt`
+  - `summary` — `MonthlySalesReportSummaryDto`
+  - `dailySales` — ayın bütün günləri (satış olmayan günlər 0 ilə)
+  - `topProducts` — top 10 məhsul (quantity DESC)
+  - `categorySales` — kateqoriya üzrə group
+  - `saleTypeBreakdown` — satış növü üzrə group
+  - `profitLossProducts` — ən yüksək və ən aşağı netProfit məhsullar (~10)
+  - `recentSales` — son 20 satış (SoldAt DESC)
 - **Validation rules:**
   - `year` — 2000-2100 arası
   - `month` — 1-12 arası
 - **Error responses:**
   - `400` — etibarsız parametr
   - `401` — token yoxdur və ya etibarsızdır
-
-### GET /api/sales/export/pdf
-- **Method:** GET
-- **URL:** `/api/sales/export/pdf?year={year}&month={month}`
-- **Auth:** JWT Bearer token
-- **Old behavior:** Endpoint mövcud deyildi
-- **New behavior:** Seçilmiş təqvim ayı üzrə satış hesabatını PDF faylı kimi qaytarır
-- **Request body:** yoxdur
-- **Query params:** eyni (`year`, `month`)
-- **Response body:** binary PDF faylı
-- **Response headers:**
-  - `Content-Type: application/pdf`
-  - `Content-Disposition: attachment; filename="MAY_AYI_SATIS_2026.pdf"`
-- **Validation rules:** eyni
-- **Error responses:** eyni
+- **Boş ay:** `200 OK`, summary sıfırlar, `dailySales` ayın bütün günləri 0 ilə
 
 ## Changed Models / DTOs
-Yeni internal report DTO-ları (JSON API response deyil, yalnız export generasiyası üçün):
-- `MonthlySalesReportDto`
-- `MonthlySalesReportSummaryDto`
-- `MonthlySalesReportItemDto`
-- `SalesExportFileDto`
+Yeni/ genişləndirilmiş JSON API modelləri:
+- `MonthlySalesReportDto` — dashboard response (genişləndirildi)
+- `MonthlySalesReportSummaryDto` — `averageSaleAmount`, `profitMarginPercent` əlavə
+- `DailySalesReportDto`
+- `TopProductReportDto`
+- `CategorySalesReportDto`
+- `SaleTypeReportDto`
+- `ProfitLossProductReportDto`
+- `MonthlySalesReportItemDto` — `grossProfit`, `netProfit` əlavə
 
-Mövcud `SaleListItemDto` və digər satış API modelləri dəyişməyib.
+Export üçün `Items` sahəsi saxlanılıb; JSON API response-da `items` boş array qaytarılır.
 
 ## Database / Business Rule Changes
 - Migration yoxdur
 - Satış filteri: `SoldAt >= ayın1ciGünüUTC && SoldAt < növbətiAyın1ciGünüUTC`
-- Summary hesablamaları mövcud `GetSalesStatisticsAsync` aggregation ilə eynidir:
-  - `GrossProfit = TotalSalesAmount - TotalCostAmount`
-  - `NetProfit = TotalSalesAmount - TotalCostAmount - TotalExpenses`
-- Item `Profit` = entity `Profit` (xalis mənfəət)
+- Summary hesablamaları mövcud `GetSalesStatisticsAsync` aggregation ilə eynidir
+- Kateqoriyasız məhsullar: `CategoryName = "Kateqoriyasız"`
+- Sale type label: `SaleSourceDisplayHelper` ("Mövcud məhsul", "Manual giriş")
 
 ## Frontend Impact
 
 ### Admin
 **Tələb olunan dəyişikliklər:**
 
-1. **Satışlar səhifəsinə export düymələri əlavə edin** (Excel və PDF)
-   - İstifadəçi ay və il seçir (mövcud filter UI-dan istifadə edə bilərsiniz)
-   - Düymə klikində API çağırılıb fayl browser download edilməlidir
-
-2. **Excel export API çağırışı:**
+1. **Yeni "Hesabatlar" səhifəsi yaradın** (sidebar/menu)
+2. **Ay və il seçici** — `year`, `month` query paramları göndərilməlidir
+3. **API çağırışı:**
    ```
-   GET /api/sales/export/excel?year=2026&month=5
+   GET /api/reports/sales/monthly?year=2026&month=7
    Authorization: Bearer {token}
    ```
-
-3. **PDF export API çağırışı:**
-   ```
-   GET /api/sales/export/pdf?year=2026&month=5
-   Authorization: Bearer {token}
-   ```
-
-4. **Download nümunəsi (TypeScript):**
-   ```typescript
-   async function downloadSalesExport(
-     format: 'excel' | 'pdf',
-     year: number,
-     month: number,
-     token: string
-   ): Promise<void> {
-     const path = format === 'excel' ? 'excel' : 'pdf';
-     const response = await fetch(
-       `/api/sales/export/${path}?year=${year}&month=${month}`,
-       { headers: { Authorization: `Bearer ${token}` } }
-     );
-     if (!response.ok) throw new Error('Export uğursuz oldu');
-
-     const blob = await response.blob();
-     const disposition = response.headers.get('Content-Disposition');
-     const fileNameMatch = disposition?.match(/filename="?([^";\n]+)"?/);
-     const fileName = fileNameMatch?.[1] ?? `SATIS_${year}_${month}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
-
-     const url = URL.createObjectURL(blob);
-     const a = document.createElement('a');
-     a.href = url;
-     a.download = fileName;
-     a.click();
-     URL.revokeObjectURL(url);
-   }
-   ```
-
-5. **Xəta idarəetməsi:**
-   - `400` — "Etibarsız ay və ya il" mesajı
-   - `401` — login səhifəsinə yönləndirmə
-
-6. **Qeyd:** Dashboard `GET /api/dashboard/statistics` cari ay üçün month-to-date göstərir; export isə **tam təqvim ayı** üçündür. UI-da bu fərqi nəzərə alın.
+4. **Response-dan istifadə:**
+   - Summary kartları: `summary.salesCount`, `summary.totalSalesAmount`, `summary.netProfit`, `summary.profitMarginPercent` və s.
+   - Qrafik: `dailySales` array (bütün günlər mövcuddur)
+   - Top məhsullar: `topProducts`
+   - Kateqoriya chart: `categorySales`
+   - Satış növü pie: `saleTypeBreakdown`
+   - Mənfəət/zərər: `profitLossProducts`
+   - Son satışlar cədvəli: `recentSales` (max 20)
+5. **Boş ay:** UI error göstərməsin — sıfırlı data ilə render etsin
 
 ### User
 No frontend change required.
@@ -122,12 +83,12 @@ No frontend change required.
 - contracts/openapi.diff.md updated: yes
 
 ## Test Result
-- Backend build: Application və Persistence uğurlu (0 error). WebApi build IIS Express file lock səbəbindən lokal mühitdə uğursuz ola bilər — VS/IIS Express dayandırıb yenidən build edin.
-- Backend tests: test layihəsi yoxdur
+- Backend build: Application və Persistence uğurlu; WebApi IIS Express file lock səbəbindən copy fail ola bilər (kod compile olunur)
+- Backend tests: unit test layihəsi yoxdur
 - Manual API test:
-  1. Admin token ilə `GET /api/sales/export/excel?year=2026&month=5` — `.xlsx` faylı yüklənməlidir
-  2. `GET /api/sales/export/pdf?year=2026&month=5` — `.pdf` faylı yüklənməlidir
-  3. `month=0` və ya `year=1999` — `400 BadRequest`
-  4. Token olmadan — `401 Unauthorized`
-  5. Data olmayan ay — boş hesabat faylı (200 OK)
-- Known issues: yoxdur
+  1. JWT token ilə `GET /api/reports/sales/monthly?year=2026&month=7`
+  2. Data olan ayda summary rəqəmlərini `GET /api/sales` eyni ay filteri ilə müqayisə et
+  3. Boş ayda `dailySales.length` = ayın gün sayı, summary=0
+  4. `month=13` → 400
+  5. Auth olmadan → 401
+- Known issues: WebApi build zamanı IIS Express/Visual Studio DLL lock ola bilər — serveri dayandırıb yenidən build edin

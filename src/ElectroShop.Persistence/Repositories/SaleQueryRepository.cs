@@ -10,6 +10,8 @@ namespace ElectroShop.Persistence.Repositories;
 
 public class SaleQueryRepository : QueryRepository<Sale>, ISaleQueryRepository
 {
+    private const string UncategorizedCategoryName = "Kateqoriyasız";
+
     public SaleQueryRepository(ElectroShopDbContext context) : base(context)
     {
     }
@@ -115,6 +117,142 @@ public class SaleQueryRepository : QueryRepository<Sale>, ISaleQueryRepository
                 && s.SoldAt >= dateFromUtc
                 && s.SoldAt < dateToUtcExclusive)
             .OrderByDescending(s => s.SoldAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<DailySalesAggregateDto>> GetDailySalesAggregatesAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(s => s.SoldAt >= dateFromUtc && s.SoldAt < dateToUtcExclusive)
+            .GroupBy(s => s.SoldAt.Date)
+            .Select(g => new DailySalesAggregateDto
+            {
+                Date = g.Key,
+                SalesCount = g.Count(),
+                TotalSalesAmount = g.Sum(s => s.TotalSaleAmount),
+                TotalCostAmount = g.Sum(s => s.TotalCost),
+                TotalExpenses = g.Sum(s => s.TotalExpenses)
+            })
+            .OrderBy(d => d.Date)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<TopProductAggregateDto>> GetTopProductsAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(s => s.SoldAt >= dateFromUtc && s.SoldAt < dateToUtcExclusive)
+            .GroupBy(s => new { s.ProductName, Sku = s.ProductCode, s.CategoryName })
+            .Select(g => new TopProductAggregateDto
+            {
+                ProductName = g.Key.ProductName,
+                Sku = g.Key.Sku,
+                CategoryName = g.Key.CategoryName,
+                Quantity = g.Sum(s => s.Quantity),
+                TotalSalesAmount = g.Sum(s => s.TotalSaleAmount),
+                TotalProfit = g.Sum(s => s.Profit)
+            })
+            .OrderByDescending(p => p.Quantity)
+            .ThenByDescending(p => p.TotalSalesAmount)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<CategorySalesAggregateDto>> GetCategorySalesAggregatesAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(s => s.SoldAt >= dateFromUtc && s.SoldAt < dateToUtcExclusive)
+            .GroupBy(s => s.CategoryName ?? UncategorizedCategoryName)
+            .Select(g => new CategorySalesAggregateDto
+            {
+                CategoryName = g.Key,
+                SalesCount = g.Count(),
+                Quantity = g.Sum(s => s.Quantity),
+                TotalSalesAmount = g.Sum(s => s.TotalSaleAmount),
+                TotalProfit = g.Sum(s => s.Profit)
+            })
+            .OrderByDescending(c => c.TotalSalesAmount)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<SaleTypeAggregateDto>> GetSaleTypeAggregatesAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(s => s.SoldAt >= dateFromUtc && s.SoldAt < dateToUtcExclusive)
+            .GroupBy(s => s.SaleSource)
+            .Select(g => new SaleTypeAggregateDto
+            {
+                SaleSource = g.Key,
+                SalesCount = g.Count(),
+                TotalSalesAmount = g.Sum(s => s.TotalSaleAmount),
+                TotalProfit = g.Sum(s => s.Profit)
+            })
+            .OrderByDescending(s => s.TotalSalesAmount)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<ProductProfitAggregateDto>> GetProductProfitAggregatesAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(s => s.SoldAt >= dateFromUtc && s.SoldAt < dateToUtcExclusive)
+            .GroupBy(s => new { s.ProductName, Sku = s.ProductCode })
+            .Select(g => new ProductProfitAggregateDto
+            {
+                ProductName = g.Key.ProductName,
+                Sku = g.Key.Sku,
+                TotalSalesAmount = g.Sum(s => s.TotalSaleAmount),
+                TotalCostAmount = g.Sum(s => s.TotalCost),
+                TotalExpenses = g.Sum(s => s.TotalExpenses),
+                NetProfit = g.Sum(s => s.Profit)
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<RecentSaleAggregateDto>> GetRecentSalesAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(s => s.SoldAt >= dateFromUtc && s.SoldAt < dateToUtcExclusive)
+            .OrderByDescending(s => s.SoldAt)
+            .Take(limit)
+            .Select(s => new RecentSaleAggregateDto
+            {
+                ProductName = s.ProductName,
+                ProductCode = s.ProductCode,
+                CategoryName = s.CategoryName,
+                SaleSource = s.SaleSource,
+                SalePrice = s.SalePrice,
+                Quantity = s.Quantity,
+                TotalCost = s.TotalCost,
+                TotalSaleAmount = s.TotalSaleAmount,
+                TotalExpenses = s.TotalExpenses,
+                Profit = s.Profit,
+                SoldAt = s.SoldAt
+            })
             .ToListAsync(cancellationToken);
     }
 }

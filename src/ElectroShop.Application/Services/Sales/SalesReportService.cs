@@ -32,21 +32,10 @@ public class SalesReportService : ISalesReportService
             Month = month,
             MonthName = SalesMonthHelper.GetDisplayMonthName(month),
             ReportDate = DateTime.UtcNow,
-            Summary = MapSummary(stats),
+            Summary = SalesReportSummaryMapper.MapSummary(stats),
             Items = sales.Select(MapItem).ToList()
         };
     }
-
-    private static MonthlySalesReportSummaryDto MapSummary(SalesStatisticsDto stats) => new()
-    {
-        SalesCount = stats.SalesCount,
-        TotalQuantity = stats.SoldProductQuantity,
-        TotalSalesAmount = stats.TotalSaleAmount,
-        TotalCostAmount = stats.TotalProductCost,
-        TotalExpenses = stats.TotalExpenses,
-        GrossProfit = stats.TotalSaleAmount - stats.TotalProductCost,
-        NetProfit = stats.TotalProfit
-    };
 
     private static MonthlySalesReportItemDto MapItem(Sale sale) => new()
     {
@@ -60,6 +49,8 @@ public class SalesReportService : ISalesReportService
         TotalCostAmount = sale.TotalCost,
         TotalSalesAmount = sale.TotalSaleAmount,
         TotalExpenses = sale.TotalExpenses,
+        GrossProfit = sale.TotalSaleAmount - sale.TotalCost,
+        NetProfit = sale.Profit,
         Profit = sale.Profit,
         SaleDate = sale.SoldAt
     };

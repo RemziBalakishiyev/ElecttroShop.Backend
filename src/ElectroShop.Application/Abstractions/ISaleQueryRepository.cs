@@ -39,6 +39,38 @@ public interface ISaleQueryRepository : IQueryRepository<Sale>
         DateTime dateFromUtc,
         DateTime dateToUtcExclusive,
         CancellationToken cancellationToken = default);
+
+    Task<List<DailySalesAggregateDto>> GetDailySalesAggregatesAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        CancellationToken cancellationToken = default);
+
+    Task<List<TopProductAggregateDto>> GetTopProductsAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        int limit,
+        CancellationToken cancellationToken = default);
+
+    Task<List<CategorySalesAggregateDto>> GetCategorySalesAggregatesAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        CancellationToken cancellationToken = default);
+
+    Task<List<SaleTypeAggregateDto>> GetSaleTypeAggregatesAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        CancellationToken cancellationToken = default);
+
+    Task<List<ProductProfitAggregateDto>> GetProductProfitAggregatesAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        CancellationToken cancellationToken = default);
+
+    Task<List<RecentSaleAggregateDto>> GetRecentSalesAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        int limit,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>

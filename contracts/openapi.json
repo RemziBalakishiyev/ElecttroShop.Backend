@@ -1189,6 +1189,70 @@
         }
       }
     },
+    "/api/reports/sales/monthly": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Seçilmiş ay üzrə satış hesabatını JSON formatında qaytarır (dashboard üçün)",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 2000,
+              "maximum": 2100
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "maximum": 12
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlySalesReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/discounts": {
       "get": {
         "tags": [
@@ -5699,6 +5763,149 @@
             },
             "nullable": true
           }
+        },
+        "additionalProperties": false
+      },
+      "MonthlySalesReportDto": {
+        "type": "object",
+        "properties": {
+          "year": { "type": "integer", "format": "int32" },
+          "month": { "type": "integer", "format": "int32" },
+          "monthName": { "type": "string", "nullable": true },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": "string", "format": "date-time" },
+          "generatedAt": { "type": "string", "format": "date-time" },
+          "reportDate": { "type": "string", "format": "date-time" },
+          "summary": { "$ref": "#/components/schemas/MonthlySalesReportSummaryDto" },
+          "dailySales": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DailySalesReportDto" },
+            "nullable": true
+          },
+          "topProducts": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TopProductReportDto" },
+            "nullable": true
+          },
+          "categorySales": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CategorySalesReportDto" },
+            "nullable": true
+          },
+          "saleTypeBreakdown": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SaleTypeReportDto" },
+            "nullable": true
+          },
+          "profitLossProducts": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ProfitLossProductReportDto" },
+            "nullable": true
+          },
+          "recentSales": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MonthlySalesReportItemDto" },
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MonthlySalesReportItemDto" },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MonthlySalesReportSummaryDto": {
+        "type": "object",
+        "properties": {
+          "salesCount": { "type": "integer", "format": "int32" },
+          "totalQuantity": { "type": "number", "format": "double" },
+          "totalSalesAmount": { "type": "number", "format": "double" },
+          "totalCostAmount": { "type": "number", "format": "double" },
+          "totalExpenses": { "type": "number", "format": "double" },
+          "grossProfit": { "type": "number", "format": "double" },
+          "netProfit": { "type": "number", "format": "double" },
+          "averageSaleAmount": { "type": "number", "format": "double" },
+          "profitMarginPercent": { "type": "number", "format": "double" }
+        },
+        "additionalProperties": false
+      },
+      "DailySalesReportDto": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string", "format": "date-time" },
+          "dayLabel": { "type": "string", "nullable": true },
+          "salesCount": { "type": "integer", "format": "int32" },
+          "totalSalesAmount": { "type": "number", "format": "double" },
+          "totalExpenses": { "type": "number", "format": "double" },
+          "grossProfit": { "type": "number", "format": "double" },
+          "netProfit": { "type": "number", "format": "double" }
+        },
+        "additionalProperties": false
+      },
+      "TopProductReportDto": {
+        "type": "object",
+        "properties": {
+          "productName": { "type": "string", "nullable": true },
+          "sku": { "type": "string", "nullable": true },
+          "categoryName": { "type": "string", "nullable": true },
+          "quantity": { "type": "number", "format": "double" },
+          "totalSalesAmount": { "type": "number", "format": "double" },
+          "totalProfit": { "type": "number", "format": "double" }
+        },
+        "additionalProperties": false
+      },
+      "CategorySalesReportDto": {
+        "type": "object",
+        "properties": {
+          "categoryName": { "type": "string", "nullable": true },
+          "salesCount": { "type": "integer", "format": "int32" },
+          "quantity": { "type": "number", "format": "double" },
+          "totalSalesAmount": { "type": "number", "format": "double" },
+          "totalProfit": { "type": "number", "format": "double" }
+        },
+        "additionalProperties": false
+      },
+      "SaleTypeReportDto": {
+        "type": "object",
+        "properties": {
+          "saleType": { "type": "string", "nullable": true },
+          "salesCount": { "type": "integer", "format": "int32" },
+          "totalSalesAmount": { "type": "number", "format": "double" },
+          "totalProfit": { "type": "number", "format": "double" }
+        },
+        "additionalProperties": false
+      },
+      "ProfitLossProductReportDto": {
+        "type": "object",
+        "properties": {
+          "productName": { "type": "string", "nullable": true },
+          "sku": { "type": "string", "nullable": true },
+          "totalSalesAmount": { "type": "number", "format": "double" },
+          "totalCostAmount": { "type": "number", "format": "double" },
+          "totalExpenses": { "type": "number", "format": "double" },
+          "netProfit": { "type": "number", "format": "double" },
+          "profitMarginPercent": { "type": "number", "format": "double" }
+        },
+        "additionalProperties": false
+      },
+      "MonthlySalesReportItemDto": {
+        "type": "object",
+        "properties": {
+          "productName": { "type": "string", "nullable": true },
+          "productCode": { "type": "string", "nullable": true },
+          "sku": { "type": "string", "nullable": true },
+          "categoryName": { "type": "string", "nullable": true },
+          "saleType": { "type": "string", "nullable": true },
+          "salePrice": { "type": "number", "format": "double" },
+          "quantity": { "type": "number", "format": "double" },
+          "totalCostAmount": { "type": "number", "format": "double" },
+          "totalSalesAmount": { "type": "number", "format": "double" },
+          "totalExpenses": { "type": "number", "format": "double" },
+          "grossProfit": { "type": "number", "format": "double" },
+          "netProfit": { "type": "number", "format": "double" },
+          "profit": { "type": "number", "format": "double" },
+          "saleDate": { "type": "string", "format": "date-time" }
         },
         "additionalProperties": false
       },
