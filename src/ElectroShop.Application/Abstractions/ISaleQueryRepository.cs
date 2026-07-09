@@ -31,6 +31,14 @@ public interface ISaleQueryRepository : IQueryRepository<Sale>
         DateTime dateFromUtc,
         DateTime dateToUtcExclusive,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Verilmiş tarix intervalı üzrə satış siyahısı (SoldAt əsasında, UTC, end exclusive)
+    /// </summary>
+    Task<List<Sale>> GetSalesBySoldAtRangeAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>

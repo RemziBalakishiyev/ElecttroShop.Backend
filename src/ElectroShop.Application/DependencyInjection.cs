@@ -47,6 +47,9 @@ public static class DependencyInjection
         services.AddScoped<Abstractions.IProductAttributeSchemaResolver, Services.ProductAttributeSchemaResolver>();
         services.AddScoped<Abstractions.IProductVariantAttributeValidator, Services.ProductVariantAttributeValidator>();
 
+        services.AddScoped<Services.Sales.ISalesReportService, Services.Sales.SalesReportService>();
+        services.AddScoped<Services.Sales.ISalesExportService, Services.Sales.SalesExportService>();
+
         return services;
     }
 

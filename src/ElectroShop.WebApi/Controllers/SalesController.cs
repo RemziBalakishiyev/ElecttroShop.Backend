@@ -3,6 +3,8 @@ using ElectroShop.Application.DTOs;
 using ElectroShop.Application.Features.Sales.Commands.CreateSale;
 using ElectroShop.Application.Features.Sales.Commands.DeleteSale;
 using ElectroShop.Application.Features.Sales.Commands.UpdateSale;
+using ElectroShop.Application.Features.Sales.Queries.ExportMonthlySalesExcel;
+using ElectroShop.Application.Features.Sales.Queries.ExportMonthlySalesPdf;
 using ElectroShop.Application.Features.Sales.Queries.GetSaleById;
 using ElectroShop.Application.Features.Sales.Queries.GetSales;
 using Microsoft.AspNetCore.Authorization;
@@ -30,6 +32,46 @@ public class SalesController : BaseApiController
     {
         var result = await Mediator.Send(query, cancellationToken);
         return HandlePagedResult(result);
+    }
+
+    /// <summary>
+    /// Seçilmiş ay üzrə satış hesabatını Excel formatında export edir
+    /// </summary>
+    [HttpGet("export/excel")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ExportExcel(
+        [FromQuery] int year,
+        [FromQuery] int month,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(new ExportMonthlySalesExcelQuery(year, month), cancellationToken);
+        if (!result.IsSuccess)
+            return HandleResult(result);
+
+        var file = result.Value!;
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
+    /// <summary>
+    /// Seçilmiş ay üzrə satış hesabatını PDF formatında export edir
+    /// </summary>
+    [HttpGet("export/pdf")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ExportPdf(
+        [FromQuery] int year,
+        [FromQuery] int month,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(new ExportMonthlySalesPdfQuery(year, month), cancellationToken);
+        if (!result.IsSuccess)
+            return HandleResult(result);
+
+        var file = result.Value!;
+        return File(file.Content, file.ContentType, file.FileName);
     }
 
     /// <summary>

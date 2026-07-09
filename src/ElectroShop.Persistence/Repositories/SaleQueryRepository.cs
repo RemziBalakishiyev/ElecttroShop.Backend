@@ -103,4 +103,18 @@ public class SaleQueryRepository : QueryRepository<Sale>, ISaleQueryRepository
 
         return stats ?? new SalesStatisticsDto();
     }
+
+    public async Task<List<Sale>> GetSalesBySoldAtRangeAsync(
+        DateTime dateFromUtc,
+        DateTime dateToUtcExclusive,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(s => !s.IsDeleted
+                && s.SoldAt >= dateFromUtc
+                && s.SoldAt < dateToUtcExclusive)
+            .OrderByDescending(s => s.SoldAt)
+            .ToListAsync(cancellationToken);
+    }
 }

@@ -1,31 +1,39 @@
-# OpenAPI Diff — Product Image Delete
+# OpenAPI Diff — Sales Monthly Export
 
 ## Date
 2026-07-09
 
 ## Summary
-Məhsul şəkli silmə endpoint-i sənədləşdirildi və Cloudinary fallback silmə davranışı təkmilləşdirildi.
+Satışlar moduluna ay/il üzrə Excel və PDF export endpointləri əlavə edildi.
 
-## Changed Endpoints
+## New Endpoints
 
-### DELETE /api/Products/{productId}/images/{imageId}
-- **Summary:** Məhsuldan şəkil silir (bazadan və Cloudinary-dən)
-- **Auth:** JWT Bearer token (Admin panel)
-- **Path params:**
-  - `productId` (uuid, required) — məhsul ID
-  - `imageId` (uuid, required) — silinəcək şəklin `imageId` dəyəri (`ProductImageDto.imageId`)
-- **Request body:** yoxdur
-- **Success:** `200 OK` (boş body)
+### GET /api/sales/export/excel
+- **Summary:** Seçilmiş ay üzrə satış hesabatını Excel formatında export edir
+- **Auth:** JWT Bearer token (mövcud `/api/sales` ilə eyni — `[Authorize]`)
+- **Query params:**
+  - `year` (int, required) — 2000..2100
+  - `month` (int, required) — 1..12
+- **Success:** `200 OK`
+  - Content-Type: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+  - Content-Disposition: `attachment; filename="MAY_AYI_SATIS_2026.xlsx"` (ay adı ASCII safe)
 - **Errors:**
-  - `404` — məhsul və ya şəkil tapılmadı (`Product.NotFound`, `ProductImage.NotFound`)
+  - `400` — etibarsız `year` və ya `month`
   - `401` — autentifikasiya tələb olunur
 
-## Backend Behavior
-1. Məhsul və şəkil DB-dən yoxlanılır
-2. Cloudinary-də silinir (`PublicId` varsa; yoxdursa `smartal/products/{imageId}` fallback)
-3. Köhnə local fayl varsa diskdən silinir
-4. `ProductImages` cədvəlindən sətir silinir
-5. Silinən şəkil primary idisə, qalan şəkillərdən birincisi avtomatik primary olur
+### GET /api/sales/export/pdf
+- **Summary:** Seçilmiş ay üzrə satış hesabatını PDF formatında export edir
+- **Auth:** JWT Bearer token
+- **Query params:** eyni (`year`, `month`)
+- **Success:** `200 OK`
+  - Content-Type: `application/pdf`
+  - Content-Disposition: `attachment; filename="MAY_AYI_SATIS_2026.pdf"`
+- **Errors:** eyni (`400`, `401`)
+
+## Data Filter
+- Satış tarixi: `SoldAt` (UTC)
+- Interval: ayın 1-ci günü 00:00:00 UTC ≤ `SoldAt` < növbəti ayın 1-ci günü 00:00:00 UTC
+- Data yoxdursa boş hesabat faylı qaytarılır (xəta yox)
 
 ## Breaking Changes
-None — endpoint əvvəldən mövcud idi, davranış geriyə uyğundur.
+None — yalnız yeni endpointlər əlavə edilib.
