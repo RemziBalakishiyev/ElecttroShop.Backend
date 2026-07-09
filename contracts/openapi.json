@@ -2837,6 +2837,7 @@
         "tags": [
           "Products"
         ],
+        "summary": "Məhsuldan şəkil silir (bazadan və Cloudinary-dən)",
         "parameters": [
           {
             "name": "productId",
@@ -2859,7 +2860,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Şəkil uğurla silindi"
+          },
+          "404": {
+            "description": "Məhsul və ya şəkil tapılmadı"
+          },
+          "401": {
+            "description": "Autentifikasiya tələb olunur"
           }
         }
       }

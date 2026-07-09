@@ -192,9 +192,20 @@ public class Product : AggregateRoot
     public void RemoveImage(Guid imageId)
     {
         var image = ProductImages.FirstOrDefault(img => img.ImageId == imageId);
-        if (image != null)
+        if (image is null)
+            return;
+
+        var wasPrimary = image.IsPrimary;
+        ProductImages.Remove(image);
+
+        if (wasPrimary && ProductImages.Count > 0)
         {
-            ProductImages.Remove(image);
+            var nextPrimary = ProductImages
+                .OrderBy(x => x.DisplayOrder)
+                .ThenBy(x => x.ImageId)
+                .First();
+
+            SetPrimaryImage(nextPrimary.ImageId);
         }
     }
 

@@ -21,7 +21,12 @@ public class CloudinaryUrlBuilder : ICloudinaryUrlBuilder
 
     public string BuildSecureUrlFromImageId(Guid imageId)
     {
+        return BuildSecureUrl(BuildPublicIdFromImageId(imageId));
+    }
+
+    public string BuildPublicIdFromImageId(Guid imageId)
+    {
         var folder = _settings.Folder.Trim().Trim('/');
-        return BuildSecureUrl($"{folder}/{imageId}");
+        return $"{folder}/{imageId}";
     }
 }

@@ -48,6 +48,13 @@ public static class DomainErrors
             "Məhsul stokda yoxdur.");
     }
 
+    public static class ProductImage
+    {
+        public static Error NotFound(Guid productId, Guid imageId) => Error.NotFound(
+            "ProductImage.NotFound",
+            $"ID-si {productId} olan məhsulda {imageId} şəkli tapılmadı.");
+    }
+
     public static class ProductVariant
     {
         public static Error AttributeAlreadyExists(string type) => Error.Conflict(

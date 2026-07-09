@@ -14,6 +14,7 @@ public class RemoveProductImageCommandHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly IImageStorageService _imageStorageService;
     private readonly IImageStorage _imageStorage;
+    private readonly ICloudinaryUrlBuilder _cloudinaryUrlBuilder;
     private readonly ILogger<RemoveProductImageCommandHandler> _logger;
 
     public RemoveProductImageCommandHandler(
@@ -21,12 +22,14 @@ public class RemoveProductImageCommandHandler
         IUnitOfWork unitOfWork,
         IImageStorageService imageStorageService,
         IImageStorage imageStorage,
+        ICloudinaryUrlBuilder cloudinaryUrlBuilder,
         ILogger<RemoveProductImageCommandHandler> logger)
     {
         _productQueryRepository = productQueryRepository;
         _unitOfWork = unitOfWork;
         _imageStorageService = imageStorageService;
         _imageStorage = imageStorage;
+        _cloudinaryUrlBuilder = cloudinaryUrlBuilder;
         _logger = logger;
     }
 
@@ -50,7 +53,7 @@ public class RemoveProductImageCommandHandler
 
         if (imageToRemove is null)
         {
-            return Result.Failure(DomainErrors.Product.NotFound(request.ProductId));
+            return Result.Failure(DomainErrors.ProductImage.NotFound(request.ProductId, request.ImageId));
         }
 
         await DeleteStoredImageAsync(imageToRemove, cancellationToken);
@@ -60,23 +63,30 @@ public class RemoveProductImageCommandHandler
         await _unitOfWork.PrepareProductAggregateForSaveAsync(product.Id, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        _logger.LogInformation(
+            "Product image removed. ProductId: {ProductId}, ImageId: {ImageId}",
+            request.ProductId,
+            request.ImageId);
+
         return Result.Success();
     }
 
     private async Task DeleteStoredImageAsync(ProductImage image, CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(image.PublicId))
+        var publicId = ResolveCloudinaryPublicId(image);
+
+        if (!string.IsNullOrWhiteSpace(publicId))
         {
             try
             {
-                await _imageStorageService.DeleteAsync(image.PublicId, cancellationToken);
+                await _imageStorageService.DeleteAsync(publicId, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(
                     ex,
                     "Cloudinary delete failed for PublicId: {PublicId}, ImageId: {ImageId}",
-                    image.PublicId,
+                    publicId,
                     image.ImageId);
             }
 
@@ -94,5 +104,25 @@ public class RemoveProductImageCommandHandler
                 "Local image delete failed for ImageId: {ImageId}",
                 image.ImageId);
         }
+    }
+
+    private string? ResolveCloudinaryPublicId(ProductImage image)
+    {
+        if (!string.IsNullOrWhiteSpace(image.PublicId))
+            return image.PublicId;
+
+        if (IsCloudinaryImage(image))
+            return _cloudinaryUrlBuilder.BuildPublicIdFromImageId(image.ImageId);
+
+        return null;
+    }
+
+    private static bool IsCloudinaryImage(ProductImage image)
+    {
+        if (string.Equals(image.StorageProvider, "Cloudinary", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return !string.IsNullOrWhiteSpace(image.ImageUrl) &&
+               image.ImageUrl.Contains("res.cloudinary.com", StringComparison.OrdinalIgnoreCase);
     }
 }
