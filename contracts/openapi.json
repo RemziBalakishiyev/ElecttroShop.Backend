@@ -1,4 +1,4 @@
-﻿{
+{
   "openapi": "3.0.1",
   "info": {
     "title": "ElectroShop API",
@@ -6,6 +6,75 @@
     "version": "v1"
   },
   "paths": {
+    "/api/admin/backfill-cloudinary-images": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackfillCloudinaryImagesResultDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackfillCloudinaryImagesResultDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackfillCloudinaryImagesResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/debug/uploads": {
       "get": {
         "tags": [
@@ -196,7 +265,17 @@
           "200": {
             "description": "OK",
             "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppLogDtoPagedResult"
+                }
+              },
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppLogDtoPagedResult"
+                }
+              },
+              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AppLogDtoPagedResult"
                 }
@@ -204,10 +283,44 @@
             }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -496,10 +609,8 @@
             "name": "IncludeAll",
             "in": "query",
             "schema": {
-              "type": "boolean",
-              "default": true
-            },
-            "description": "false olduqda yalnız root kateqoriyalar; default: bütün aktiv kateqoriyalar"
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -887,8 +998,7 @@
             "schema": {
               "type": "boolean",
               "default": true
-            },
-            "description": "false olduqda yalnız root kateqoriyalar; default: bütün aktiv kateqoriyalar"
+            }
           },
           {
             "name": "parentId",
@@ -902,6 +1012,695 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/credit-sales": {
+      "get": {
+        "tags": [
+          "CreditSales"
+        ],
+        "parameters": [
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Status",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "ProductSourceType",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/CreditSaleProductSource"
+            }
+          },
+          {
+            "name": "FromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "ToDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "DueFromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "DueToDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleListItemDtoPagedResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleListItemDtoPagedResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleListItemDtoPagedResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CreditSales"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCreditSaleCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCreditSaleCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCreditSaleCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleDetailDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleDetailDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/credit-sales/summary": {
+      "get": {
+        "tags": [
+          "CreditSales"
+        ],
+        "parameters": [
+          {
+            "name": "Month",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Year",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "FromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "ToDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleSummaryDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleSummaryDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleSummaryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/credit-sales/{id}": {
+      "get": {
+        "tags": [
+          "CreditSales"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleDetailDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleDetailDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleDetailDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "CreditSales"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCreditSaleCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCreditSaleCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCreditSaleCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleDetailDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleDetailDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/credit-sales/{id}/mark-as-sold": {
+      "post": {
+        "tags": [
+          "CreditSales"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkCreditSaleAsSoldCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkCreditSaleAsSoldCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkCreditSaleAsSoldCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleDetailDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleDetailDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditSaleDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/credit-sales/{id}/cancel": {
+      "post": {
+        "tags": [
+          "CreditSales"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -1144,7 +1943,6 @@
         "tags": [
           "Dashboard"
         ],
-        "summary": "Admin dashboard satış və məhsul statistikalarını əldə edir",
         "responses": {
           "200": {
             "description": "OK",
@@ -1180,70 +1978,6 @@
                 }
               },
               "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/reports/sales/monthly": {
-      "get": {
-        "tags": [
-          "Reports"
-        ],
-        "summary": "Seçilmiş ay üzrə satış hesabatını JSON formatında qaytarır (dashboard üçün)",
-        "parameters": [
-          {
-            "name": "year",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 2000,
-              "maximum": 2100
-            }
-          },
-          {
-            "name": "month",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 1,
-              "maximum": 12
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MonthlySalesReportDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -1736,26 +2470,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         }
       }
@@ -1779,26 +2493,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         }
       }
@@ -1830,44 +2524,10 @@
             "description": "OK"
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
+            "description": "Bad Request"
           },
           "401": {
-            "description": "Unauthorized",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
+            "description": "Unauthorized"
           }
         }
       }
@@ -2901,7 +3561,6 @@
         "tags": [
           "Products"
         ],
-        "summary": "Məhsuldan şəkil silir (bazadan və Cloudinary-dən)",
         "parameters": [
           {
             "name": "productId",
@@ -2924,13 +3583,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Şəkil uğurla silindi"
-          },
-          "404": {
-            "description": "Məhsul və ya şəkil tapılmadı"
-          },
-          "401": {
-            "description": "Autentifikasiya tələb olunur"
+            "description": "OK"
           }
         }
       }
@@ -3086,6 +3739,93 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/reports/sales/monthly": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlySalesReportDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlySalesReportDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlySalesReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -3326,36 +4066,41 @@
         "tags": [
           "Sales"
         ],
-        "summary": "Seçilmiş ay üzrə satış hesabatını Excel formatında export edir",
         "parameters": [
           {
             "name": "year",
             "in": "query",
-            "required": true,
             "schema": {
               "type": "integer",
-              "format": "int32",
-              "minimum": 2000,
-              "maximum": 2100
+              "format": "int32"
             }
           },
           {
             "name": "month",
             "in": "query",
-            "required": true,
             "schema": {
               "type": "integer",
-              "format": "int32",
-              "minimum": 1,
-              "maximum": 12
+              "format": "int32"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Excel faylı",
+            "description": "OK",
             "content": {
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/json": {
                 "schema": {
                   "type": "string",
                   "format": "binary"
@@ -3366,7 +4111,17 @@
           "400": {
             "description": "Bad Request",
             "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -3376,7 +4131,17 @@
           "401": {
             "description": "Unauthorized",
             "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -3391,36 +4156,41 @@
         "tags": [
           "Sales"
         ],
-        "summary": "Seçilmiş ay üzrə satış hesabatını PDF formatında export edir",
         "parameters": [
           {
             "name": "year",
             "in": "query",
-            "required": true,
             "schema": {
               "type": "integer",
-              "format": "int32",
-              "minimum": 2000,
-              "maximum": 2100
+              "format": "int32"
             }
           },
           {
             "name": "month",
             "in": "query",
-            "required": true,
             "schema": {
               "type": "integer",
-              "format": "int32",
-              "minimum": 1,
-              "maximum": 12
+              "format": "int32"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "PDF faylı",
+            "description": "OK",
             "content": {
-              "application/pdf": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/json": {
                 "schema": {
                   "type": "string",
                   "format": "binary"
@@ -3431,7 +4201,17 @@
           "400": {
             "description": "Bad Request",
             "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -3441,7 +4221,17 @@
           "401": {
             "description": "Unauthorized",
             "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -3828,10 +4618,12 @@
             "format": "date-time"
           },
           "level": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "exception": {
             "type": "string",
@@ -3956,6 +4748,75 @@
         },
         "additionalProperties": false
       },
+      "BackfillCloudinaryImageItemDto": {
+        "type": "object",
+        "properties": {
+          "productImageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "imageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BackfillCloudinaryImagesResultDto": {
+        "type": "object",
+        "properties": {
+          "totalCandidates": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "migratedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skippedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "migrated": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackfillCloudinaryImageItemDto"
+            },
+            "nullable": true
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackfillCloudinaryImageItemDto"
+            },
+            "nullable": true
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackfillCloudinaryImageItemDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CategorySalesChartDataDto": {
         "type": "object",
         "properties": {
@@ -3982,6 +4843,32 @@
           "productCount": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CategorySalesReportDto": {
+        "type": "object",
+        "properties": {
+          "categoryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalSalesAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalProfit": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -4110,6 +4997,67 @@
             "nullable": true
           },
           "slug": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateCreditSaleCommand": {
+        "type": "object",
+        "properties": {
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "productSourceType": {
+            "$ref": "#/components/schemas/CreditSaleProductSource"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "productName": {
+            "type": "string",
+            "nullable": true
+          },
+          "sku": {
+            "type": "string",
+            "nullable": true
+          },
+          "costPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "salePrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleExpenseRequestDto"
+            },
+            "nullable": true
+          },
+          "creditDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
             "type": "string",
             "nullable": true
           }
@@ -4323,6 +5271,408 @@
         },
         "additionalProperties": false
       },
+      "CreditSaleDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "productName": {
+            "type": "string",
+            "nullable": true
+          },
+          "sku": {
+            "type": "string",
+            "nullable": true
+          },
+          "productSourceType": {
+            "$ref": "#/components/schemas/CreditSaleProductSource"
+          },
+          "productSourceTypeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "costPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "salePrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCostAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalSaleAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalExpenses": {
+            "type": "number",
+            "format": "double"
+          },
+          "grossProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "netProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "creditDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "debtDurationDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CreditSaleStatus"
+          },
+          "statusName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isOverdue": {
+            "type": "boolean"
+          },
+          "daysLeft": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "convertedSaleId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "convertedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "categoryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "expenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleExpenseDto"
+            },
+            "nullable": true
+          },
+          "convertedSaleSoldAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "convertedSaleTotalAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreditSaleListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "productName": {
+            "type": "string",
+            "nullable": true
+          },
+          "sku": {
+            "type": "string",
+            "nullable": true
+          },
+          "productSourceType": {
+            "$ref": "#/components/schemas/CreditSaleProductSource"
+          },
+          "productSourceTypeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "costPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "salePrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCostAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalSaleAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalExpenses": {
+            "type": "number",
+            "format": "double"
+          },
+          "grossProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "netProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "creditDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "debtDurationDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CreditSaleStatus"
+          },
+          "statusName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isOverdue": {
+            "type": "boolean"
+          },
+          "daysLeft": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "convertedSaleId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "convertedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreditSaleListItemDtoPagedResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "isFailure": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/Error"
+          },
+          "value": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreditSaleListItemDto"
+            },
+            "nullable": true,
+            "readOnly": true
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreditSaleProductSource": {
+        "enum": [
+          "Manual",
+          "SystemProduct"
+        ],
+        "type": "string"
+      },
+      "CreditSaleStatus": {
+        "enum": [
+          "Pending",
+          "Sold",
+          "Cancelled"
+        ],
+        "type": "string"
+      },
+      "CreditSaleSummaryDto": {
+        "type": "object",
+        "properties": {
+          "pendingCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "overdueCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "soldCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cancelledCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalDebtAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPendingDebtAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalOverdueDebtAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalSoldAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalExpectedProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalNetProfit": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DailySalesReportDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dayLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalSalesAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalExpenses": {
+            "type": "number",
+            "format": "double"
+          },
+          "grossProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "netProfit": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "DashboardDto": {
         "type": "object",
         "properties": {
@@ -4415,62 +5765,6 @@
           },
           "productSummary": {
             "$ref": "#/components/schemas/ProductSummaryStatisticsResponse"
-          }
-        },
-        "additionalProperties": false
-      },
-      "SalesStatisticsResponse": {
-        "type": "object",
-        "properties": {
-          "totalSaleAmount": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalProductCost": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalExpenses": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalProfit": {
-            "type": "number",
-            "format": "double"
-          },
-          "soldProductQuantity": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "salesCount": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
-      "ProductSummaryStatisticsResponse": {
-        "type": "object",
-        "properties": {
-          "totalProductCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalProductCostValue": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalProductSaleValue": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalInventoryCostValue": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalInventorySaleValue": {
-            "type": "number",
-            "format": "double"
           }
         },
         "additionalProperties": false
@@ -4665,6 +5959,16 @@
         ],
         "type": "string"
       },
+      "ExpenseType": {
+        "enum": [
+          "Installation",
+          "Delivery",
+          "Service",
+          "Commission",
+          "Other"
+        ],
+        "type": "string"
+      },
       "ImageDebugResponse": {
         "type": "object",
         "properties": {
@@ -4683,6 +5987,22 @@
           "productId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "publicId": {
+            "type": "string",
+            "nullable": true
+          },
+          "imagePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "storageProvider": {
+            "type": "string",
             "nullable": true
           },
           "storedPath": {
@@ -4779,6 +6099,216 @@
           "password": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MarkCreditSaleAsSoldCommand": {
+        "type": "object",
+        "properties": {
+          "paymentDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "soldDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MonthlySalesReportDto": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "month": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "monthName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reportDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/MonthlySalesReportSummaryDto"
+          },
+          "dailySales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailySalesReportDto"
+            },
+            "nullable": true
+          },
+          "topProducts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopProductReportDto"
+            },
+            "nullable": true
+          },
+          "categorySales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategorySalesReportDto"
+            },
+            "nullable": true
+          },
+          "saleTypeBreakdown": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleTypeReportDto"
+            },
+            "nullable": true
+          },
+          "profitLossProducts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfitLossProductReportDto"
+            },
+            "nullable": true
+          },
+          "recentSales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonthlySalesReportItemDto"
+            },
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonthlySalesReportItemDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MonthlySalesReportItemDto": {
+        "type": "object",
+        "properties": {
+          "productName": {
+            "type": "string",
+            "nullable": true
+          },
+          "productCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "sku": {
+            "type": "string",
+            "nullable": true
+          },
+          "categoryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "saleType": {
+            "type": "string",
+            "nullable": true
+          },
+          "salePrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCostAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalSalesAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalExpenses": {
+            "type": "number",
+            "format": "double"
+          },
+          "grossProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "netProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "profit": {
+            "type": "number",
+            "format": "double"
+          },
+          "saleDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MonthlySalesReportSummaryDto": {
+        "type": "object",
+        "properties": {
+          "salesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalQuantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalSalesAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCostAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalExpenses": {
+            "type": "number",
+            "format": "double"
+          },
+          "grossProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "netProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageSaleAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "profitMarginPercent": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -4968,6 +6498,32 @@
         },
         "additionalProperties": false
       },
+      "ProductSummaryStatisticsResponse": {
+        "type": "object",
+        "properties": {
+          "totalProductCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalProductCostValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalProductSaleValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalInventoryCostValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalInventorySaleValue": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "ProductVariantRequestDto": {
         "type": "object",
         "properties": {
@@ -4990,6 +6546,40 @@
           },
           "isActive": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProfitLossProductReportDto": {
+        "type": "object",
+        "properties": {
+          "productName": {
+            "type": "string",
+            "nullable": true
+          },
+          "sku": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalSalesAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCostAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalExpenses": {
+            "type": "number",
+            "format": "double"
+          },
+          "netProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "profitMarginPercent": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -5139,6 +6729,48 @@
         },
         "additionalProperties": false
       },
+      "SaleExpenseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expenseType": {
+            "$ref": "#/components/schemas/ExpenseType"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SaleExpenseRequestDto": {
+        "type": "object",
+        "properties": {
+          "expenseType": {
+            "$ref": "#/components/schemas/ExpenseType"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "SaleListItemDto": {
         "type": "object",
         "properties": {
@@ -5274,54 +6906,54 @@
         ],
         "type": "string"
       },
-      "ExpenseType": {
-        "enum": [
-          "Installation",
-          "Delivery",
-          "Service",
-          "Commission",
-          "Other"
-        ],
-        "type": "string"
-      },
-      "SaleExpenseRequestDto": {
+      "SaleTypeReportDto": {
         "type": "object",
         "properties": {
-          "expenseType": {
-            "$ref": "#/components/schemas/ExpenseType"
-          },
-          "description": {
+          "saleType": {
             "type": "string",
             "nullable": true
           },
-          "amount": {
+          "salesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalSalesAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalProfit": {
             "type": "number",
             "format": "double"
           }
         },
         "additionalProperties": false
       },
-      "SaleExpenseDto": {
+      "SalesStatisticsResponse": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "expenseType": {
-            "$ref": "#/components/schemas/ExpenseType"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "amount": {
+          "totalSaleAmount": {
             "type": "number",
             "format": "double"
           },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
+          "totalProductCost": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalExpenses": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalProfit": {
+            "type": "number",
+            "format": "double"
+          },
+          "soldProductQuantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "salesCount": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -5391,6 +7023,36 @@
           "orderCount": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TopProductReportDto": {
+        "type": "object",
+        "properties": {
+          "productName": {
+            "type": "string",
+            "nullable": true
+          },
+          "sku": {
+            "type": "string",
+            "nullable": true
+          },
+          "categoryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalSalesAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalProfit": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -5492,6 +7154,55 @@
           "slug": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateCreditSaleCommand": {
+        "type": "object",
+        "properties": {
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "costPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "salePrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleExpenseRequestDto"
+            },
+            "nullable": true
+          },
+          "creditDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "additionalProperties": false
@@ -5763,149 +7474,6 @@
             },
             "nullable": true
           }
-        },
-        "additionalProperties": false
-      },
-      "MonthlySalesReportDto": {
-        "type": "object",
-        "properties": {
-          "year": { "type": "integer", "format": "int32" },
-          "month": { "type": "integer", "format": "int32" },
-          "monthName": { "type": "string", "nullable": true },
-          "startDate": { "type": "string", "format": "date-time" },
-          "endDate": { "type": "string", "format": "date-time" },
-          "generatedAt": { "type": "string", "format": "date-time" },
-          "reportDate": { "type": "string", "format": "date-time" },
-          "summary": { "$ref": "#/components/schemas/MonthlySalesReportSummaryDto" },
-          "dailySales": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/DailySalesReportDto" },
-            "nullable": true
-          },
-          "topProducts": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/TopProductReportDto" },
-            "nullable": true
-          },
-          "categorySales": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/CategorySalesReportDto" },
-            "nullable": true
-          },
-          "saleTypeBreakdown": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/SaleTypeReportDto" },
-            "nullable": true
-          },
-          "profitLossProducts": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/ProfitLossProductReportDto" },
-            "nullable": true
-          },
-          "recentSales": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/MonthlySalesReportItemDto" },
-            "nullable": true
-          },
-          "items": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/MonthlySalesReportItemDto" },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "MonthlySalesReportSummaryDto": {
-        "type": "object",
-        "properties": {
-          "salesCount": { "type": "integer", "format": "int32" },
-          "totalQuantity": { "type": "number", "format": "double" },
-          "totalSalesAmount": { "type": "number", "format": "double" },
-          "totalCostAmount": { "type": "number", "format": "double" },
-          "totalExpenses": { "type": "number", "format": "double" },
-          "grossProfit": { "type": "number", "format": "double" },
-          "netProfit": { "type": "number", "format": "double" },
-          "averageSaleAmount": { "type": "number", "format": "double" },
-          "profitMarginPercent": { "type": "number", "format": "double" }
-        },
-        "additionalProperties": false
-      },
-      "DailySalesReportDto": {
-        "type": "object",
-        "properties": {
-          "date": { "type": "string", "format": "date-time" },
-          "dayLabel": { "type": "string", "nullable": true },
-          "salesCount": { "type": "integer", "format": "int32" },
-          "totalSalesAmount": { "type": "number", "format": "double" },
-          "totalExpenses": { "type": "number", "format": "double" },
-          "grossProfit": { "type": "number", "format": "double" },
-          "netProfit": { "type": "number", "format": "double" }
-        },
-        "additionalProperties": false
-      },
-      "TopProductReportDto": {
-        "type": "object",
-        "properties": {
-          "productName": { "type": "string", "nullable": true },
-          "sku": { "type": "string", "nullable": true },
-          "categoryName": { "type": "string", "nullable": true },
-          "quantity": { "type": "number", "format": "double" },
-          "totalSalesAmount": { "type": "number", "format": "double" },
-          "totalProfit": { "type": "number", "format": "double" }
-        },
-        "additionalProperties": false
-      },
-      "CategorySalesReportDto": {
-        "type": "object",
-        "properties": {
-          "categoryName": { "type": "string", "nullable": true },
-          "salesCount": { "type": "integer", "format": "int32" },
-          "quantity": { "type": "number", "format": "double" },
-          "totalSalesAmount": { "type": "number", "format": "double" },
-          "totalProfit": { "type": "number", "format": "double" }
-        },
-        "additionalProperties": false
-      },
-      "SaleTypeReportDto": {
-        "type": "object",
-        "properties": {
-          "saleType": { "type": "string", "nullable": true },
-          "salesCount": { "type": "integer", "format": "int32" },
-          "totalSalesAmount": { "type": "number", "format": "double" },
-          "totalProfit": { "type": "number", "format": "double" }
-        },
-        "additionalProperties": false
-      },
-      "ProfitLossProductReportDto": {
-        "type": "object",
-        "properties": {
-          "productName": { "type": "string", "nullable": true },
-          "sku": { "type": "string", "nullable": true },
-          "totalSalesAmount": { "type": "number", "format": "double" },
-          "totalCostAmount": { "type": "number", "format": "double" },
-          "totalExpenses": { "type": "number", "format": "double" },
-          "netProfit": { "type": "number", "format": "double" },
-          "profitMarginPercent": { "type": "number", "format": "double" }
-        },
-        "additionalProperties": false
-      },
-      "MonthlySalesReportItemDto": {
-        "type": "object",
-        "properties": {
-          "productName": { "type": "string", "nullable": true },
-          "productCode": { "type": "string", "nullable": true },
-          "sku": { "type": "string", "nullable": true },
-          "categoryName": { "type": "string", "nullable": true },
-          "saleType": { "type": "string", "nullable": true },
-          "salePrice": { "type": "number", "format": "double" },
-          "quantity": { "type": "number", "format": "double" },
-          "totalCostAmount": { "type": "number", "format": "double" },
-          "totalSalesAmount": { "type": "number", "format": "double" },
-          "totalExpenses": { "type": "number", "format": "double" },
-          "grossProfit": { "type": "number", "format": "double" },
-          "netProfit": { "type": "number", "format": "double" },
-          "profit": { "type": "number", "format": "double" },
-          "saleDate": { "type": "string", "format": "date-time" }
         },
         "additionalProperties": false
       },

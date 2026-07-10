@@ -120,7 +120,6 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
                 }
             }
 
-            // Məhsul spesifikasiyaları məhsulun özünə yazılır (kateqoriyaya deyil)
             product.SyncAttributes(ProductAttributeDraftMapper.ToDrafts(request.InlineAttributes));
 
             if (variantData is not null)

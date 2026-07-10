@@ -39,6 +39,11 @@ public interface IUnitOfWork : IDisposable
     /// Sale expense child entity-lərinin EF state-ini SaveChanges-dən əvvəl düzəldir
     /// </summary>
     Task PrepareSaleForSaveAsync(Guid saleId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// CreditSale expense child entity-lərinin EF state-ini SaveChanges-dən əvvəl düzəldir
+    /// </summary>
+    Task PrepareCreditSaleForSaveAsync(Guid creditSaleId, CancellationToken cancellationToken = default);
 }
 
 

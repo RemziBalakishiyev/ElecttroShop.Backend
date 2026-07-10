@@ -55,6 +55,12 @@ public class SaleConfiguration : BaseCommonEntityConfiguration<Sale>
             .HasConversion<string>()
             .HasMaxLength(50);
 
+        builder.Property(s => s.Origin)
+            .IsRequired()
+            .HasConversion<string>()
+            .HasMaxLength(50)
+            .HasDefaultValue(Domain.Enums.SaleOrigin.Normal);
+
         builder.Property(s => s.SoldAt)
             .IsRequired();
 
@@ -69,6 +75,8 @@ public class SaleConfiguration : BaseCommonEntityConfiguration<Sale>
         builder.HasIndex(s => s.ProductId);
         builder.HasIndex(s => s.CategoryId);
         builder.HasIndex(s => s.SaleSource);
+        builder.HasIndex(s => s.Origin);
+        builder.HasIndex(s => s.SourceCreditSaleId);
         builder.HasIndex(s => s.SoldAt);
         builder.HasIndex(s => new { s.IsDeleted, s.SoldAt });
     }

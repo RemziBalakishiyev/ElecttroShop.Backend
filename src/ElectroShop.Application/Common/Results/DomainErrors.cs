@@ -165,6 +165,29 @@ public static class DomainErrors
             $"ID-si {id} olan satış tapılmadı.");
     }
 
+    public static class CreditSale
+    {
+        public static Error NotFound(Guid id) => Error.NotFound(
+            "CreditSale.NotFound",
+            $"ID-si {id} olan nisyə tapılmadı.");
+
+        public static Error InvalidStatus => Error.Validation(
+            "CreditSale.InvalidStatus",
+            "Nisyənin statusu bu əməliyyat üçün uyğun deyil.");
+
+        public static Error AlreadySold => Error.Conflict(
+            "CreditSale.AlreadySold",
+            "Nisyə artıq satılıb.");
+
+        public static Error CannotEdit => Error.Validation(
+            "CreditSale.CannotEdit",
+            "Satılmış və ya ləğv edilmiş nisyə redaktə edilə bilməz.");
+
+        public static Error CannotCancel => Error.Validation(
+            "CreditSale.CannotCancel",
+            "Satılmış nisyə ləğv edilə bilməz.");
+    }
+
     public static class ProductRating
     {
         public static Error NotFound(Guid productId) => Error.NotFound(

@@ -191,6 +191,26 @@ public class UnitOfWork : IUnitOfWork
         FixChildEntityStates(expenseEntries, existingExpenseIds.ToHashSet(), e => e.Entity.Id);
     }
 
+    public async Task PrepareCreditSaleForSaveAsync(Guid creditSaleId, CancellationToken cancellationToken = default)
+    {
+        var expenseEntries = _context.ChangeTracker.Entries<CreditSaleExpense>()
+            .Where(e => e.Entity.CreditSaleId == creditSaleId)
+            .ToList();
+
+        if (expenseEntries.Count == 0)
+            return;
+
+        var expenseIds = expenseEntries.Select(e => e.Entity.Id).ToList();
+        var existingExpenseIds = await _context.CreditSaleExpenses
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(e => expenseIds.Contains(e.Id))
+            .Select(e => e.Id)
+            .ToListAsync(cancellationToken);
+
+        FixChildEntityStates(expenseEntries, existingExpenseIds.ToHashSet(), e => e.Entity.Id);
+    }
+
     private static void FixChildEntityStates<TEntity>(
         List<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<TEntity>> entries,
         HashSet<Guid> existingIds,

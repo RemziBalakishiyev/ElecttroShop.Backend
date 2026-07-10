@@ -26,6 +26,8 @@ public class ElectroShopDbContext : DbContext
     public DbSet<Discount> Discounts => Set<Discount>();
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleExpense> SaleExpenses => Set<SaleExpense>();
+    public DbSet<CreditSale> CreditSales => Set<CreditSale>();
+    public DbSet<CreditSaleExpense> CreditSaleExpenses => Set<CreditSaleExpense>();
     public DbSet<ProductRating> ProductRatings => Set<ProductRating>();
     public DbSet<AppLogEntry> AppLogs => Set<AppLogEntry>();
 

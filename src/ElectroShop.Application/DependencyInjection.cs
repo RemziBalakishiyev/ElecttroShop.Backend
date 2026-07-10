@@ -50,6 +50,7 @@ public static class DependencyInjection
         services.AddScoped<Services.Sales.ISalesReportService, Services.Sales.SalesReportService>();
         services.AddScoped<Services.Sales.ISalesExportService, Services.Sales.SalesExportService>();
         services.AddScoped<Services.Reports.IReportsService, Services.Reports.ReportsService>();
+        services.AddScoped<Services.CreditSales.ICreditSaleService, Services.CreditSales.CreditSaleService>();
 
         return services;
     }

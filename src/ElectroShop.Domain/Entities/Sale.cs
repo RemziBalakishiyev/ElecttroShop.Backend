@@ -19,6 +19,8 @@ public class Sale : BaseCommonEntity
     public decimal TotalExpenses { get; private set; }
     public decimal Profit { get; private set; }
     public SaleSource SaleSource { get; private set; }
+    public SaleOrigin Origin { get; private set; } = SaleOrigin.Normal;
+    public Guid? SourceCreditSaleId { get; private set; }
     public DateTime SoldAt { get; private set; }
     public string? Note { get; private set; }
 
@@ -67,6 +69,64 @@ public class Sale : BaseCommonEntity
             SoldAt = soldAt,
             Note = note?.Trim()
         };
+    }
+
+    public static Sale CreateFromCreditSaleExistingProduct(
+        Guid sourceCreditSaleId,
+        Guid productId,
+        string productName,
+        string? productCode,
+        Guid? categoryId,
+        string? categoryName,
+        decimal costPrice,
+        decimal salePrice,
+        int quantity,
+        DateTime soldAt,
+        string? note = null)
+    {
+        var sale = CreateFromExistingProduct(
+            productId,
+            productName,
+            productCode,
+            categoryId,
+            categoryName,
+            costPrice,
+            salePrice,
+            quantity,
+            soldAt,
+            note);
+
+        sale.Origin = SaleOrigin.CreditSale;
+        sale.SourceCreditSaleId = sourceCreditSaleId;
+        return sale;
+    }
+
+    public static Sale CreateFromCreditSaleManualEntry(
+        Guid sourceCreditSaleId,
+        string productName,
+        string? productCode,
+        Guid? categoryId,
+        string? categoryName,
+        decimal costPrice,
+        decimal salePrice,
+        int quantity,
+        DateTime soldAt,
+        string? note = null)
+    {
+        var sale = CreateManualEntry(
+            productName,
+            productCode,
+            categoryId,
+            categoryName,
+            costPrice,
+            salePrice,
+            quantity,
+            soldAt,
+            note);
+
+        sale.Origin = SaleOrigin.CreditSale;
+        sale.SourceCreditSaleId = sourceCreditSaleId;
+        return sale;
     }
 
     public static Sale CreateManualEntry(

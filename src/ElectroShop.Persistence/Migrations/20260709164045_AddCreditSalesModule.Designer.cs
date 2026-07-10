@@ -3,6 +3,7 @@ using System;
 using ElectroShop.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ElectroShop.Persistence.Migrations
 {
     [DbContext(typeof(ElectroShopDbContext))]
-    partial class ElectroShopDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260709164045_AddCreditSalesModule")]
+    partial class AddCreditSalesModule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -367,10 +370,12 @@ namespace ElectroShop.Persistence.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CustomerName")
+                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
                     b.Property<string>("CustomerPhone")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -379,6 +384,11 @@ namespace ElectroShop.Persistence.Migrations
 
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Expenses")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
 
                     b.Property<decimal>("GrossProfit")
                         .HasColumnType("decimal(18,2)");
@@ -426,11 +436,6 @@ namespace ElectroShop.Persistence.Migrations
                     b.Property<decimal>("TotalCostAmount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("TotalExpenses")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("decimal(18,2)")
-                        .HasDefaultValue(0m);
-
                     b.Property<decimal>("TotalSaleAmount")
                         .HasColumnType("decimal(18,2)");
 
@@ -460,57 +465,6 @@ namespace ElectroShop.Persistence.Migrations
                     b.HasIndex("IsDeleted", "CreditDate");
 
                     b.ToTable("CreditSales", (string)null);
-                });
-
-            modelBuilder.Entity("ElectroShop.Domain.Entities.CreditSaleExpense", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("CreditSaleId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("ExpenseType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreditSaleId");
-
-                    b.HasIndex("ExpenseType");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.ToTable("CreditSaleExpenses", (string)null);
                 });
 
             modelBuilder.Entity("ElectroShop.Domain.Entities.Customer", b =>
@@ -1411,17 +1365,6 @@ namespace ElectroShop.Persistence.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("ElectroShop.Domain.Entities.CreditSaleExpense", b =>
-                {
-                    b.HasOne("ElectroShop.Domain.Entities.CreditSale", "CreditSale")
-                        .WithMany("Expenses")
-                        .HasForeignKey("CreditSaleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CreditSale");
-                });
-
             modelBuilder.Entity("ElectroShop.Domain.Entities.Discount", b =>
                 {
                     b.HasOne("ElectroShop.Domain.Entities.Brand", "Brand")
@@ -1777,11 +1720,6 @@ namespace ElectroShop.Persistence.Migrations
             modelBuilder.Entity("ElectroShop.Domain.Entities.CategoryAttribute", b =>
                 {
                     b.Navigation("Values");
-                });
-
-            modelBuilder.Entity("ElectroShop.Domain.Entities.CreditSale", b =>
-                {
-                    b.Navigation("Expenses");
                 });
 
             modelBuilder.Entity("ElectroShop.Domain.Entities.Order", b =>

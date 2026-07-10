@@ -1,94 +1,127 @@
 # Backend Change Result
 
 ## Summary
-Hesabatlar moduluna ay və il üzrə JSON satış hesabatı API əlavə edildi. Admin paneldə ayrıca "Hesabatlar" səhifəsi bu endpoint-dən summary, günlük qrafik datası, top məhsullar, kateqoriya/satış növü breakdown, mənfəət/zərər analizi və son satışları göstərə bilər. Export endpointləri dəyişməyib.
+Nisyə modulunda: müştəri adı/telefonu optional, xərclər Sales kimi çoxsətirli, manual girişdə SKU optional və kateqoriya request-dən çıxarıldı.
 
 ## Changed Endpoints
+Endpoint URL-ləri dəyişməyib. Request/response modelləri yenilənib.
 
-### GET /api/reports/sales/monthly
-- **Method:** GET
-- **URL:** `/api/reports/sales/monthly?year={year}&month={month}`
-- **Auth:** JWT Bearer token (`[Authorize]` — mövcud satışlar və dashboard ilə eyni)
-- **Old behavior:** Endpoint mövcud deyildi
-- **New behavior:** Seçilmiş təqvim ayı üzrə tam satış hesabatını JSON qaytarır
-- **Request body:** yoxdur
-- **Query params:**
-  - `year` (required, int) — 2000..2100
-  - `month` (required, int) — 1..12
-- **Response body:** `MonthlySalesReportDto`
-  - `year`, `month`, `monthName` (məs. "İYUL")
-  - `startDate`, `endDate`, `generatedAt`
-  - `summary` — `MonthlySalesReportSummaryDto`
-  - `dailySales` — ayın bütün günləri (satış olmayan günlər 0 ilə)
-  - `topProducts` — top 10 məhsul (quantity DESC)
-  - `categorySales` — kateqoriya üzrə group
-  - `saleTypeBreakdown` — satış növü üzrə group
-  - `profitLossProducts` — ən yüksək və ən aşağı netProfit məhsullar (~10)
-  - `recentSales` — son 20 satış (SoldAt DESC)
-- **Validation rules:**
-  - `year` — 2000-2100 arası
-  - `month` — 1-12 arası
-- **Error responses:**
-  - `400` — etibarsız parametr
-  - `401` — token yoxdur və ya etibarsızdır
-- **Boş ay:** `200 OK`, summary sıfırlar, `dailySales` ayın bütün günləri 0 ilə
+### POST /api/credit-sales
+### PUT /api/credit-sales/{id}
+
+**Request dəyişiklikləri:**
+
+| Sahə | Əvvəl | İndi |
+|------|-------|------|
+| `customerName` | required | optional (`null` ola bilər) |
+| `customerPhone` | required | optional (`null` ola bilər) |
+| `expenses` | `number` (tək məbləğ) | **silindi** |
+| `expenses` | — | `SaleExpenseRequestDto[]` (Sales ilə eyni) |
+| `categoryId` | optional (manual) | **request-dən silindi** |
+
+**Manual giriş üçün tələb olunanlar:**
+- `productSourceType`: 1
+- `productName`
+- `costPrice`, `salePrice`, `quantity`
+- `creditDate`, `dueDate`
+- `sku` — optional
+- `customerName`, `customerPhone` — optional
+
+**Xərc array nümunəsi (Sales ilə eyni):**
+```json
+"expenses": [
+  { "expenseType": "Delivery", "description": "Çatdırılma", "amount": 15 },
+  { "expenseType": "Other", "description": "Quraşdırma", "amount": 30 }
+]
+```
+
+`expenseType` enum: `Installation`, `Delivery`, `Service`, `Commission`, `Other`
+
+### GET /api/credit-sales (list)
+- `expenses` → **`totalExpenses`** (cəmi məbləğ)
+- `customerName`, `customerPhone` nullable
+
+### GET /api/credit-sales/{id} (detail)
+- `totalExpenses` — cəmi
+- `expenses` — `SaleExpenseDto[]` (id, expenseType, description, amount, createdAt)
+- `categoryId`/`categoryName` — yalnız sistem məhsulundan gələn snapshot (response-da qala bilər)
 
 ## Changed Models / DTOs
-Yeni/ genişləndirilmiş JSON API modelləri:
-- `MonthlySalesReportDto` — dashboard response (genişləndirildi)
-- `MonthlySalesReportSummaryDto` — `averageSaleAmount`, `profitMarginPercent` əlavə
-- `DailySalesReportDto`
-- `TopProductReportDto`
-- `CategorySalesReportDto`
-- `SaleTypeReportDto`
-- `ProfitLossProductReportDto`
-- `MonthlySalesReportItemDto` — `grossProfit`, `netProfit` əlavə
-
-Export üçün `Items` sahəsi saxlanılıb; JSON API response-da `items` boş array qaytarılır.
+- `CreateCreditSaleCommand`: `expenses` array, `categoryId` yoxdur
+- `UpdateCreditSaleCommand`: `expenses` array (göndərilsə tam əvəz olunur — Sales pattern)
+- `CreditSaleListItemDto`: `totalExpenses` (köhnə `expenses` decimal silindi)
+- `CreditSaleDetailDto`: + `expenses: SaleExpenseDto[]`
 
 ## Database / Business Rule Changes
-- Migration yoxdur
-- Satış filteri: `SoldAt >= ayın1ciGünüUTC && SoldAt < növbətiAyın1ciGünüUTC`
-- Summary hesablamaları mövcud `GetSalesStatisticsAsync` aggregation ilə eynidir
-- Kateqoriyasız məhsullar: `CategoryName = "Kateqoriyasız"`
-- Sale type label: `SaleSourceDisplayHelper` ("Mövcud məhsul", "Manual giriş")
+- Migration: `20260709175626_UpdateCreditSaleExpensesAndNullableCustomer`
+- `CreditSaleExpenses` cədvəli (Sales `SaleExpenses` kimi)
+- `CreditSales.Expenses` → `TotalExpenses`
+- `CustomerName`, `CustomerPhone` nullable
+- Mark-as-sold: bütün xərc sətirləri Sales-ə köçürülür
 
 ## Frontend Impact
 
-### Admin
-**Tələb olunan dəyişikliklər:**
+### Admin frontend — MÜTLƏQ dəyişikliklər
 
-1. **Yeni "Hesabatlar" səhifəsi yaradın** (sidebar/menu)
-2. **Ay və il seçici** — `year`, `month` query paramları göndərilməlidir
-3. **API çağırışı:**
-   ```
-   GET /api/reports/sales/monthly?year=2026&month=7
-   Authorization: Bearer {token}
-   ```
-4. **Response-dan istifadə:**
-   - Summary kartları: `summary.salesCount`, `summary.totalSalesAmount`, `summary.netProfit`, `summary.profitMarginPercent` və s.
-   - Qrafik: `dailySales` array (bütün günlər mövcuddur)
-   - Top məhsullar: `topProducts`
-   - Kateqoriya chart: `categorySales`
-   - Satış növü pie: `saleTypeBreakdown`
-   - Mənfəət/zərər: `profitLossProducts`
-   - Son satışlar cədvəli: `recentSales` (max 20)
-5. **Boş ay:** UI error göstərməsin — sıfırlı data ilə render etsin
+1. **Create/Edit form — Müştəri**
+   - `customerName` və `customerPhone` required validasiyasını sil
+   - Boş buraxıla bilər
 
-### User
+2. **Create/Edit form — Manual giriş**
+   - Kateqoriya seçimini sil (dropdown/input lazım deyil)
+   - `categoryId` API-yə göndərmə
+   - SKU sahəsi optional qalsın (required deyil)
+
+3. **Create/Edit form — Xərclər (Sales səhifəsindən kopyala)**
+   - Tək `expenses` number input-u sil
+   - Sales modulundakı kimi dinamik sətir cədvəli əlavə et:
+     - expenseType (select/enum)
+     - description (optional text)
+     - amount (number ≥ 0)
+   - "Xərc əlavə et" / sil düymələri
+   - API-yə `expenses: [{ expenseType, description, amount }]` göndər
+   - Update zamanı `expenses` göndərilsə tam siyahı əvəz olunur (Sales ilə eyni)
+
+4. **TypeScript types**
+   - `expenses: number` → sil
+   - `totalExpenses: number` (list)
+   - `expenses: SaleExpenseDto[]` (detail)
+   - `customerName?: string | null`
+   - `customerPhone?: string | null`
+   - Create/Update request-dən `categoryId` sil
+
+5. **List cədvəli**
+   - `expenses` sütununu `totalExpenses` ilə əvəz et
+
+6. **Detail səhifəsi**
+   - Xərclər bölməsində `expenses` array göstər (tip, təsvir, məbləğ)
+   - Cəmi: `totalExpenses`
+
+### User frontend
 No frontend change required.
 
 ## OpenAPI
-- contracts/openapi.json updated: yes
+- contracts/openapi.json updated: manual refresh lazımdır (swagger export)
 - contracts/openapi.diff.md updated: yes
 
 ## Test Result
-- Backend build: Application və Persistence uğurlu; WebApi IIS Express file lock səbəbindən copy fail ola bilər (kod compile olunur)
-- Backend tests: unit test layihəsi yoxdur
-- Manual API test:
-  1. JWT token ilə `GET /api/reports/sales/monthly?year=2026&month=7`
-  2. Data olan ayda summary rəqəmlərini `GET /api/sales` eyni ay filteri ilə müqayisə et
-  3. Boş ayda `dailySales.length` = ayın gün sayı, summary=0
-  4. `month=13` → 400
-  5. Auth olmadan → 401
-- Known issues: WebApi build zamanı IIS Express/Visual Studio DLL lock ola bilər — serveri dayandırıb yenidən build edin
+- Backend build: success (Persistence/Application/Domain)
+- Migration: applied (`UpdateCreditSaleExpensesAndNullableCustomer`)
+
+## Manual test
+```json
+POST /api/credit-sales
+{
+  "productSourceType": 1,
+  "productName": "Test məhsul",
+  "costPrice": 100,
+  "salePrice": 150,
+  "quantity": 1,
+  "creditDate": "2026-07-01T00:00:00Z",
+  "dueDate": "2026-07-31T00:00:00Z",
+  "expenses": [
+    { "expenseType": "Delivery", "amount": 10 },
+    { "expenseType": "Other", "description": "Test", "amount": 5 }
+  ]
+}
+```
